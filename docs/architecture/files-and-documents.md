@@ -91,8 +91,9 @@ Qué hace el render:
 - una sección de Word por sección de la plantilla, vertical u horizontal;
 - `TemplateDocumentWord` traduce el documento Tiptap: párrafos, marcas, alineación,
   listas anidadas, tablas con `gridSpan`/`vMerge`, colores y anchos;
-- `WordTableGrid` recalcula la rejilla de cada tabla con anchos fijos; si una palabra no
-  cabe, baja la letra hasta 7 pt (6 pt en esa celda);
+- `WordTableGrid` recalcula la rejilla de cada tabla con anchos fijos; las tablas usan
+  el tamaño de contenido de la plantilla y una palabra que no cabe se parte dentro de su
+  celda: no se achica la letra ni se ponen encabezados en vertical (2026-11-02);
 - bloques (unidades, evaluación, etc.) según su `layout` en la definición;
 - pie y línea de metadatos según `document.footer` y `document.metadata` (la oficial
   usa «Página {page} de {pages}»);

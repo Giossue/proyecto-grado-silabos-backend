@@ -290,6 +290,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## Firmas y documentos
 
+- El PDF usa solo los tamaños de letra de la plantilla (título, secciones y contenido, más
+  el pie y la línea de metadatos). Las tablas no achican la letra ni ponen encabezados en
+  vertical; una palabra que no cabe se parte en su celda, como en la vista previa
+  (2026-11-02).
 - Firmas al decidir (2026-10-28, reemplaza la firma secuencial del PDF ya aprobado): cada
   persona firma una sola vez por sílabo con su `.p12` en el navegador, en el momento de
   decidir. El docente firma al primer envío («Firmar y enviar»); los reenvíos tras una

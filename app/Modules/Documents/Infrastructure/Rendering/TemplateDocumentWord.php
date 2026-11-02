@@ -7,12 +7,6 @@ use PhpOffice\PhpWord\SimpleType\TblWidth;
 
 final class TemplateDocumentWord
 {
-    private const TABLE_MIN_FONT_SIZE = 7;
-
-    private const CELL_MARGINS = 100;
-
-    private ?int $tableFontSize = null;
-
     private int $listDepth = 0;
 
     private bool $keepWithNext = false;
@@ -21,7 +15,6 @@ final class TemplateDocumentWord
         private readonly ?string $paragraphAlignment = null,
         private readonly ?string $tableHeaderBackground = null,
         private readonly ?string $tableHeaderColor = null,
-        private readonly int $bodyFontSize = 11,
         private readonly string $tableBorder = '333333',
     ) {}
 
@@ -60,7 +53,7 @@ final class TemplateDocumentWord
 
                     continue;
                 }
-                $font = $insideTable && $this->tableFontSize !== null ? ['size' => $this->tableFontSize] : [];
+                $font = [];
                 foreach ($text['marks'] ?? [] as $mark) {
                     if (in_array($mark['type'], ['bold', 'italic'], true)) {
                         $font[$mark['type']] = true;
@@ -124,21 +117,9 @@ final class TemplateDocumentWord
             }
         }
         $widths = array_values(array_map(fn ($weight) => (int) round($width * $weight / array_sum($weights)), $weights));
-        $outerFontSize = $this->tableFontSize;
         $outerKeepWithNext = $this->keepWithNext;
         $leadingHeader = true;
         $leadingHeading = true;
-        $cellTexts = $this->cellTexts($rows, $widths);
-        $tableFontSize = $this->fontSizeThatFits($cellTexts);
-        $rowHeights = [];
-        foreach ($cellTexts as $cellText) {
-            if ($cellText['header'] && $this->rotates($cellText['text'], $cellText['width'], $tableFontSize ?? $this->bodyFontSize)) {
-                $needed = (int) ceil((self::wordWidth($this->longestWord($cellText['text']), $tableFontSize ?? $this->bodyFontSize) + self::CELL_MARGINS) / $cellText['rows']);
-                for ($y = 0; $y < $cellText['rows']; $y++) {
-                    $rowHeights[$cellText['row'] + $y] = max($rowHeights[$cellText['row'] + $y] ?? 0, $needed);
-                }
-            }
-        }
         $table = $target->addTable(['borderSize' => 4, 'borderColor' => $this->tableBorder, 'cellMargin' => 50, 'width' => 5000, 'unit' => TblWidth::PERCENT]);
         $merged = [];
         foreach ($rows as $rowIndex => $source) {
@@ -148,7 +129,7 @@ final class TemplateDocumentWord
                 true,
             );
             $leadingHeading = $leadingHeading && ($source['content'][0]['type'] ?? null) === 'tableHeader';
-            $row = $table->addRow($rowHeights[$rowIndex] ?? null, [...($leadingHeading ? ['cantSplit' => true] : []), ...($leadingHeader ? ['tblHeader' => true] : [])]);
+            $row = $table->addRow(null, [...($leadingHeading ? ['cantSplit' => true] : []), ...($leadingHeader ? ['tblHeader' => true] : [])]);
             $cells = $source['content'];
             $column = 0;
             while ($column < $count) {
@@ -196,14 +177,6 @@ final class TemplateDocumentWord
                         'options' => [...$options, 'vMerge' => 'continue'],
                     ];
                 }
-                $available = $cellWidth - self::CELL_MARGINS;
-                $longest = $this->longestWord($this->plainText($cell));
-                $this->tableFontSize = $tableFontSize;
-                if ($isHeader && $this->rotates($this->plainText($cell), $cellWidth, $tableFontSize ?? $this->bodyFontSize)) {
-                    $options['textDirection'] = 'btLr';
-                } elseif (self::wordWidth($longest, $tableFontSize ?? $this->bodyFontSize) > $available) {
-                    $this->tableFontSize = self::TABLE_MIN_FONT_SIZE - 1;
-                }
                 $destination = $row->addCell($cellWidth, $options);
                 $this->keepWithNext = $leadingHeading;
                 foreach ($cell['content'] as $child) {
@@ -222,117 +195,7 @@ final class TemplateDocumentWord
                 $column += $span;
             }
         }
-        $this->tableFontSize = $outerFontSize;
         $this->keepWithNext = $outerKeepWithNext;
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $rows
-     * @param  list<int>  $widths
-     * @return list<array{text: string, width: int, row: int, rows: int, header: bool}>
-     */
-    private function cellTexts(array $rows, array $widths): array
-    {
-        $texts = [];
-        $occupied = [];
-        foreach ($rows as $r => $row) {
-            $column = 0;
-            foreach ($row['content'] as $cell) {
-                while (isset($occupied[$r][$column])) {
-                    $column++;
-                }
-                $span = $cell['attrs']['colspan'] ?? 1;
-                for ($y = 1; $y < ($cell['attrs']['rowspan'] ?? 1); $y++) {
-                    for ($c = 0; $c < $span; $c++) {
-                        $occupied[$r + $y][$column + $c] = true;
-                    }
-                }
-                $texts[] = [
-                    'text' => $this->plainText($cell),
-                    'width' => (int) array_sum(array_slice($widths, $column, $span)),
-                    'row' => $r,
-                    'rows' => max(1, (int) ($cell['attrs']['rowspan'] ?? 1)),
-                    'header' => $cell['type'] === 'tableHeader',
-                ];
-                $column += $span;
-            }
-        }
-
-        return $texts;
-    }
-
-    /** @param  list<array{text: string, width: int, row: int, rows: int, header: bool}>  $cells */
-    private function fontSizeThatFits(array $cells): ?int
-    {
-        $cells = array_filter(
-            $cells,
-            fn (array $cell): bool => self::wordWidth($this->longestWord($cell['text']), self::TABLE_MIN_FONT_SIZE) <= $cell['width'] - self::CELL_MARGINS,
-        );
-        for ($size = $this->bodyFontSize; $size > self::TABLE_MIN_FONT_SIZE; $size--) {
-            $fits = true;
-            foreach ($cells as $cell) {
-                if (self::wordWidth($this->longestWord($cell['text']), $size) > $cell['width'] - self::CELL_MARGINS) {
-                    $fits = false;
-                    break;
-                }
-            }
-            if ($fits) {
-                return $size === $this->bodyFontSize ? null : $size;
-            }
-        }
-
-        return self::TABLE_MIN_FONT_SIZE;
-    }
-
-    private function rotates(string $text, int $width, int $tableFontSize): bool
-    {
-        $longest = $this->longestWord($text);
-        $available = $width - self::CELL_MARGINS;
-
-        return self::wordWidth($longest, $tableFontSize) > $available
-            && self::wordWidth($longest, self::TABLE_MIN_FONT_SIZE - 1) > $available;
-    }
-
-    private function longestWord(string $text): string
-    {
-        $longest = '';
-        foreach (preg_split('/\s+/u', $text) ?: [] as $word) {
-            if (self::wordWidth($word, 10) > self::wordWidth($longest, 10)) {
-                $longest = $word;
-            }
-        }
-
-        return $longest;
-    }
-
-    public static function wordWidth(string $word, int $size): int
-    {
-        $em = $size * 20;
-        $width = 0.0;
-        foreach (mb_str_split($word) as $character) {
-            $width += match (true) {
-                in_array($character, ['I', 'i', 'l', 'j', '.', ',', ':', ';', '|', '!', "'"], true) => 0.3,
-                in_array($character, ['M', 'W', 'm', 'w'], true) => 0.9,
-                mb_strtoupper($character) === $character && mb_strtolower($character) !== $character => 0.74,
-                default => 0.58,
-            };
-        }
-
-        return (int) ceil($width * $em);
-    }
-
-    /** @param array<string, mixed> $node */
-    private function plainText(array $node): string
-    {
-        if (($node['type'] ?? null) === 'text') {
-            return (string) ($node['text'] ?? '');
-        }
-        $parts = [];
-        foreach ($node['content'] ?? [] as $child) {
-            $parts[] = $this->plainText($child);
-        }
-
-        return implode(' ', $parts);
     }
 
     /**

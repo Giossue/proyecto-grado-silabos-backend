@@ -62,7 +62,6 @@ final class WordRenderContext
             $this->hasAppearance ? (string) $this->appearance['body_alignment'] : null,
             $this->hasAppearance ? $this->color('table_header_background') : null,
             $this->hasAppearance ? $this->color('table_header_color') : null,
-            (int) $this->appearance['body_font_size'],
             ltrim((string) ($this->appearance['table_border'] ?? self::TABLE_BORDER), '#'),
         );
     }
