@@ -60,7 +60,7 @@ Abre solo lo que la tarea necesita.
 2. Decisiones vigentes de `DECISIONS_STATUS.md` y ADR aceptados.
 3. Especificación del producto y criterios de aceptación.
 4. El `AGENTS.md` más cercano al archivo modificado.
-5. Plan activo.
+5. Documento ODD de la tarea (`odd/tasks/`).
 6. Convenciones generales.
 
 Si dos fuentes se contradicen, detén esa parte, anota el conflicto y pide resolución.
@@ -71,17 +71,33 @@ No elijas en silencio.
 1. Identifica los IDs `RF`, `RNF`, `RN`, `CU`, `UI` y `CP` relacionados.
 2. Revisa si la tarea depende de un punto de `docs/plans/pendientes.md`. Esos puntos
    están `POR VALIDAR`: usa el valor de «Mientras tanto» o detén esa parte.
-3. Para trabajo no trivial, crea un plan en `docs/plans/active/`.
+3. Sigue ODD (ver «Flujo de trabajo: ODD»). Si la tarea es grande, crea su documento en
+   `odd/tasks/` antes de escribir código.
 4. Implementa la unidad vertical más pequeña: política, caso de uso, persistencia,
    interfaz, pruebas y documentación.
 5. Ejecuta las verificaciones que correspondan.
 6. Si cambia el comportamiento visible, actualiza `docs/quality/traceability.md`.
-7. Al terminar, borra el plan (git lo guarda), anota la decisión en
+7. Al terminar, borra el documento ODD (git lo guarda) y su copia en Engram, anota la decisión en
    `DECISIONS_STATUS.md` y quita de `pendientes.md` lo que quedó resuelto.
 8. No declares terminado mientras código, migraciones, pruebas y documentación difieran.
 
 Un pendiente no relacionado no impide avanzar. Un pendiente que cambie permisos,
 estados, datos, infraestructura o aceptación sí bloquea esa parte.
+
+## Flujo de trabajo: ODD
+
+Se trabaja con ODD (*Organic Driven Development*, de Gentleman Programming); SDD no se usa.
+Las reglas generales de ODD llegan con gentle-ai en el `CLAUDE.md` global. En este
+repositorio:
+
+- Un cambio pequeño y entendido no deja documento. Uno grande, el que no se podría retomar
+  en otra sesión sin notas, lleva un solo documento `odd/tasks/<feature>.md` con encabezado,
+  `## Specs` (S1…, con los RF/CU/RN que toca), `## Tasks` (ID, specs, ruta, estado, commit)
+  y `## Log` (L1 es el pedido del usuario, textual).
+- Copia en Engram con el tema `odd/<feature>/tasks`. Si Engram falla, manda el archivo.
+- Se trabaja en `main`, sin rama de feature. Al terminar: commit y push a `main`, que
+  despliega. Este punto reemplaza la regla de ODD de ramas y push manual.
+- Lo que estaba en `POR VALIDAR` sigue así en el documento; ODD no lo vuelve regla.
 
 ## Verificación
 

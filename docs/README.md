@@ -14,7 +14,7 @@ Toda la documentación describe cómo funciona el sistema hoy. El historial est�
 
 - `plans/pendientes.md`: lo único que falta: decisiones abiertas (PV), firma (DT-16),
   reglas por confirmar, tareas de producción, aceptación manual y deuda técnica.
-- `plans/active/`: planes en curso. Un plan se borra al terminar.
+- `../odd/tasks/`: documentos ODD del trabajo en curso. Se borran al terminar.
 
 ## Producto
 

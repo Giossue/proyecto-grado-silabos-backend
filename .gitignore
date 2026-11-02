@@ -33,3 +33,6 @@ yarn-error.log
 /.vscode
 /.zed
 temp/*
+
+# gentle-ai (registro de skills por proyecto)
+/.atl/

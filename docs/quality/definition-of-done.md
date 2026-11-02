@@ -64,7 +64,7 @@ Una unidad está terminada solo si las secciones aplicables se cumplen.
       la arquitectura.
 - [ ] El comportamiento observable nuevo está en `docs/quality/traceability.md`.
 - [ ] Lo que queda pendiente o la deuda con impacto está en `docs/plans/pendientes.md`.
-- [ ] El plan de `docs/plans/active/` se borró al terminar.
+- [ ] El documento de `odd/tasks/` y su copia en Engram se borraron al terminar.
 - [ ] Hay evidencia de verificación y estrategia de reversión.
 
 Si un ítem aplicable falla, el trabajo no está Done aunque compile.

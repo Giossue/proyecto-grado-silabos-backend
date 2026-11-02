@@ -37,7 +37,7 @@ solo si el repositorio lo decide explícitamente y pueden reproducirse/validarse
 
 ## Planes y decisiones
 
-- Un plan vive en `docs/plans/active/` solo mientras el trabajo está en curso. Al
+- Un documento ODD vive en `odd/tasks/` solo mientras el trabajo está en curso. Al
   terminar se borra; su historia queda en git.
 - Las decisiones van a `DECISIONS_STATUS.md`; lo que falta decidir, a
   `docs/plans/pendientes.md`.

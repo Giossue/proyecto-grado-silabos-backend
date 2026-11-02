@@ -64,7 +64,7 @@ regenerar o eliminar el sílabo.
 
 ## Asistente de la plantilla (POR VALIDAR)
 
-Plan: `docs/plans/active/asistente-ia-plantilla.md`. Administración pide un cambio en
+Documento ODD: `odd/tasks/asistente-ia-plantilla.md`. Administración pide un cambio en
 lenguaje natural mientras edita y la IA arma una propuesta llamando funciones (*tools*)
 sobre una copia del borrador del editor. La persona la aplica en el editor (marcada «Cambió»)
 o la descarta; solo «Guardar» cambia la plantilla.

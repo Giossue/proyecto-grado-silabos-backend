@@ -26,7 +26,7 @@ para llenar la bibliografía en CU-07.
 
 ## Antes de implementar un caso
 
-Anota en el plan activo:
+Anota en el documento ODD (`odd/tasks/`), en `## Specs`:
 
 - actor, rol y alcance;
 - disparador y precondiciones;

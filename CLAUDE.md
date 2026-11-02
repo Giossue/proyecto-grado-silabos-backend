@@ -4,6 +4,6 @@ Lee primero `AGENTS.md`. Después abre únicamente la documentación que ese arc
 indique para la tarea actual.
 
 No conviertas un elemento `POR VALIDAR` en regla de producción. En tareas no triviales,
-mantén un plan en `docs/plans/active/` y entrega implementación, pruebas, trazabilidad y
+sigue ODD (`odd/tasks/<feature>.md`, ver `AGENTS.md`) y entrega implementación, pruebas, trazabilidad y
 documentación como una unidad coherente.
 

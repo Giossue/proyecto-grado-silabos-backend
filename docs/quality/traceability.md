@@ -98,7 +98,7 @@ fidelidad del documento) se revisa con `manual-review-script.md`.
 1. Registra el origen y la autoridad del cambio.
 2. Actualiza la SRS o la decisión en `DECISIONS_STATUS.md`.
 3. Analiza el impacto en RN, CU, UI, datos, arquitectura y CP.
-4. Si el trabajo no es trivial, crea un plan en `docs/plans/active/`.
+4. Si el trabajo es grande, crea su documento ODD en `odd/tasks/`.
 5. Actualiza implementación, pruebas y esta matriz.
 6. Vuelve a validar los criterios afectados.
 
