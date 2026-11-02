@@ -9,6 +9,8 @@ esa carpeta debe estar en un volumen persistente (ver [deployment.md](deployment
 |---|---|---|
 | `exports/{revisión}/{exportación}/syllabus.pdf` | PDF final de la revisión aprobada, con los sellos de las tres firmas | sí (`syllabus_export`) |
 | `logos/facultades/{facultad}/{uuid}.png` | Logo de facultad | sí (`logo_facultad`) |
+| `documentos-apoyo/{carrera}/{documento}/original.{ext}` | Documento de apoyo tal como se subió | sí (`documento_apoyo`) |
+| `documentos-apoyo/{carrera}/{documento}/vista.pdf` | Vista en PDF de un Word o Excel de apoyo | sí (`documento_apoyo_vista`) |
 | `logos/institucion.png` | Logo de la universidad | no |
 | `ca-confiables.pem` (sugerido) | Entidades certificadoras reconocidas | no |
 
@@ -26,6 +28,7 @@ Los logos se publican sin sesión en `GET /logos/institucion` y
 | Proyecto de carrera (PDF/Excel) | hasta 6 archivos de 20 MB, `pdf`, `xlsx` o `xls` |
 | Planillas de usuarios, docentes, carreras y malla | `xlsx` de hasta 2 MB |
 | Logos | PNG transparente de hasta 4 MB; se ajusta al tamaño del encabezado |
+| Documentos de apoyo | un archivo `pdf`, `doc`, `docx`, `xls` o `xlsx` de hasta 20 MB |
 
 Nginx del backend acepta cuerpos de hasta 32 MB (`client_max_body_size`). El nombre
 físico lo genera el servidor.
@@ -40,6 +43,12 @@ físico lo genera el servidor.
   exportaciones anteriores.
 - La respuesta se transmite desde el disco con `X-Content-Type-Options: nosniff` y se
   audita como `documento.descargado`.
+- Documentos de apoyo: `GET support-documents/{documento}/view` entrega el PDF en línea
+  (`inline`) para abrirlo en una ventana aparte y `GET support-documents/{documento}/file`,
+  el original. Ambos exigen el rol activo de Coordinación o Docente en la carrera del
+  documento; si no, responden 404. Un PDF es su propia vista; Word y Excel se convierten
+  con Gotenberg en la cola `documentos` (`PrepareSupportDocumentViewJob`), y antes cada
+  hoja de Excel se ajusta al ancho de la página (`SheetsFitPageWidth`).
 
 ## Generar el PDF
 

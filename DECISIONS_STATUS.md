@@ -207,6 +207,19 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   una espera de unos segundos, y el docente recibe un aviso por correo. Activar o
   desactivar «Puede generar sílabos» rehace solo los de esa materia.
 
+## Documentos de apoyo
+
+- Coordinación sube documentos de apoyo para los docentes de su carrera: PDF, Word
+  (`doc`, `docx`) o Excel (`xls`, `xlsx`) de hasta 20 MB, con un nombre. Son de la carrera,
+  no de una asignatura ni de un período, y no dependen de la convocatoria (2026-11-02).
+- Los ven Coordinación y los docentes con rol activo en esa carrera. Se abren en una
+  ventana aparte como PDF y se descarga el original.
+- Word y Excel se pasan a PDF con Gotenberg en la cola `documentos`; antes, cada hoja de
+  Excel se ajusta al ancho de la página (horizontal si pasa de 8 columnas) y salen todas
+  las hojas. Sin Gotenberg o si la conversión falla, quedan sin vista y solo se descargan.
+- Eliminar quita el documento de la lista; los archivos quedan en `archivos`, que es
+  inmutable.
+
 ## Elaboración del sílabo
 
 - Catálogo de la biblioteca (POR VALIDAR con la biblioteca, 2026-10-31): el docente busca un libro

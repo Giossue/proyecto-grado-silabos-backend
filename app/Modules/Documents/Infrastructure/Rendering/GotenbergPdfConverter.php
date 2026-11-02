@@ -30,6 +30,23 @@ class GotenbergPdfConverter
         return $this->stabilize($pdf, $docx, $generatedAt);
     }
 
+    public function convertFile(string $content, string $filename): string
+    {
+        try {
+            $response = Http::timeout((int) config('services.gotenberg.timeout', 90))
+                ->attach('files', $content, $filename)
+                ->post($this->url().'/forms/libreoffice/convert');
+        } catch (Throwable $exception) {
+            throw new RuntimeException('El servicio de conversión a PDF no respondió.', previous: $exception);
+        }
+        $pdf = $response->body();
+        if (! $response->successful() || ! str_starts_with($pdf, '%PDF-')) {
+            throw new RuntimeException("El servicio de conversión a PDF respondió {$response->status()}.");
+        }
+
+        return $pdf;
+    }
+
     public function stabilize(string $pdf, string $docx, string $generatedAt): string
     {
         $timestamp = strtotime($generatedAt);

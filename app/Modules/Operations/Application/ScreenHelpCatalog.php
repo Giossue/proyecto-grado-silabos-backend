@@ -128,6 +128,12 @@ Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si p
 
 Puede crear un docente, importar varios desde Excel, corregir su nombre (y su correo, mientras la cuenta no esté activada) y retirarlo de la carrera. Cada docente recibe una invitación por correo para activar su cuenta.',
         ],
+        '/coordinacion/documentos-apoyo' => [
+            'title' => 'Documentos de apoyo',
+            'content' => 'Suba material que ayude a sus docentes a conocer mejor sus asignaturas: proyecto de carrera, TIC y TAC, habilidades blandas u otros. Acepta PDF, Word y Excel de hasta 20 MB.
+
+Los docentes de la carrera los ven en una ventana aparte y pueden descargarlos. Word y Excel tardan unos segundos en estar listos para verse.',
+        ],
         '/coordinacion/malla' => [
             'title' => 'Malla curricular',
             'content' => 'Vista de la malla de su carrera: ciclos, materias y relaciones de prerrequisito y correquisito.
@@ -191,6 +197,10 @@ Su formación y experiencia académica-investigativa se escribe una sola vez: to
             'content' => 'Cambie su contraseña y administre la verificación en dos pasos. Para activarla o desactivarla se le pedirá su contraseña actual.
 
 Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si pierde el acceso a su aplicación de autenticación.',
+        ],
+        '/docente/documentos-apoyo' => [
+            'title' => 'Documentos de apoyo',
+            'content' => 'Material que Coordinación subió para conocer mejor sus asignaturas. Pulse uno para verlo en una ventana aparte o descárguelo desde el menú de la fila.',
         ],
         '/docente/mis-silabos' => [
             'title' => 'Mis sílabos',

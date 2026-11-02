@@ -8,6 +8,7 @@ use App\Modules\Academic\Presentation\Http\Controllers\CareerImportController;
 use App\Modules\Academic\Presentation\Http\Controllers\CurriculumImportController;
 use App\Modules\Academic\Presentation\Http\Controllers\FichaImportsController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
+use App\Modules\Academic\Presentation\Http\Controllers\SupportDocumentController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\TemplateAssistantController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
@@ -243,6 +244,16 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.update');
             Route::delete('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'destroy'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.destroy');
+            Route::get('coordination/support-documents', [SupportDocumentController::class, 'coordinationIndex'])
+                ->middleware('active-role')->name('api.v1.coordination.support-documents.index');
+            Route::post('coordination/support-documents', [SupportDocumentController::class, 'store'])
+                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.coordination.support-documents.store');
+            Route::delete('coordination/support-documents/{document}', [SupportDocumentController::class, 'destroy'])
+                ->middleware('active-role')->whereUuid('document')->name('api.v1.coordination.support-documents.destroy');
+            Route::get('support-documents/{document}/view', [SupportDocumentController::class, 'view'])
+                ->middleware('active-role')->whereUuid('document')->name('api.v1.support-documents.view');
+            Route::get('support-documents/{document}/file', [SupportDocumentController::class, 'download'])
+                ->middleware('active-role')->whereUuid('document')->name('api.v1.support-documents.download');
             Route::post('coordination/academic/teachers/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
                 ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.coordination.academic.teachers.activation.resend');
             Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])
@@ -297,6 +308,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('teacher/syllabi/{syllabus}/submit', [SyllabusController::class, 'submit'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.submit');
+            Route::get('teacher/support-documents', [SupportDocumentController::class, 'teacherIndex'])
+                ->middleware('active-role')
+                ->name('api.v1.teacher.support-documents.index');
             Route::get('teacher/library-catalog/search', [BibliographicCatalogController::class, 'search'])
                 ->middleware(['active-role', 'throttle:library-catalog'])
                 ->name('api.v1.teacher.library-catalog.search');

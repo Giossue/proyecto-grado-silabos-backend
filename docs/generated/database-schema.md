@@ -2,9 +2,9 @@
 
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
-- Fecha: 2026-10-31.
-- Última migración aplicada: `2026_10_31_000254_add_catalog_libraries_to_faculties`.
-- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 36 tablas.
+- Fecha: 2026-11-02.
+- Última migración aplicada: `2026_11_02_000256_create_support_documents_table`.
+- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 37 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
   - columnas: `pg_attribute` + `format_type()` + `pg_attrdef` (`pg_get_expr`);
@@ -285,6 +285,32 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `definiciones_campo_responsable_check`: `CHECK (((quien_llena_definicion_campo)::text = ANY ((ARRAY['docente'::character varying, 'coordinacion'::character varying, 'institucional'::character varying])::text[])))`
 - Triggers:
   - `marcar_cambio_definicion_campo_plantilla`: AFTER INSERT OR DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION marcar_cambio_plantilla()
+
+### `documentos_apoyo`
+
+| Columna | Tipo | Nulo | Por defecto |
+|---|---|---|---|
+| `documento_apoyo_id` | uuid | no |  |
+| `carrera_id` | uuid | no |  |
+| `titulo_documento` | character varying(180) | no |  |
+| `archivo_id` | uuid | no |  |
+| `archivo_vista_id` | uuid | sí |  |
+| `estado_vista` | character varying(20) | no | `'pendiente'::character varying` |
+| `subido_por` | uuid | no |  |
+| `subido_en` | timestamp(0) with time zone | no | `CURRENT_TIMESTAMP` |
+
+- PK: `PRIMARY KEY (documento_apoyo_id)`
+- FK:
+  - `documentos_apoyo_archivo_id_foreign`: `FOREIGN KEY (archivo_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT`
+  - `documentos_apoyo_archivo_vista_id_foreign`: `FOREIGN KEY (archivo_vista_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT`
+  - `documentos_apoyo_carrera_id_foreign`: `FOREIGN KEY (carrera_id) REFERENCES carreras(carrera_id) ON DELETE RESTRICT`
+  - `documentos_apoyo_subido_por_foreign`: `FOREIGN KEY (subido_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
+- Únicos:
+  - `documentos_apoyo_archivo_id_unique`: `(archivo_id)`
+- CHECK:
+  - `documentos_apoyo_estado_vista_check`: `CHECK (((estado_vista)::text = ANY ((ARRAY['pendiente'::character varying, 'lista'::character varying, 'sin_vista'::character varying])::text[])))`
+  - `documentos_apoyo_titulo_check`: `CHECK ((btrim((titulo_documento)::text) <> ''::text))`
+  - `documentos_apoyo_vista_check`: `CHECK ((((estado_vista)::text <> 'lista'::text) OR (archivo_vista_id IS NOT NULL)))`
 
 ### `envios_biblioteca`
 
