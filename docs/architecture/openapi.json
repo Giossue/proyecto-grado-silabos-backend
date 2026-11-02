@@ -901,6 +901,153 @@
                 ]
             }
         },
+        "/api/v1/admin/system-settings": {
+            "get": {
+                "tags": [
+                    "Administración"
+                ],
+                "operationId": "api_v1_admin_system-settings_show",
+                "summary": "api.v1.admin.system-settings.show",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/system-settings/{section}": {
+            "put": {
+                "tags": [
+                    "Administración"
+                ],
+                "operationId": "api_v1_admin_system-settings_update",
+                "summary": "api.v1.admin.system-settings.update",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "section",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/system-settings/{section}/test": {
+            "post": {
+                "tags": [
+                    "Administración"
+                ],
+                "operationId": "api_v1_admin_system-settings_test",
+                "summary": "api.v1.admin.system-settings.test",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "section",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/template": {
             "get": {
                 "tags": [

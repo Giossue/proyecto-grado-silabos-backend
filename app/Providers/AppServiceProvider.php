@@ -25,6 +25,7 @@ use App\Modules\Identity\Domain\Policies\UserPolicy;
 use App\Modules\Library\Domain\Contracts\BibliographicCatalog;
 use App\Modules\Library\Infrastructure\Gateways\DisabledBibliographicCatalog;
 use App\Modules\Library\Infrastructure\Gateways\KohaPublicCatalog;
+use App\Modules\Operations\Application\SystemSettings;
 use App\Modules\Syllabus\Domain\Policies\ConvocationPolicy;
 use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Domain\Policies\SyllabusProcessPolicy;
@@ -41,6 +42,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -52,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
     {
 
         $this->app->scoped(TemplateContext::class);
+        $this->app->singleton(SystemSettings::class);
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
         $this->app->bind(AiChatGateway::class, function (): AiChatGateway {
@@ -78,6 +81,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Lo guardado en Configuración › Sistema manda sobre el entorno; las tareas en cola lo releen
+        // antes de cada trabajo para tomar los cambios sin reiniciar el proceso.
+        $this->app->make(SystemSettings::class)->apply();
+        Queue::before(fn () => $this->app->make(SystemSettings::class)->apply());
         $this->configureDefaults();
         DevCommands::artisan('queue:listen --queue=critica,documentos,ia,general --tries=1 --timeout=0', 'queue');
     }
@@ -115,6 +122,11 @@ class AppServiceProvider extends ServiceProvider
             ));
         Gate::define(
             'manage-templates',
+            fn (User $user): bool => $user->activo
+                && app(ActiveRole::class)->hasRole(request(), RoleCode::Administrator),
+        );
+        Gate::define(
+            'manage-system-settings',
             fn (User $user): bool => $user->activo
                 && app(ActiveRole::class)->hasRole(request(), RoleCode::Administrator),
         );

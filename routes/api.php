@@ -27,6 +27,7 @@ use App\Modules\Library\Presentation\Http\Controllers\LibraryReviewController;
 use App\Modules\Operations\Presentation\Http\Controllers\AuditEventController;
 use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
 use App\Modules\Operations\Presentation\Http\Controllers\ScreenHelpController;
+use App\Modules\Operations\Presentation\Http\Controllers\SystemSettingsController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ConvocationController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ReviewController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
@@ -127,6 +128,14 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.users.roles.destroy');
             Route::delete('admin/users/{user}', [ManagedUserController::class, 'destroy'])
                 ->middleware('active-role')->name('api.v1.admin.users.destroy');
+            Route::get('admin/system-settings', [SystemSettingsController::class, 'show'])
+                ->middleware('active-role')->name('api.v1.admin.system-settings.show');
+            Route::put('admin/system-settings/{section}', [SystemSettingsController::class, 'update'])
+                ->middleware(['active-role', 'throttle:10,1'])->whereIn('section', ['notificaciones', 'ia', 'biblioteca'])
+                ->name('api.v1.admin.system-settings.update');
+            Route::post('admin/system-settings/{section}/test', [SystemSettingsController::class, 'test'])
+                ->middleware(['active-role', 'throttle:10,1'])->whereIn('section', ['ia', 'biblioteca'])
+                ->name('api.v1.admin.system-settings.test');
             Route::get('admin/audit-events', [AuditEventController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.admin.audit-events.index');
             Route::get('admin/library-catalog/libraries', [BibliographicCatalogController::class, 'libraries'])
