@@ -70,9 +70,14 @@ class PrepareSupportDocumentViewJob implements ShouldBeUnique, ShouldQueue
         $path = dirname($original->ruta_interna).'/vista.pdf';
         $disk->put($path, $pdf);
 
-        DB::transaction(function () use ($document, $original, $path, $pdf): void {
+        $stored = DB::transaction(function () use ($document, $original, $path, $pdf): bool {
             $locked = SupportDocument::query()->lockForUpdate()->find($document->documento_apoyo_id);
-            $preview = StoredObject::query()->firstOrCreate(['disco' => $original->disco, 'ruta_interna' => $path], [
+            if ($locked === null || $locked->estado_vista !== SupportDocument::VIEW_PENDING) {
+                return false;
+            }
+            $preview = StoredObject::query()->create([
+                'disco' => $original->disco,
+                'ruta_interna' => $path,
                 'nombre_logico' => pathinfo($original->nombre_logico, PATHINFO_FILENAME).'.pdf',
                 'mime' => 'application/pdf',
                 'tamano_bytes' => strlen($pdf),
@@ -80,10 +85,13 @@ class PrepareSupportDocumentViewJob implements ShouldBeUnique, ShouldQueue
                 'clasificacion' => 'documento_apoyo_vista',
                 'propietario_usuario_id' => $original->propietario_usuario_id,
             ]);
-            if ($locked !== null && $locked->estado_vista === SupportDocument::VIEW_PENDING) {
-                $locked->update(['archivo_vista_id' => $preview->id, 'estado_vista' => SupportDocument::VIEW_READY]);
-            }
+            $locked->update(['archivo_vista_id' => $preview->id, 'estado_vista' => SupportDocument::VIEW_READY]);
+
+            return true;
         });
+        if (! $stored) {
+            $disk->delete($path);
+        }
     }
 
     public function failed(Throwable $exception): void

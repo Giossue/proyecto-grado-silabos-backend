@@ -8,9 +8,11 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\SupportDocument;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -163,24 +165,40 @@ class SupportDocumentTest extends TestCase
         $this->deleteJson(route('api.v1.coordination.support-documents.destroy', $other))->assertNotFound();
     }
 
-    public function test_coordinator_deletes_the_document_and_teachers_stop_seeing_it(): void
+    public function test_deleting_a_document_removes_its_files_from_the_server(): void
     {
+        config(['services.gotenberg.url' => 'http://gotenberg:3000/']);
+        Http::fake(fn () => Http::response(self::PDF, 200, ['Content-Type' => 'application/pdf']));
         $this->asRole('coordinador@silabos.test');
         $id = $this->post(route('api.v1.coordination.support-documents.store'), [
             'title' => 'Para borrar',
-            'file' => UploadedFile::fake()->createWithContent('b.pdf', self::PDF),
+            'file' => UploadedFile::fake()->createWithContent('b.docx', $this->docx()),
         ], ['Accept' => 'application/json'])->json('document.id');
-        $object = SupportDocument::query()->findOrFail($id)->archivo_id;
+        $document = SupportDocument::query()->with(['original', 'preview'])->findOrFail($id);
+        $paths = [$document->original->ruta_interna, (string) $document->preview?->ruta_interna];
+        $objects = [$document->archivo_id, (string) $document->archivo_vista_id];
+        Storage::disk('private')->assertExists($paths);
 
         $this->deleteJson(route('api.v1.coordination.support-documents.destroy', $id))->assertOk();
 
         $this->assertDatabaseMissing('documentos_apoyo', ['documento_apoyo_id' => $id]);
-        $this->assertDatabaseHas('archivos', ['archivo_id' => $object, 'categoria' => 'documento_apoyo']);
+        $this->assertSame(0, DB::table('archivos')->whereIn('archivo_id', $objects)->count());
+        Storage::disk('private')->assertMissing($paths);
+        Storage::disk('private')->assertDirectoryEmpty(dirname($paths[0]));
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.documento_apoyo.eliminacion', 'recurso_id' => $id]);
         $this->asRole('docente@silabos.test');
         $this->getJson(route('api.v1.teacher.support-documents.index'))->assertOk()->assertJsonCount(0, 'data');
-        $this->get(route('api.v1.support-documents.download', $id))->assertNotFound();
-        $this->asRole('coordinador@silabos.test');
-        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.documento_apoyo.eliminacion', 'recurso_id' => $id]);
+    }
+
+    public function test_other_files_stay_immutable(): void
+    {
+        $object = StoredObject::query()->create([
+            'disco' => 'private', 'ruta_interna' => 'exports/x/y/syllabus.pdf', 'nombre_logico' => 'silabo.pdf', 'mime' => 'application/pdf',
+            'tamano_bytes' => 10, 'huella_sha256' => str_repeat('a', 64), 'clasificacion' => 'syllabus_export', 'propietario_usuario_id' => null,
+        ]);
+
+        $this->expectException(QueryException::class);
+        DB::table('archivos')->where('archivo_id', $object->id)->delete();
     }
 
     private function foreignDocument(): string

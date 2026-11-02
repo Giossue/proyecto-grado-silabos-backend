@@ -30,10 +30,36 @@ return new class extends Migration
         DB::statement("ALTER TABLE documentos_apoyo ADD CONSTRAINT documentos_apoyo_estado_vista_check CHECK (estado_vista IN ('pendiente', 'lista', 'sin_vista'))");
         DB::statement("ALTER TABLE documentos_apoyo ADD CONSTRAINT documentos_apoyo_vista_check CHECK (estado_vista <> 'lista' OR archivo_vista_id IS NOT NULL)");
         DB::statement("ALTER TABLE documentos_apoyo ADD CONSTRAINT documentos_apoyo_titulo_check CHECK (btrim(titulo_documento) <> '')");
+
+        DB::unprepared(<<<'SQL'
+            CREATE OR REPLACE FUNCTION proteger_archivo_registrado() RETURNS trigger AS $$
+            BEGIN
+                IF TG_OP = 'DELETE' AND OLD.categoria IN ('documento_apoyo', 'documento_apoyo_vista') THEN
+                    RETURN OLD;
+                END IF;
+                IF reinicio_institucional_habilitado() THEN
+                    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+                END IF;
+                RAISE EXCEPTION 'El registro histórico es inmutable' USING ERRCODE = '23514';
+            END;
+            $$ LANGUAGE plpgsql;
+
+            DROP TRIGGER IF EXISTS proteger_archivo ON archivos;
+            CREATE TRIGGER proteger_archivo
+            BEFORE DELETE OR UPDATE ON archivos
+            FOR EACH ROW EXECUTE FUNCTION proteger_archivo_registrado();
+            SQL);
     }
 
     public function down(): void
     {
+        DB::unprepared(<<<'SQL'
+            DROP TRIGGER IF EXISTS proteger_archivo ON archivos;
+            CREATE TRIGGER proteger_archivo
+            BEFORE DELETE OR UPDATE ON archivos
+            FOR EACH ROW EXECUTE FUNCTION proteger_registro_append_only();
+            DROP FUNCTION IF EXISTS proteger_archivo_registrado();
+            SQL);
         Schema::dropIfExists('documentos_apoyo');
     }
 };

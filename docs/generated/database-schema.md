@@ -50,10 +50,11 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - `impedir_cambio_periodo_proceso_con_convocatorias()`: triggers en `convocatorias_universidad`
 - `marcar_cambio_plantilla()`: triggers en `campos_plantilla`, `definiciones_campo`, `secciones_plantilla`
 - `marcar_definicion_plantilla_modificada()`: triggers en `plantilla_silabo`
+- `proteger_archivo_registrado()`: triggers en `archivos`
 - `proteger_envio_biblioteca()`: triggers en `envios_biblioteca`
 - `proteger_mensaje_ia()`: triggers en `mensajes_ia`
 - `proteger_notificacion()`: triggers en `notificaciones`
-- `proteger_registro_append_only()`: triggers en `aprobaciones`, `archivos`, `eventos_auditoria`, `firmas_silabo`, `revisiones_coordinacion`
+- `proteger_registro_append_only()`: triggers en `aprobaciones`, `eventos_auditoria`, `firmas_silabo`, `revisiones_coordinacion`
 - `proteger_registro_con_campos_unicos()`: triggers en `revisiones_silabo`
 - `reinicio_institucional_habilitado()`: ningún trigger la llama directamente
 - `validar_exportacion_silabo()`: triggers en `exportaciones_silabo`
@@ -106,7 +107,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - Únicos:
   - `archivos_disco_ruta_archivo_unique`: `(disco, ruta_archivo)`
 - Triggers:
-  - `proteger_archivo`: BEFORE DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION proteger_registro_append_only()
+  - `proteger_archivo`: BEFORE DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION proteger_archivo_registrado()
 
 ### `asignaciones_paralelo`
 

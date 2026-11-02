@@ -128,12 +128,6 @@ Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si p
 
 Puede crear un docente, importar varios desde Excel, corregir su nombre (y su correo, mientras la cuenta no esté activada) y retirarlo de la carrera. Cada docente recibe una invitación por correo para activar su cuenta.',
         ],
-        '/coordinacion/documentos-apoyo' => [
-            'title' => 'Documentos de apoyo',
-            'content' => 'Suba material que ayude a sus docentes a conocer mejor sus asignaturas: proyecto de carrera, TIC y TAC, habilidades blandas u otros. Acepta PDF, Word y Excel de hasta 20 MB.
-
-Los docentes de la carrera los ven en una ventana aparte y pueden descargarlos. Word y Excel tardan unos segundos en estar listos para verse.',
-        ],
         '/coordinacion/malla' => [
             'title' => 'Malla curricular',
             'content' => 'Vista de la malla de su carrera: ciclos, materias y relaciones de prerrequisito y correquisito.
@@ -161,6 +155,8 @@ Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leíd
             'content' => 'El proyecto de carrera contiene los campos que Administración asignó a Coordinación en la plantilla del sílabo. Pulse una materia para editar sus datos y elegir qué campos puede modificar el docente.
 
 Con «Importar desde Excel», descargue la plantilla de su carrera. Complete las celdas de contenido sin cambiar hojas, encabezados ni materias. Cargue el Excel, revise la vista previa y seleccione qué materias y campos aplicar. Las celdas vacías conservan los valores actuales. Esta carga no necesita IA ni OCR.
+
+En la pestaña «Documentos de apoyo» suba PDF, Word o Excel de hasta 20 MB para sus docentes: proyecto de carrera, TIC y TAC, habilidades blandas u otros. Ellos los ven en una ventana aparte y los descargan. Al eliminar uno, se borra del servidor.
 
 Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en curso, cambiar un dato exige pausar y confirmar su regeneración; los procesos cerrados no se modifican.',
         ],

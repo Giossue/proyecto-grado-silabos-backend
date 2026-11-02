@@ -15,7 +15,9 @@ esa carpeta debe estar en un volumen persistente (ver [deployment.md](deployment
 | `ca-confiables.pem` (sugerido) | Entidades certificadoras reconocidas | no |
 
 La tabla `archivos` guarda disco, ruta interna, nombre, tipo MIME, tamaño, hash
-SHA-256, categoría, quién lo subió y cuándo. Es inmutable. Las tablas de dominio
+SHA-256, categoría, quién lo subió y cuándo. Es inmutable, salvo las filas de los
+documentos de apoyo (`documento_apoyo` y `documento_apoyo_vista`), que se pueden borrar
+(trigger `proteger_archivo`, función `proteger_archivo_registrado()`). Las tablas de dominio
 apuntan a `archivos`; nunca guardan una ruta como dato de negocio.
 
 Los logos se publican sin sesión en `GET /logos/institucion` y
@@ -171,3 +173,6 @@ Configuración y armado del PEM: [deployment.md](deployment.md#firma-electrónic
 
 No hay borrado automático de archivos. Los archivos de un sílabo solo se borran cuando
 se regenera o se elimina ese sílabo (`InProgressWork`), después del commit.
+
+Eliminar un documento de apoyo borra su fila, sus filas de `archivos` (original y vista)
+y, después del commit, los archivos del disco, para ocupar solo el espacio necesario.

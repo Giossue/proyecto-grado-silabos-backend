@@ -124,16 +124,26 @@ final class SupportDocuments
         abort_unless($this->coordinationCareer($request) === $document->carrera_id, 404);
 
         DB::transaction(function () use ($request, $actor, $document): void {
-            $document->delete();
+            $locked = SupportDocument::query()->lockForUpdate()->findOrFail($document->documento_apoyo_id);
+            $objectIds = array_values(array_unique(array_filter([$locked->archivo_id, $locked->archivo_vista_id])));
+            $objects = DB::table('archivos')->whereIn('archivo_id', $objectIds)->get(['disco', 'ruta_archivo']);
+            $locked->delete();
+            DB::table('archivos')->whereIn('archivo_id', $objectIds)->delete();
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $this->roles->resolve($request)?->id,
                 action: 'academico.documento_apoyo.eliminacion',
                 resourceType: 'documento_apoyo',
-                resourceId: $document->documento_apoyo_id,
+                resourceId: $locked->documento_apoyo_id,
                 result: 'exito',
-                metadata: ['carrera_id' => $document->carrera_id],
+                metadata: ['carrera_id' => $locked->carrera_id],
             );
+            DB::afterCommit(function () use ($objects): void {
+                foreach ($objects as $object) {
+                    Storage::disk($object->disco)->delete($object->ruta_archivo);
+                    Storage::disk($object->disco)->deleteDirectory(dirname($object->ruta_archivo));
+                }
+            });
         });
     }
 
