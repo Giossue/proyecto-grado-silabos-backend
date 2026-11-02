@@ -213,10 +213,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   (`doc`, `docx`) o Excel (`xls`, `xlsx`) de hasta 20 MB, con un nombre. Son de la carrera,
   no de una asignatura ni de un período, y no dependen de la convocatoria (2026-11-02).
 - Los ven Coordinación y los docentes con rol activo en esa carrera. Se abren en una
-  ventana aparte como PDF y se descarga el original.
+  ventana aparte como PDF; no se descarga el original ni se muestra su tipo.
 - Word y Excel se pasan a PDF con Gotenberg en la cola `documentos`; antes, cada hoja de
   Excel se ajusta al ancho de la página (horizontal si pasa de 8 columnas) y salen todas
-  las hojas. Sin Gotenberg o si la conversión falla, quedan sin vista y solo se descargan.
+  las hojas. Sin Gotenberg o si la conversión falla, quedan sin vista y hay que volver a subirlos.
 - Están en la pestaña «Documentos de apoyo» de Proyecto de carrera; el docente los ve en
   su propia entrada del menú.
 - Eliminar borra el documento y sus archivos del servidor (original y vista), para

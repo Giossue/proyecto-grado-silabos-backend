@@ -8,6 +8,7 @@ use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -52,6 +53,9 @@ return Application::configure(basePath: dirname(__DIR__))
                     'version_bloqueo_actual' => $exception->currentVersion,
                 ], 409)
                 : response()->json(['message' => $exception->getMessage()], 409),
+        );
+        $exceptions->render(
+            fn (PostTooLargeException $exception) => response()->json(['message' => 'El archivo es demasiado grande.'], 413),
         );
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),

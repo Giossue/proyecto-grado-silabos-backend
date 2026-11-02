@@ -156,7 +156,7 @@ Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leíd
 
 Con «Importar desde Excel», descargue la plantilla de su carrera. Complete las celdas de contenido sin cambiar hojas, encabezados ni materias. Cargue el Excel, revise la vista previa y seleccione qué materias y campos aplicar. Las celdas vacías conservan los valores actuales. Esta carga no necesita IA ni OCR.
 
-En la pestaña «Documentos de apoyo» suba PDF, Word o Excel de hasta 20 MB para sus docentes: proyecto de carrera, TIC y TAC, habilidades blandas u otros. Ellos los ven en una ventana aparte y los descargan. Al eliminar uno, se borra del servidor.
+En la pestaña «Documentos de apoyo» suba PDF, Word o Excel de hasta 20 MB para sus docentes: proyecto de carrera, TIC y TAC, habilidades blandas u otros. Ellos los ven en una ventana aparte. Al eliminar uno, se borra del servidor.
 
 Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en curso, cambiar un dato exige pausar y confirmar su regeneración; los procesos cerrados no se modifican.',
         ],
@@ -196,7 +196,7 @@ Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si p
         ],
         '/docente/documentos-apoyo' => [
             'title' => 'Documentos de apoyo',
-            'content' => 'Material que Coordinación subió para conocer mejor sus asignaturas. Pulse uno para verlo en una ventana aparte o descárguelo desde el menú de la fila.',
+            'content' => 'Material que Coordinación subió para conocer mejor sus asignaturas. Pulse uno para verlo en una ventana aparte.',
         ],
         '/docente/mis-silabos' => [
             'title' => 'Mis sílabos',

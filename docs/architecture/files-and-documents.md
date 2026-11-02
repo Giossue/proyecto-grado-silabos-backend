@@ -46,8 +46,7 @@ físico lo genera el servidor.
 - La respuesta se transmite desde el disco con `X-Content-Type-Options: nosniff` y se
   audita como `documento.descargado`.
 - Documentos de apoyo: `GET support-documents/{documento}/view` entrega el PDF en línea
-  (`inline`) para abrirlo en una ventana aparte y `GET support-documents/{documento}/file`,
-  el original. Ambos exigen el rol activo de Coordinación o Docente en la carrera del
+  (`inline`) para abrirlo en una ventana aparte; el original no se descarga. Exige el rol activo de Coordinación o Docente en la carrera del
   documento; si no, responden 404. Un PDF es su propia vista; Word y Excel se convierten
   con Gotenberg en la cola `documentos` (`PrepareSupportDocumentViewJob`), y antes cada
   hoja de Excel se ajusta al ancho de la página (`SheetsFitPageWidth`).

@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Modules\Academic\Application\SupportDocuments;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SupportDocument;
 use App\Modules\Academic\Presentation\Http\Requests\StoreSupportDocumentRequest;
-use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -61,19 +60,6 @@ class SupportDocumentController extends Controller
         ], 'inline');
     }
 
-    public function download(Request $request, SupportDocument $document): StreamedResponse
-    {
-        $this->documents->assertReadable($request, $document);
-        $original = $document->original;
-        abort_unless(Storage::disk($original->disco)->exists($original->ruta_interna), 404);
-
-        return Storage::disk($original->disco)->download($original->ruta_interna, $this->filename($document, $this->extension($original)), [
-            'Content-Type' => $original->mime,
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, no-store',
-        ]);
-    }
-
     private function list(string $careerId): JsonResponse
     {
         return response()->json(['data' => $this->documents->forCareer($careerId)->map(fn (SupportDocument $document): array => $this->item($document))->values()]);
@@ -85,18 +71,10 @@ class SupportDocumentController extends Controller
         return [
             'id' => $document->documento_apoyo_id,
             'title' => $document->titulo_documento,
-            'file_name' => $document->original->nombre_logico,
-            'extension' => $this->extension($document->original),
             'size' => $document->original->tamano_bytes,
             'view' => $document->estado_vista,
             'uploaded_at' => $document->subido_en->toIso8601String(),
-            'uploaded_by' => $document->uploader?->nombre,
         ];
-    }
-
-    private function extension(StoredObject $object): string
-    {
-        return strtolower(pathinfo($object->ruta_interna, PATHINFO_EXTENSION));
     }
 
     private function filename(SupportDocument $document, string $extension): string

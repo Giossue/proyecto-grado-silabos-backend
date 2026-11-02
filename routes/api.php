@@ -252,8 +252,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid('document')->name('api.v1.coordination.support-documents.destroy');
             Route::get('support-documents/{document}/view', [SupportDocumentController::class, 'view'])
                 ->middleware('active-role')->whereUuid('document')->name('api.v1.support-documents.view');
-            Route::get('support-documents/{document}/file', [SupportDocumentController::class, 'download'])
-                ->middleware('active-role')->whereUuid('document')->name('api.v1.support-documents.download');
             Route::post('coordination/academic/teachers/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
                 ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.coordination.academic.teachers.activation.resend');
             Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])

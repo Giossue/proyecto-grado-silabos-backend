@@ -53,7 +53,7 @@ final class SupportDocuments
     /** @return Collection<int, SupportDocument> */
     public function forCareer(string $careerId): Collection
     {
-        return SupportDocument::query()->with(['uploader', 'original'])
+        return SupportDocument::query()->with('original')
             ->where('carrera_id', $careerId)
             ->orderByDesc('subido_en')->orderBy('titulo_documento')
             ->get();
@@ -79,7 +79,7 @@ final class SupportDocuments
             PrepareSupportDocumentViewJob::dispatch($id);
         }
 
-        return $document->load(['uploader', 'original']);
+        return $document->load('original');
     }
 
     private function record(Request $request, User $actor, UploadedFile $file, string $title, string $careerId, string $content, string $id, string $path, bool $isPdf): SupportDocument

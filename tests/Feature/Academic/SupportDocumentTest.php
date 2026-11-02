@@ -35,7 +35,7 @@ class SupportDocumentTest extends TestCase
         Storage::fake('private');
     }
 
-    public function test_coordinator_uploads_a_pdf_that_teachers_of_the_career_view_and_download(): void
+    public function test_coordinator_uploads_a_pdf_that_teachers_of_the_career_view(): void
     {
         $this->asRole('coordinador@silabos.test');
         $response = $this->post(route('api.v1.coordination.support-documents.store'), [
@@ -44,9 +44,9 @@ class SupportDocumentTest extends TestCase
         ], ['Accept' => 'application/json'])->assertCreated();
 
         $response->assertJsonPath('document.title', 'Proyecto de carrera')
-            ->assertJsonPath('document.extension', 'pdf')
             ->assertJsonPath('document.view', 'lista')
-            ->assertJsonPath('document.uploaded_by', 'COORDINADORA DEMO');
+            ->assertJsonMissingPath('document.uploaded_by')
+            ->assertJsonMissingPath('document.file_name');
         $id = $response->json('document.id');
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.documento_apoyo.subida', 'recurso_id' => $id]);
 
@@ -56,8 +56,7 @@ class SupportDocumentTest extends TestCase
         $view = $this->get(route('api.v1.support-documents.view', $id))->assertOk();
         $this->assertSame('application/pdf', $view->headers->get('Content-Type'));
         $this->assertStringStartsWith('inline;', (string) $view->headers->get('Content-Disposition'));
-        $download = $this->get(route('api.v1.support-documents.download', $id))->assertOk();
-        $this->assertStringContainsString('attachment; filename=proyecto-de-carrera.pdf', (string) $download->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('filename=proyecto-de-carrera.pdf', (string) $view->headers->get('Content-Disposition'));
     }
 
     public function test_word_documents_are_converted_to_pdf_for_the_view(): void
@@ -121,7 +120,7 @@ class SupportDocumentTest extends TestCase
         $this->assertSame('landscape', $book->getSheet(1)->getPageSetup()->getOrientation());
     }
 
-    public function test_without_the_converter_the_document_has_no_view_but_can_be_downloaded(): void
+    public function test_without_the_converter_the_document_has_no_view(): void
     {
         config(['services.gotenberg.url' => '']);
         $this->asRole('coordinador@silabos.test');
@@ -132,7 +131,16 @@ class SupportDocumentTest extends TestCase
 
         $this->assertSame('sin_vista', SupportDocument::query()->findOrFail($id)->estado_vista);
         $this->get(route('api.v1.support-documents.view', $id))->assertNotFound();
-        $this->get(route('api.v1.support-documents.download', $id))->assertOk();
+    }
+
+    public function test_a_request_above_the_server_limit_answers_in_spanish(): void
+    {
+        $this->asRole('coordinador@silabos.test');
+        $limit = ini_get('post_max_size');
+        $this->call('POST', route('api.v1.coordination.support-documents.store'), [], [], [], [
+            'CONTENT_LENGTH' => (string) (((int) $limit + 1) * 1024 * 1024 * 1024),
+            'HTTP_ACCEPT' => 'application/json',
+        ])->assertStatus(413)->assertExactJson(['message' => 'El archivo es demasiado grande.']);
     }
 
     public function test_upload_rejects_other_formats_and_requires_a_title(): void
@@ -160,7 +168,6 @@ class SupportDocumentTest extends TestCase
         $this->asRole('docente@silabos.test');
         $this->getJson(route('api.v1.teacher.support-documents.index'))->assertOk()->assertJsonCount(0, 'data');
         $this->get(route('api.v1.support-documents.view', $other))->assertNotFound();
-        $this->get(route('api.v1.support-documents.download', $other))->assertNotFound();
         $this->asRole('coordinador@silabos.test');
         $this->deleteJson(route('api.v1.coordination.support-documents.destroy', $other))->assertNotFound();
     }
