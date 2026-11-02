@@ -25,6 +25,9 @@
       los buscadores de tablas usan `Buscar por...` con los datos consultados. Las ayudas
       no exponen claves internas, nombres de columnas ni contratos técnicos.
 - [ ] Error indica campo, causa y corrección.
+- [ ] En un modal, el botón de enviar queda deshabilitado mientras falte un campo obligatorio
+      (`required`) y, si edita datos existentes, mientras no haya cambios. Lo hace el componente
+      `Button` solo; no se repite por pantalla.
 - [ ] Ningún texto de la interfaz (avisos, errores, ayudas, estados vacíos, tooltips, banners)
       termina en punto final. Los puntos entre frases se conservan. Lo que llega del servidor se
       muestra con `withoutFinalPeriod`.
