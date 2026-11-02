@@ -44,6 +44,11 @@ php artisan queue:work --queue=critica,documentos,ia,general --tries=3
 - `ia`: chat del docente. La carga de proyectos de carrera usa Excel estructurado sin cola.
 - `general`: correos de activación de cuenta.
 
+Para el día a día, `scripts/dev.sh` levanta todo con un solo comando: base de datos,
+Gotenberg (`127.0.0.1:3010`), migraciones, API (`127.0.0.1:8000`, con subidas de hasta 32 MB),
+worker y frontend (`http://127.0.0.1:4173`). Ctrl+C lo apaga todo. Usa Podman si está instalado
+y, si no, Docker.
+
 Compose publica PostgreSQL en `127.0.0.1:55432`. También
 crea la base `silabos_ueb_test` para las pruebas. Las credenciales de `.env.example` son
 solo para desarrollo.
