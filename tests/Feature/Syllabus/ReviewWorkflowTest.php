@@ -79,6 +79,30 @@ class ReviewWorkflowTest extends TestCase
         $this->librarianContext = $this->librarian->roleAssignments()->firstOrFail();
     }
 
+    public function test_editing_the_faculty_while_paused_does_not_change_a_syllabus_already_sent(): void
+    {
+        [$syllabus, $revision] = $this->submitValidDraft();
+        $snapshot = $revision->fotografia;
+        $fingerprint = $revision->huella_sha256;
+        $faculty = $syllabus->career->faculty;
+        $before = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()->json('syllabus');
+
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']))->assertSuccessful();
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [
+            'nombre' => 'Facultad con otro nombre',
+            'campus' => $faculty->campus->value,
+            'logo' => $this->transparentPng(300, 100),
+        ])->assertSuccessful();
+
+        $this->assertSame('Facultad con otro nombre', $faculty->fresh()->nombre);
+        $this->assertSame($snapshot, $revision->fresh()->fotografia);
+        $this->assertSame($fingerprint, $revision->fresh()->huella_sha256);
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $after = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()->json('syllabus');
+        $this->assertSame($before['sections'], $after['sections']);
+        $this->assertSame($before['template_variables'], $after['template_variables']);
+    }
+
     public function test_documents_and_variables_are_frozen_with_the_submitted_revision(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
