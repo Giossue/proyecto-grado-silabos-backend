@@ -100,7 +100,7 @@ final class FixedContent
 
         return self::doc([self::table([
             [$signature(), $signature(), $signature()],
-            [self::cell(['Profesor – Investigador']), self::cell(['Coordinador de Carrera']), self::cell(['Bibliotecario'])],
+            [self::cell(['Docente – Investigador/a']), self::cell(['Coordinación de Carrera']), self::cell(['Biblioteca'])],
             [self::strongHeader('Fecha de entrega:'), self::strongHeader('Fecha de revisión:'), self::strongHeader('Fecha de verificación:')],
         ])]);
     }
