@@ -45,6 +45,8 @@
       botones, en pantallas desde `sm`.
 - [ ] En las tablas de captura (más anchas que su contenedor), la columna de acciones queda fija al
       borde derecho: lleva `data-sticky-end` en su encabezado y en sus celdas.
+- [ ] El desplazamiento vertical de una zona usa `ScrollArea` (shadcn), no `overflow-y-auto` ni
+      `overflow-y-scroll`: la barra nativa del navegador se ve distinta en cada uno.
 
 ## IA
 
