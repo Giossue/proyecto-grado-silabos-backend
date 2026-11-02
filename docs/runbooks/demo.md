@@ -79,7 +79,7 @@ con Docente Demo asignado.
 ### Administración: logo, plantilla y convocatoria
 
 1. Ingrese con `admin@silabos.test`.
-2. En **Facultades y carreras**, edite la facultad y cargue su logo (PNG sin fondo). Sin
+2. En **Facultades y carreras**, edite la facultad y cargue su logo (PNG, JPG o WebP: el sistema lo deja en 600 × 180 px y quita el fondo blanco). Sin
    logo, Coordinación no puede abrir su convocatoria.
 3. En **Plantilla**, revise las secciones y campos. Cada campo indica **Quién llena**:
    Docente, Carrera o Fijo. Abra **Opciones avanzadas → Editar JSON** para ver la plantilla como dato:
