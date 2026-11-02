@@ -106,9 +106,9 @@ Notificaciones, el proveedor de IA y la biblioteca (Koha) se configuran en Admin
 Configuración › Sistema. Lo guardado ahí manda y vale sin redesplegar. Las variables de entorno de
 esta sección (`NOTIFICATION_EMAILS`, `NOTIFICATION_DIGEST`, `NOTIFICATION_DIGEST_TIME`, `AI_DRIVER`,
 `AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY`, `AI_CONNECT_TIMEOUT`, `AI_TIMEOUT`, `CATALOG_DRIVER` y
-`KOHA_BASE_URL`) solo se usan mientras el ajuste no se haya guardado en la pantalla, que lo indica
-con «Hoy sale de la variable de entorno». Para dejarlas: guarde cada sección en la pantalla, use
-«Probar conexión» y después bórrelas de Environment Settings.
+`KOHA_BASE_URL`) solo se usan mientras el ajuste no se haya guardado en la pantalla (la pantalla no
+indica el origen). Para dejarlas: guarde las tres secciones en la pantalla, use «Probar conexión» y
+después bórrelas de Environment Settings.
 
 ### Proveedor de IA
 
