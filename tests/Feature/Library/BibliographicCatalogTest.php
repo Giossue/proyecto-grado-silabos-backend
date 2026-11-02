@@ -46,6 +46,7 @@ class BibliographicCatalogTest extends TestCase
                 'publisher' => 'Pearson Educación',
                 'isbn' => '9789563431063',
                 'call_number' => '658.404 S2411p',
+                'format' => 'Libro físico',
             ]);
     }
 

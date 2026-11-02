@@ -616,7 +616,7 @@
                     "place": "ciudad",
                     "publisher": "editorial",
                     "isbn": "isbn",
-                    "call_number": "codigo"
+                    "format": "codigo"
                 }
             },
             "layout": [

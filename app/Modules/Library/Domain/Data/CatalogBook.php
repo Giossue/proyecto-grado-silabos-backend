@@ -4,6 +4,8 @@ namespace App\Modules\Library\Domain\Data;
 
 final readonly class CatalogBook
 {
+    public const PHYSICAL = 'Libro físico';
+
     public function __construct(
         public string $id,
         public string $title,
@@ -13,6 +15,7 @@ final readonly class CatalogBook
         public string $publisher,
         public string $isbn,
         public string $callNumber,
+        public string $format = self::PHYSICAL,
     ) {}
 
     /** @return array<string, string> */
@@ -27,6 +30,7 @@ final readonly class CatalogBook
             'publisher' => $this->publisher,
             'isbn' => $this->isbn,
             'call_number' => $this->callNumber,
+            'format' => $this->format,
         ];
     }
 }

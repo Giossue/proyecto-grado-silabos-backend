@@ -257,7 +257,7 @@
                         "map": {
                             "type": "object",
                             "minProperties": 1,
-                            "propertyNames": { "enum": ["author", "title", "year", "place", "publisher", "isbn", "call_number"] },
+                            "propertyNames": { "enum": ["author", "title", "year", "place", "publisher", "isbn", "call_number", "format"] },
                             "additionalProperties": { "$ref": "#/$defs/key" }
                         }
                     }

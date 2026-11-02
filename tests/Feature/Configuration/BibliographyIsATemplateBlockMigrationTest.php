@@ -34,7 +34,7 @@ class BibliographyIsATemplateBlockMigrationTest extends TestCase
 
         $definition = json_decode((string) DB::table('plantilla_silabo')->value('definicion_plantilla'), true);
         // La signatura se enlaza a «Código» en una migración posterior.
-        unset($current['blocks']['bibliografia']['catalog']['map']['call_number']);
+        unset($current['blocks']['bibliografia']['catalog']['map']['format']);
         $this->assertSame($current['blocks']['bibliografia'], $definition['blocks']['bibliografia']);
         foreach ([$basic, $complementary] as $id) {
             $stored = json_decode((string) DB::table('definiciones_campo')->where('definicion_campo_id', $id)->value('contenido_definicion_campo'), true);

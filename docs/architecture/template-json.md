@@ -286,8 +286,9 @@ Un bloque puede declarar que sus filas se llenan con libros del catálogo Koha (
 ```
 
 `list` es una lista del bloque y `map` dice qué dato del libro va a cada columna de texto de esa lista. Los datos
-del libro son `author`, `title`, `year`, `place`, `publisher`, `isbn` y `call_number`; el que no se nombre no se llena
-(la plantilla oficial lleva `call_number`, la signatura, a `codigo`). El docente ve «Buscar en la biblioteca» sobre el
+del libro son `author`, `title`, `year`, `place`, `publisher`, `isbn`, `call_number` (signatura) y `format` («Libro
+físico»); el que no se nombre no se llena (la plantilla oficial lleva `format` a `codigo`). Un dato que el catálogo no
+tiene se escribe «N/A». El docente ve «Buscar en la biblioteca» sobre el
 bloque; el servidor valida que `list` exista y que cada columna sea de texto.
 
 ### Ejemplo completo: un bloque nuevo sin código

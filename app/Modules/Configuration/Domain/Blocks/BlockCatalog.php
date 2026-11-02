@@ -8,7 +8,7 @@ namespace App\Modules\Configuration\Domain\Blocks;
  */
 final class BlockCatalog
 {
-    public const FIELDS = ['author', 'title', 'year', 'place', 'publisher', 'isbn', 'call_number'];
+    public const FIELDS = ['author', 'title', 'year', 'place', 'publisher', 'isbn', 'call_number', 'format'];
 
     /**
      * @param  array<string, array<string, mixed>>  $value
