@@ -109,7 +109,6 @@ class LibraryReviewController extends Controller
         $responsible = $ownerId === null ? null : User::query()->whereKey($ownerId)->value('nombre');
         $assignedToOther = $state === LibraryReviews::STATE_PENDING && $ownerId !== null && $ownerId !== $request->user()?->id;
         $reviewable = $state === LibraryReviews::STATE_PENDING
-            && ! $assignedToOther
             && $syllabus->estado === 'en_revision'
             && ReviewStage::ofRevision($revision) === ReviewStage::LIBRARY
             && SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation()->value('estado'));
@@ -149,7 +148,6 @@ class LibraryReviewController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $this->reviews->assertMayAct($revision, $actor);
         /**
          * @var list<string> $reasons
          */
@@ -164,7 +162,6 @@ class LibraryReviewController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $this->reviews->assertMayAct($revision, $actor);
         $action->execute($revision, DecisionSignature::from($request->input('signature')), $actor, $request);
 
         return response()->json(['message' => 'Sílabo firmado y aprobado.'], 201);

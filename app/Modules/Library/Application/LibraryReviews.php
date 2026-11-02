@@ -2,12 +2,10 @@
 
 namespace App\Modules\Library\Application;
 
-use App\Models\User;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\InstitutionDate;
 use App\Support\Search\AccentInsensitive;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -142,19 +140,7 @@ final class LibraryReviews
         return ['state' => $state, 'outcome' => self::outcome($state, $row?->getAttribute('resultado_envio'))];
     }
 
-    /** Un sílabo que un bibliotecario devolvió solo lo revisa esa misma persona cuando vuelve a biblioteca. */
-    public function assertMayAct(SyllabusRevision $revision, User $actor): void
-    {
-        $owner = $this->responsibleOf($revision);
-        if ($owner === null || $owner === $actor->id) {
-            return;
-        }
-        $name = User::query()->whereKey($owner)->value('nombre');
-
-        throw new AuthorizationException('Este sílabo lo atiende '.(is_string($name) ? $name : 'otra persona').', que lo devolvió antes: solo esa persona puede revisarlo.');
-    }
-
-    /** Bibliotecario reservado para este envío; null si todavía nadie lo atiende. */
+    /** Bibliotecario que lo atiende (el que devolvió antes el sílabo); null si todavía nadie. Es un aviso, no un bloqueo. */
     public function responsibleOf(SyllabusRevision $revision): ?string
     {
         $row = $this->query()->where('envios_biblioteca.revision_silabo_id', $revision->id)->first();
