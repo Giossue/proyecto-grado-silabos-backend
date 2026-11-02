@@ -83,4 +83,27 @@ class PasswordResetTest extends TestCase
         $this->assertDatabaseMissing('sesiones', ['id' => 'otra-sesion']);
         $this->assertNotSame($rememberCode, $user->fresh()->codigo_recordarme);
     }
+
+    public function test_the_recovery_link_is_limited_per_minute_and_per_day(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+        $send = fn () => $this->postJson(route('api.v1.authentication.password-recovery.send'), ['email' => $user->correo_electronico]);
+
+        foreach (range(1, 3) as $ignored) {
+            $send()->assertAccepted();
+        }
+        $send()->assertTooManyRequests();
+
+        // Un envío por cada minuto que pasa: el límite del día corta al décimo.
+        foreach (range(4, 10) as $ignored) {
+            $this->travel(2)->minutes();
+            $send()->assertAccepted();
+        }
+        $this->travel(2)->minutes();
+        $send()->assertTooManyRequests();
+
+        $this->travel(1)->days();
+        $send()->assertAccepted();
+    }
 }

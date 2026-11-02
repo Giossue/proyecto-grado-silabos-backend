@@ -85,5 +85,15 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(3)->by(Str::transliterate($email.'|'.$request->ip()));
         });
 
+        // Solo para pedir el enlace: además del tope por minuto, 10 al día por cuenta, desde cualquier IP,
+        // para que nadie llene de correos a una persona.
+        RateLimiter::for('password-recovery-link', function (Request $request) {
+            $email = Str::transliterate(Str::lower($request->string('email')->toString()));
+
+            return [
+                Limit::perMinute(3)->by($email.'|'.$request->ip()),
+                Limit::perDay(10)->by('dia:'.$email),
+            ];
+        });
     }
 }

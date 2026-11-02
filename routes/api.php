@@ -38,7 +38,7 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:login')
         ->name('api.v1.authentication.login');
     Route::post('authentication/password-recovery', [PasswordRecoveryController::class, 'sendLink'])
-        ->middleware('throttle:password-recovery')
+        ->middleware('throttle:password-recovery-link')
         ->name('api.v1.authentication.password-recovery.send');
     Route::post('authentication/password-reset', [PasswordRecoveryController::class, 'reset'])
         ->middleware('throttle:password-recovery')
