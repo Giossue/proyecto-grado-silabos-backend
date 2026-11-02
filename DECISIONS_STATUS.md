@@ -90,6 +90,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   rechaza iniciar, editar y enviar, y la API explica el motivo en `edit_block_reason`.
   Coordinación y Biblioteca siguen revisando lo ya enviado. Solo Administración prorroga; al
   hacerlo, todo se reabre. El aviso de plazo vencido sale en rojo.
+- Notificaciones, Asistente de IA y Biblioteca se configuran en Administración › Configuración ›
+  Sistema (2026-11-02), tabla `ajustes_sistema`. Lo guardado manda sobre la variable de entorno,
+  que queda como respaldo mientras el ajuste no se guarde; se aplica al arrancar y antes de cada
+  tarea en cola. La clave de la IA se guarda cifrada con `APP_KEY` y nunca vuelve al navegador
+  (solo sus últimos 4 caracteres); si `APP_KEY` cambia, hay que escribirla de nuevo. Guardar IA o
+  Biblioteca pide la contraseña actual y cada cambio queda en la auditoría sin el valor de la clave.
 - Las confirmaciones delicadas piden escribir una frase en vez de esperar una cuenta
   regresiva (2026-11-02): «devolver a borrador» (cambios que devuelven sílabos a
   borrador), «abrir convocatoria», «editar plantilla», «cerrar convocatoria», «rehacer

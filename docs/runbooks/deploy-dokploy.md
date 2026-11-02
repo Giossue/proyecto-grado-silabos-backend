@@ -88,9 +88,10 @@ MAIL_MAILER=log
 - `SESSION_SECURE_COOKIE=true` exige HTTPS. Sin certificado nadie puede iniciar sesión.
 - `QUEUE_RETRY_AFTER` debe ser mayor que el timeout del trabajo más largo:
   `GenerateSyllabusExportJob`, con 120 s. `.env.example` conserva 960 s.
-- Las claves (`APP_KEY`, `DB_PASSWORD`, `AI_API_KEY`,
-  `RESEND_API_KEY`) se cargan como secretos de Dokploy. No van al
-  repositorio, a la base, a los logs ni a comandos de diagnóstico.
+- Las claves (`APP_KEY`, `DB_PASSWORD`, `RESEND_API_KEY`) se cargan como secretos de Dokploy.
+  No van al repositorio, a los logs ni a comandos de diagnóstico. La clave de la IA se escribe en
+  Administración › Configuración › Sistema y se guarda cifrada con `APP_KEY`; si `APP_KEY` cambia,
+  hay que volver a escribirla ahí.
 - Tras cambiar variables, redespliegue o reinicie el contenedor: el arranque rehace la
   caché de configuración y reinicia el worker.
 
@@ -98,6 +99,16 @@ La base debe existir antes del primer despliegue: el contenedor migra, pero no l
 Una instalación desde cero necesita las extensiones `btree_gist` y `vector` disponibles
 en PostgreSQL: las migraciones las crean, aunque una posterior quita `vector`. La imagen
 local `pgvector/pgvector:0.8.6-pg18-trixie` ya trae ambas.
+
+### Ajustes que se cambian desde la pantalla
+
+Notificaciones, el proveedor de IA y la biblioteca (Koha) se configuran en Administración ›
+Configuración › Sistema. Lo guardado ahí manda y vale sin redesplegar. Las variables de entorno de
+esta sección (`NOTIFICATION_EMAILS`, `NOTIFICATION_DIGEST`, `NOTIFICATION_DIGEST_TIME`, `AI_DRIVER`,
+`AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY`, `AI_CONNECT_TIMEOUT`, `AI_TIMEOUT`, `CATALOG_DRIVER` y
+`KOHA_BASE_URL`) solo se usan mientras el ajuste no se haya guardado en la pantalla, que lo indica
+con «Hoy sale de la variable de entorno». Para dejarlas: guarde cada sección en la pantalla, use
+«Probar conexión» y después bórrelas de Environment Settings.
 
 ### Proveedor de IA
 
