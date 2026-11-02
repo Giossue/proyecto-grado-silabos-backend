@@ -97,7 +97,7 @@ esquemas de valor, propiedades y reglas. Detalle: ADR-0012.
   "title": { "text": "PROGRAMA DE ASIGNATURA (SÍLABO)", "bold": true, "italic": false, "alignment": "center" },
   "section_title": { "bold": true, "italic": false, "alignment": "left" },
   "body": { "alignment": "left" },
-  "header": { "logos": [ { "source": "institution", "height_pt": 28 }, { "source": "faculty", "height_pt": 40 } ],
+  "header": { "logos": [ { "source": "institution", "height_pt": 36 }, { "source": "faculty", "height_pt": 36 } ],
               "left_share": 0.638 },
   "footer": { "text": "Página {page} de {pages}", "size": 8, "color": "#7F7F7F" },
   "metadata": { "text": "Revisión {revision} · {subject} ({code}) · huella {fingerprint} · generado {generated}",

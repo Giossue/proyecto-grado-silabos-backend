@@ -38,11 +38,11 @@
             "logos": [
                 {
                     "source": "institution",
-                    "height_pt": 28
+                    "height_pt": 36
                 },
                 {
                     "source": "faculty",
-                    "height_pt": 40
+                    "height_pt": 36
                 }
             ],
             "left_share": 0.638
