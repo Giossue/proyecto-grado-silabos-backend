@@ -95,8 +95,8 @@ repositorio:
   `## Specs` (S1…, con los RF/CU/RN que toca), `## Tasks` (ID, specs, ruta, estado, commit)
   y `## Log` (L1 es el pedido del usuario, textual).
 - Copia en Engram con el tema `odd/<feature>/tasks`. Si Engram falla, manda el archivo.
-- Se trabaja en `main`, sin rama de feature. Al terminar: commit y push a `main`, que
-  despliega. Este punto reemplaza la regla de ODD de ramas y push manual.
+- Se trabaja en `main`, sin rama de feature. Al terminar: commit en `main`, sin push; el
+  usuario decide cuándo subir (el push despliega). Este punto reemplaza la regla de ODD de ramas.
 - Lo que estaba en `POR VALIDAR` sigue así en el documento; ODD no lo vuelve regla.
 
 ## Verificación
@@ -209,8 +209,8 @@ hosts, credenciales ni comandos de un entorno dentro de este archivo.
 
 - Cambios pequeños y coherentes.
 - Formato de commit: `tipo(alcance): asunto imperativo`, máximo 72 caracteres.
-- Al terminar un cambio verificado, haz commit y push a `main` sin preguntar; recuerda que el push
-  despliega. No hagas rebase ni reescribas historia sin petición explícita.
+- Al terminar un cambio verificado, haz commit en `main` sin preguntar. No hagas push: lo decide
+  el usuario, porque el push despliega. No hagas rebase ni reescribas historia sin petición explícita.
 - Nunca confirmes secretos, `.env`, documentos sensibles ni datos de entrevistas sin
   tratamiento y autorización.
 

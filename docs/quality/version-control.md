@@ -23,7 +23,7 @@ docs(plantilla): el manual indica el botón Editar JSON del admin
 - Ramas cortas desde una base actualizada.
 - PR pequeño con resultado, trazabilidad, capturas/evidencia, migración y riesgos.
 - No reescribas historia publicada sin coordinación explícita.
-- El agente hace commit y push al terminar un cambio verificado; no reescribe historia sin petición.
+- El agente hace commit al terminar un cambio verificado, sin push (lo decide el usuario); no reescribe historia sin petición.
 
 ## Nunca versionar
 
