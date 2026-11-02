@@ -172,8 +172,7 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('review.sections.0.key', 'bibliografia')
             ->assertJsonCount(1, 'review.sections');
         $this->assertNotEmpty($detail->json('review.template_variables'));
-        $this->assertNotEmpty($detail->json('review.syllabus_sections'));
-        $this->assertGreaterThan(count($detail->json('review.sections')), count($detail->json('review.syllabus_sections')));
+        $this->assertNull($detail->json('review.syllabus_sections'));
         $this->assertStringContainsString('Contenido bibliografia', json_encode($detail->json('review.sections'), JSON_THROW_ON_ERROR));
         FieldValue::query()->where('asignatura_id', $syllabus->subject->id)
             ->update(['valor' => FreeText::fromText('Referencia posterior')]);

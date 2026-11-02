@@ -138,7 +138,6 @@ class LibraryReviewController extends Controller
             ]),
             'template_variables' => is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [],
             'sections' => BibliographySections::of($snapshot),
-            'syllabus_sections' => $snapshot['sections'] ?? [],
             'comments' => self::comments($syllabus),
             'comment_reasons' => LibraryCommentReasons::options(),
         ]]);
