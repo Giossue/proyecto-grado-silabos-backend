@@ -506,6 +506,24 @@ class AcademicStructureTest extends TestCase
         $this->assertSame('Convocatoria activa', collect($payload)->firstWhere('id', $period->id)['lock_reason']);
     }
 
+    public function test_a_faculty_and_its_careers_are_locked_while_one_of_its_convocations_runs(): void
+    {
+        $career = $this->createCareer('EN_CURSO');
+        $period = AcademicPeriod::query()->firstOrFail();
+        $process = SyllabusProcess::query()->create([
+            'periodo_academico_id' => $period->id, 'inicia_en' => now()->subDay(), 'entrega_en' => now()->addMonth(), 'estado' => SyllabusProcess::STATE_OPEN,
+        ]);
+        $convocation = Convocation::query()->create(['carrera_id' => $career->id, 'proceso_id' => $process->id, 'estado' => Convocation::STATE_OPEN]);
+        $lock = fn (string $catalog, string $id): ?string => collect($this->actingAsAdministrator()->getJson(route('api.v1.admin.academic.index'))->json("catalogs.{$catalog}"))->firstWhere('id', $id)['lock_reason'];
+
+        $this->assertSame('Convocatoria activa', $lock('faculties', $career->facultad_id));
+        $this->assertSame('Convocatoria activa', $lock('careers', $career->id));
+
+        $convocation->update(['estado' => Convocation::STATE_PAUSED]);
+        $this->assertNull($lock('faculties', $career->facultad_id));
+        $this->assertNull($lock('careers', $career->id));
+    }
+
     public function test_every_parallel_requires_a_shift_when_creating(): void
     {
         $scheduled = Parallel::query()->firstOrFail();

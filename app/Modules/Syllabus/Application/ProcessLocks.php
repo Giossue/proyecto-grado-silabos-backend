@@ -116,6 +116,21 @@ class ProcessLocks
         ])->all();
     }
 
+    /**
+     * Carreras con una convocatoria abierta: sus datos y los de su facultad no se editan hasta pausarla.
+     *
+     * @return list<string>
+     */
+    public function careersWithRunningConvocation(): array
+    {
+        return array_values(array_unique(Convocation::query()->running()->get(['carrera_id'])->map(fn (Convocation $convocation): string => (string) $convocation->carrera_id)->all()));
+    }
+
+    public function institutionalRecordLockReason(): string
+    {
+        return self::CONVOCATION_LOCK_REASON;
+    }
+
     /** @param list<string> $careerIds */
     public function assertInstitutionalRecordEditable(array $careerIds = [], ?string $periodId = null): void
     {

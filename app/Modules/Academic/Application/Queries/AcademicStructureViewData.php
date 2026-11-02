@@ -45,6 +45,9 @@ class AcademicStructureViewData
             ->keyBy('periodo_academico_id');
         $lockedPeriods = $this->locks->lockedPeriodReasons();
         $facultyBlocks = $this->deactivationBlocks->forFaculties(Faculty::query()->where('activo', true)->get(['id'])->map(fn (Faculty $faculty): string => $faculty->id)->values()->all());
+        $runningCareers = array_flip($this->locks->careersWithRunningConvocation());
+        $facultiesWithRunning = array_flip(Career::query()->whereIn('id', array_keys($runningCareers))->pluck('facultad_id')->map(fn ($id): string => (string) $id)->all());
+        $lockReason = $this->locks->institutionalRecordLockReason();
         $careerBlocks = $this->deactivationBlocks->forCareers(Career::query()->where('activo', true)->get(['id'])->map(fn (Career $career): string => $career->id)->values()->all());
 
         return [
@@ -61,6 +64,7 @@ class AcademicStructureViewData
                         'catalog_libraries' => $faculty->koha_libraries,
                         'activo' => $faculty->activo,
                         'deactivate_block' => $facultyBlocks[$faculty->id] ?? null,
+                        'lock_reason' => isset($facultiesWithRunning[$faculty->id]) ? $lockReason : null,
                         'logo_url' => $this->logos->facultyIsConfigured($faculty)
                             ? route('logos.faculty', ['faculty' => $faculty->id, 'v' => $this->logos->version($this->logos->facultyPath($faculty))])
                             : null,
@@ -83,6 +87,7 @@ class AcademicStructureViewData
                         'name' => $career->nombre,
                         'active' => $career->activo,
                         'deactivate_block' => $careerBlocks[$career->id] ?? null,
+                        'lock_reason' => isset($runningCareers[$career->id]) ? $lockReason : null,
                     ]),
                 'periods' => AcademicPeriod::query()
                     ->orderByDesc('fecha_inicio')
