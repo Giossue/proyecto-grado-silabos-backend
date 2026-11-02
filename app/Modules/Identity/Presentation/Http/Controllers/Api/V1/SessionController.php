@@ -185,7 +185,6 @@ class SessionController extends Controller
             'high_contrast' => $request->boolean('high_contrast'),
             'text_size' => $request->string('text_size')->toString(),
             'no_motion' => $request->boolean('no_motion'),
-            'underline_links' => $request->boolean('underline_links'),
             'wide_spacing' => $request->boolean('wide_spacing'),
         ]);
 
@@ -217,7 +216,7 @@ class SessionController extends Controller
         return $user;
     }
 
-    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, can_edit_identity: bool, formation: string|null, accessibility: array{high_contrast: bool, text_size: string, no_motion: bool, underline_links: bool, wide_spacing: bool}|null}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>, institution: array{today: string, timezone: string}} */
+    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, can_edit_identity: bool, formation: string|null, accessibility: array{high_contrast: bool, text_size: string, no_motion: bool, wide_spacing: bool}|null}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>, institution: array{today: string, timezone: string}} */
     private function sessionPayload(User $user, Request $request): array
     {
         $activeRole = $this->roles->resolve($request);

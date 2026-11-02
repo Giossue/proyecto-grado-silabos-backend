@@ -475,7 +475,7 @@ class ApiSessionTest extends TestCase
     public function test_user_saves_accessibility_preferences_and_gets_them_back_in_the_session(): void
     {
         $user = User::factory()->create();
-        $payload = ['high_contrast' => true, 'text_size' => '130', 'no_motion' => true, 'underline_links' => false, 'wide_spacing' => true];
+        $payload = ['high_contrast' => true, 'text_size' => '130', 'no_motion' => true, 'wide_spacing' => true];
 
         $this->actingAs($user)
             ->withHeader('Origin', 'http://localhost:5173')

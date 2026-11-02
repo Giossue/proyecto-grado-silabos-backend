@@ -18,7 +18,6 @@ class UpdateAccessibilityRequest extends FormRequest
             'high_contrast' => ['required', 'boolean'],
             'text_size' => ['required', 'string', 'in:100,115,130,150'],
             'no_motion' => ['required', 'boolean'],
-            'underline_links' => ['required', 'boolean'],
             'wide_spacing' => ['required', 'boolean'],
         ];
     }
@@ -30,7 +29,6 @@ class UpdateAccessibilityRequest extends FormRequest
             'high_contrast' => 'alto contraste',
             'text_size' => 'tamaño del texto',
             'no_motion' => 'sin animaciones',
-            'underline_links' => 'subrayar enlaces',
             'wide_spacing' => 'texto espaciado',
         ];
     }
