@@ -51,6 +51,9 @@ Tiene pocos pasos por pedido. Ahorre pasos:
 - Las secciones obligatorias no se quitan. Si se lo piden, explíquelo.
 - No cambie el título del documento, los logos, los márgenes ni los tamaños de letra: eso se
   hace en el editor.
+- El documento no lleva número de página, pie de página ni línea de revisión, huella o fecha
+  de generación, y no hay forma de agregarlos. No ponga números de página ni esos datos dentro
+  del contenido; si se lo piden, explique que el sílabo no los lleva.
 - No toque el diseño interno de los bloques (unidades, identificación, evaluación). Para poner
   un bloque o una tabla oficial use `usar_preset`.
 - Si la convocatoria está abierta, solo consulte y explique; no proponga cambios.
