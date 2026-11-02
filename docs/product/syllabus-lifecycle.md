@@ -31,7 +31,7 @@ Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revi
 | En revisión · coordinación | Firmar y enviar a biblioteca | Coordinación | En revisión · biblioteca | Exige la firma de Coordinación; registra la revisión de coordinación y el envío a biblioteca; avisa a Biblioteca. |
 | En revisión · coordinación | Solicitar corrección | Coordinación | Corrección solicitada | Comentario general de 10 a 10 000 caracteres. |
 | En revisión · biblioteca | Firmar y aprobar | Biblioteca | Aprobado | Exige la firma de Biblioteca; crea la aprobación con huella y genera el PDF final; cuando está listo avisa al docente. |
-| En revisión · biblioteca | Devolver al docente | Biblioteca | Corrección solicitada | Uno o más motivos predefinidos, sin texto libre. |
+| En revisión · biblioteca | Devolver al docente | Biblioteca | Corrección solicitada | Uno o más motivos predefinidos, sin texto libre. Quien devuelve queda como responsable: cuando el docente reenvíe, solo esa persona puede revisarlo, devolverlo o firmarlo. |
 | Aprobado | Reiniciar | Coordinación | Sin iniciar (sílabo nuevo) | Pide un motivo y el nombre de la materia. Borra el sílabo con revisiones, aprobación, documentos, firmas y chat; crea uno nuevo para el paralelo. |
 
 Reiniciar solo se ofrece con el sílabo aprobado y exige la convocatoria de la carrera abierta o pausada. Un sílabo en borrador, en revisión o en corrección no se reinicia. Lo mismo

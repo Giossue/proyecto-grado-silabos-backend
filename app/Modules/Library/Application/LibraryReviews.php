@@ -2,9 +2,12 @@
 
 namespace App\Modules\Library\Application;
 
+use App\Models\User;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\InstitutionDate;
 use App\Support\Search\AccentInsensitive;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -44,6 +47,19 @@ final class LibraryReviews
         END
         SQL;
 
+    // Quien atiende el sílabo: quien lo aprobó, quien lo devolvió o, en un reenvío, quien lo devolvió antes.
+    private const RESPONSIBLE_SQL = <<<'SQL'
+        COALESCE(
+            (SELECT aprobacion.aprobado_por FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id LIMIT 1),
+            CASE WHEN revision.correccion_etapa = 'biblioteca' THEN revision.correccion_solicitada_por END,
+            (
+                SELECT anterior.correccion_solicitada_por FROM revisiones_silabo anterior
+                WHERE anterior.silabo_id = revision.silabo_id AND anterior.numero_revision < revision.numero_revision AND anterior.correccion_etapa = 'biblioteca'
+                ORDER BY anterior.numero_revision DESC LIMIT 1
+            )
+        )
+        SQL;
+
     private const STATE_SQL = 'CASE ('.self::OUTCOME_SQL.") WHEN 'pendiente' THEN 'pendiente' ELSE 'atendido' END";
 
     /** @return Builder<LibrarySubmission> */
@@ -54,6 +70,7 @@ final class LibraryReviews
         string $period = self::PERIOD_ANY,
         ?string $periodId = null,
         ?string $handledBy = null,
+        bool $latestOnly = false,
     ): Builder {
         return LibrarySubmission::query()
             ->join('revisiones_silabo as revision', 'revision.revision_silabo_id', '=', 'envios_biblioteca.revision_silabo_id')
@@ -61,6 +78,13 @@ final class LibraryReviews
             ->select('envios_biblioteca.*', 'revision.revision_silabo_id as revision_id', 'revision.silabo_id as silabo_id', 'revision.numero_revision as numero_revision')
             ->selectRaw(self::STATE_SQL.' AS estado_envio')
             ->selectRaw(self::OUTCOME_SQL.' AS resultado_envio')
+            ->selectRaw(self::RESPONSIBLE_SQL.' AS responsable_id')
+            // Un sílabo aparece una sola vez: con su envío más reciente.
+            ->when($latestOnly, fn (Builder $query) => $query->whereNotExists(
+                fn ($later) => $later->selectRaw('1')->from('revisiones_silabo as posterior')
+                    ->whereColumn('posterior.silabo_id', 'revision.silabo_id')
+                    ->whereColumn('posterior.numero_revision', '>', 'revision.numero_revision'),
+            ))
             ->when($state !== null, fn (Builder $query) => in_array($state, self::OUTCOMES, true)
                 ? $query->whereRaw('('.self::OUTCOME_SQL.') = ?', [$state])
                 : $query->whereRaw('('.self::STATE_SQL.') = ?', [$state]))
@@ -118,6 +142,27 @@ final class LibraryReviews
         return ['state' => $state, 'outcome' => self::outcome($state, $row?->getAttribute('resultado_envio'))];
     }
 
+    /** Un sílabo que un bibliotecario devolvió solo lo revisa esa misma persona cuando vuelve a biblioteca. */
+    public function assertMayAct(SyllabusRevision $revision, User $actor): void
+    {
+        $owner = $this->responsibleOf($revision);
+        if ($owner === null || $owner === $actor->id) {
+            return;
+        }
+        $name = User::query()->whereKey($owner)->value('nombre');
+
+        throw new AuthorizationException('Este sílabo lo atiende '.(is_string($name) ? $name : 'otra persona').', que lo devolvió antes: solo esa persona puede revisarlo.');
+    }
+
+    /** Bibliotecario reservado para este envío; null si todavía nadie lo atiende. */
+    public function responsibleOf(SyllabusRevision $revision): ?string
+    {
+        $row = $this->query()->where('envios_biblioteca.revision_silabo_id', $revision->id)->first();
+        $id = $row?->getAttribute('responsable_id');
+
+        return is_string($id) ? $id : null;
+    }
+
     public static function outcome(string $state, mixed $detail): ?string
     {
         return $state === self::STATE_HANDLED && is_string($detail) ? $detail : null;
@@ -127,7 +172,7 @@ final class LibraryReviews
     public function counts(): array
     {
         $totals = DB::query()
-            ->fromSub($this->query(period: self::PERIOD_CURRENT)->reorder()->toBase(), 'envios')
+            ->fromSub($this->query(period: self::PERIOD_CURRENT, latestOnly: true)->reorder()->toBase(), 'envios')
             ->selectRaw('resultado_envio, count(*) AS total')
             ->groupBy('resultado_envio')
             ->pluck('total', 'resultado_envio');

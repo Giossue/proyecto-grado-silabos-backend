@@ -246,6 +246,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   destino no se ha enviado (I-167).
 - Cambiar el docente o crear, editar o quitar paralelos no exige pausa. Un docente
   nuevo empieza el sílabo desde cero (I-174, I-224).
+- Biblioteca (2026-11-02): la bandeja muestra un sílabo por fila, con su envío más reciente, y la columna «Responsable». El bibliotecario que devuelve un sílabo queda como su responsable: al reenviarse, solo él puede revisarlo, devolverlo o firmarlo; los demás lo ven y la pantalla dice quién lo atiende.
 - Estados con un solo vocabulario (2026-11-02): Biblioteca muestra sus envíos con las palabras del sílabo (En revisión, Aprobado, Corrección solicitada; Anterior si hay una versión más nueva) y no con otras. La nota del coordinador dice «Corrección solicitada por biblioteca».
 - Cambiar el nombre, campus o logo de una facultad, o el nombre, código, modalidad o facultad de una carrera, con sílabos enviados o aprobados en la convocatoria actual pide confirmación y los devuelve a Borrador conservando lo escrito, como la malla (2026-11-01).
 - Cambiar código o jornada de un paralelo con el sílabo enviado o aprobado pide

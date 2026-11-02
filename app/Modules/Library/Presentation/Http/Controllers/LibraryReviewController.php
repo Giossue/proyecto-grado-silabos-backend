@@ -69,11 +69,14 @@ class LibraryReviewController extends Controller
         $search = is_string($request->validated('q')) ? trim($request->validated('q')) : null;
         $faculty = $request->validated('faculty');
         $faculty = is_string($faculty) ? $faculty : null;
-        $page = $this->reviews->query(is_string($state) ? $state : null, $search, $faculty, $period, $periodId, $handledBy)
+        $page = $this->reviews->query(is_string($state) ? $state : null, $search, $faculty, $period, $periodId, $handledBy, latestOnly: true)
             ->with(['revision.submitter:id,nombre', 'revision.approval.approver:id,nombre'])
             ->paginate(20)
             ->withQueryString();
         $syllabi = $this->syllabi(array_values(collect($page->items())->pluck('silabo_id')->all()));
+        $responsibleNames = User::query()
+            ->whereIn('id', array_values(array_filter(collect($page->items())->pluck('responsable_id')->all(), is_string(...))))
+            ->pluck('nombre', 'id');
 
         return [
             'filters' => ['q' => $search ?: null, 'state' => $state, 'faculty' => $faculty, 'period' => $periodId, 'mine' => $handledBy !== null],
@@ -85,6 +88,7 @@ class LibraryReviewController extends Controller
                 'sent_at' => $submission->revision->enviado_en->toIso8601String(),
                 'sent_by' => $submission->revision->submitter->nombre,
                 'signed_by' => $submission->revision->approval?->approver->nombre,
+                'responsible' => $responsibleNames->get($submission->getAttribute('responsable_id')),
                 'state' => $submission->getAttribute('estado_envio'),
                 'outcome' => LibraryReviews::outcome((string) $submission->getAttribute('estado_envio'), $submission->getAttribute('resultado_envio')),
             ]),
@@ -101,7 +105,11 @@ class LibraryReviewController extends Controller
         $syllabus = $this->syllabi([$revision->silabo_id])->get($revision->silabo_id);
         abort_if($syllabus === null, 404);
         ['state' => $state, 'outcome' => $outcome] = $this->reviews->statusOf($submission);
+        $ownerId = $this->reviews->responsibleOf($revision);
+        $responsible = $ownerId === null ? null : User::query()->whereKey($ownerId)->value('nombre');
+        $assignedToOther = $state === LibraryReviews::STATE_PENDING && $ownerId !== null && $ownerId !== $request->user()?->id;
         $reviewable = $state === LibraryReviews::STATE_PENDING
+            && ! $assignedToOther
             && $syllabus->estado === 'en_revision'
             && ReviewStage::ofRevision($revision) === ReviewStage::LIBRARY
             && SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation()->value('estado'));
@@ -115,6 +123,8 @@ class LibraryReviewController extends Controller
             'sent_by' => $submission->revision->submitter->nombre,
             'state' => $state,
             'outcome' => $outcome,
+            'responsible' => is_string($responsible) ? $responsible : null,
+            'assigned_to_other' => $assignedToOther,
             'can_comment' => $reviewable,
             'can_verify' => $reviewable,
             'signing_statement' => $reviewable && ! $this->signatures->signed($syllabus->id, SyllabusSignature::ROLE_LIBRARY)
@@ -139,6 +149,7 @@ class LibraryReviewController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
+        $this->reviews->assertMayAct($revision, $actor);
         /**
          * @var list<string> $reasons
          */
@@ -153,6 +164,7 @@ class LibraryReviewController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
+        $this->reviews->assertMayAct($revision, $actor);
         $action->execute($revision, DecisionSignature::from($request->input('signature')), $actor, $request);
 
         return response()->json(['message' => 'Sílabo firmado y aprobado.'], 201);

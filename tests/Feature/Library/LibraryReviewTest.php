@@ -241,11 +241,27 @@ class LibraryReviewTest extends TestCase
         $this->assertNotified($this->people['librarian'][0]->id, 'silabo.reenviado_biblioteca', 'reenvió a biblioteca');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'pendiente']))
             ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $corrected->id);
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'atendido']))
-            ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $revision->id)->assertJsonPath('reviews.data.0.outcome', 'devuelto');
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'devuelto']))
-            ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $revision->id);
+        // Un sílabo aparece una sola vez, con su envío más reciente; el anterior ya no figura como «devuelto».
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))
+            ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $corrected->id)
+            ->assertJsonPath('reviews.data.0.responsible', $this->people['librarian'][0]->nombre);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'atendido']))->assertJsonPath('reviews.total', 0);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'devuelto']))->assertJsonPath('reviews.total', 0);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'firmado']))->assertJsonPath('reviews.total', 0);
+        $this->as('librarian')->getJson(route('api.v1.dashboard.show'))->assertJsonPath('metrics.*.value', [1, 0, 0]);
+
+        // Quien devolvió el sílabo es el único que puede revisarlo cuando vuelve.
+        $other = User::factory()->create();
+        $otherAssignment = RoleAssignment::query()->create(['usuario_id' => $other->id, 'rol' => RoleCode::Librarian->value, 'carrera_id' => null, 'activo' => true]);
+        $this->people['other_librarian'] = [$other, $otherAssignment];
+        $this->as('other_librarian')->getJson(route('api.v1.library.reviews.show', $corrected))->assertOk()
+            ->assertJsonPath('review.can_comment', false)->assertJsonPath('review.can_verify', false)
+            ->assertJsonPath('review.assigned_to_other', true)->assertJsonPath('review.responsible', $this->people['librarian'][0]->nombre);
+        $this->as('other_librarian')->postJson(route('api.v1.library.reviews.comments.store', $corrected), [
+            'reasons' => ['codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
+        ])->assertForbidden();
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $corrected))->assertOk()
+            ->assertJsonPath('review.can_comment', true)->assertJsonPath('review.assigned_to_other', false);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'anulado']))->assertUnprocessable();
         $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertJsonPath('syllabus.review_stage', 'biblioteca');
     }
