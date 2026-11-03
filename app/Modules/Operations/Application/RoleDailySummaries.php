@@ -62,7 +62,8 @@ final class RoleDailySummaries
     {
         $byCareer = [];
         $syllabi = Syllabus::query()->with('convocation.career:id,nombre')->where('estado', 'en_revision')
-            ->whereHas('convocation.process', fn ($process) => $process->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
+            ->whereHas('convocation', fn ($convocation) => $convocation->where('estado', Convocation::STATE_OPEN))
+            ->whereHas('convocation.process', fn ($process) => $process->where('estado', SyllabusProcess::STATE_OPEN))
             ->get();
         foreach ($syllabi as $syllabus) {
             if (ReviewStage::of($syllabus) === ReviewStage::LIBRARY) {

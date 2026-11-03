@@ -183,7 +183,8 @@ class ReviewController extends Controller
         ]);
         $syllabus = $revision->syllabus;
         $latest = $syllabus->revisions->sortByDesc('numero_revision')->first();
-        $decisionsAllowed = SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation->estado);
+        $decisionBlock = SyllabusPolicy::decisionBlock($syllabus);
+        $decisionsAllowed = $decisionBlock === null;
         $activeRole = app(ActiveRole::class)->resolve(request());
         $myStage = $activeRole === null ? null : ReviewStage::forRole($activeRole->role->codigo_rol);
         $stage = $syllabus->estado === 'en_revision' && $latest?->id === $revision->id ? self::stageOf($revision) : null;
@@ -239,8 +240,9 @@ class ReviewController extends Controller
                 'requested_at' => $revision->correccion_solicitada_en->toIso8601String(),
             ],
             'decisions_allowed' => $decisionsAllowed,
+            'decision_block' => $decisionBlock,
             'reset' => [
-                'allowed' => $decisionsAllowed && $myStage === ReviewStage::COORDINATION && $syllabus->estado === 'aprobado',
+                'allowed' => SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation->estado) && $myStage === ReviewStage::COORDINATION && $syllabus->estado === 'aprobado',
                 'erases_history' => $syllabus->estado === 'aprobado',
                 'revisions' => $syllabus->revisions->count(),
                 'signatures' => SyllabusSignature::query()->where('silabo_id', $syllabus->id)->count(),

@@ -113,7 +113,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Al reanudar una convocatoria (2026-11-02) se avisa a los docentes de cada convocatoria
   que vuelve a quedar abierta («convocatoria.reanudada», también por correo); si quien
   reanuda es Administración, Coordinación y Biblioteca reciben «proceso.reanudado» (también por
-  correo si no lo apagaron): ellas siguen revisando lo ya enviado durante la pausa.
+  correo si no lo apagaron).
+- En pausa (de la carrera o institucional) nadie decide (2026-11-02): Coordinación y Biblioteca no
+  aprueban, firman, piden corrección ni devuelven, igual que el docente no edita ni envía. La API
+  dice el motivo en `decision_block` y los resúmenes diarios no cuentan convocatorias en pausa.
+  «Reiniciar sílabo» sigue permitido en pausa; solo la convocatoria cerrada lo impide.
   Pausar y cerrar siguen sin aviso. El plazo informa `paused_by` (Administración o
   Coordinación), y Administración recibe plazo solo con su convocatoria en pausa.
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener

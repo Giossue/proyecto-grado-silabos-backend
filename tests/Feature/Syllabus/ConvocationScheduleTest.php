@@ -301,7 +301,7 @@ class ConvocationScheduleTest extends TestCase
             && str_contains($mail->body, 'Administración reanudó'));
         $this->assertNotified($this->coordinator->id, 'proceso.reanudado', 'Administración reanudó');
         $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
-        $this->assertNotified($librarian->id, 'proceso.reanudado', 'Los docentes vuelven a editar y enviar');
+        $this->assertNotified($librarian->id, 'proceso.reanudado', 'Se retoman la edición y las revisiones');
         $this->assertNotNotified($this->teacher->id, 'proceso.reanudado');
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();

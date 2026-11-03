@@ -108,10 +108,11 @@ class LibraryReviewController extends Controller
         $ownerId = $this->reviews->responsibleOf($revision);
         $responsible = $ownerId === null ? null : User::query()->whereKey($ownerId)->value('nombre');
         $assignedToOther = $state === LibraryReviews::STATE_PENDING && $ownerId !== null && $ownerId !== $request->user()?->id;
+        $decisionBlock = SyllabusPolicy::decisionBlock($syllabus);
         $reviewable = $state === LibraryReviews::STATE_PENDING
             && $syllabus->estado === 'en_revision'
             && ReviewStage::ofRevision($revision) === ReviewStage::LIBRARY
-            && SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation()->value('estado'));
+            && $decisionBlock === null;
         $snapshot = SnapshotDocuments::present($revision->fotografia);
         $definition = TemplateContext::fromSnapshot($snapshot);
 
@@ -126,6 +127,7 @@ class LibraryReviewController extends Controller
             'assigned_to_other' => $assignedToOther,
             'can_comment' => $reviewable,
             'can_verify' => $reviewable,
+            'decision_block' => $decisionBlock,
             'signing_statement' => $reviewable && ! $this->signatures->signed($syllabus->id, SyllabusSignature::ROLE_LIBRARY)
                 ? SigningStatement::for($syllabus->id, SyllabusSignature::ROLE_LIBRARY, $revision->huella_sha256)
                 : null,

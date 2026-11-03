@@ -566,6 +566,33 @@ class ReviewWorkflowTest extends TestCase
         }
     }
 
+    public function test_nobody_decides_while_the_career_or_the_institution_is_paused_like_the_teacher(): void
+    {
+        [$syllabus, $revision] = $this->submitValidDraft();
+        $convocation = $syllabus->convocation;
+        $approve = fn () => $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+            'signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator), 'idempotency_key' => (string) Str::uuid(),
+        ]);
+
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))->assertSuccessful();
+        $approve()->assertForbidden()->assertJsonPath('message', 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.');
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), ['justification' => 'Falta alinear los resultados.'])->assertForbidden();
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
+            ->assertJsonPath('decisions_allowed', false)->assertJsonPath('decision_block', 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.');
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertSuccessful();
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$convocation->process, 'pausar']))->assertSuccessful();
+        $approve()->assertForbidden()->assertJsonPath('message', 'Administración pausó la convocatoria institucional: las revisiones se retoman cuando se reanude.');
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$convocation->process, 'reanudar']))->assertSuccessful();
+
+        $approve()->assertSuccessful();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$convocation->process, 'pausar']))->assertSuccessful();
+        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertForbidden();
+        $this->actingAsLibrarian()->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertJsonPath('review.can_verify', false)->assertJsonPath('review.decision_block', 'Administración pausó la convocatoria institucional: las revisiones se retoman cuando se reanude.');
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+    }
+
     public function test_the_coordinator_returning_a_syllabus_notifies_the_teacher_and_the_librarys_approval_notifies_the_teacher(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();

@@ -273,8 +273,8 @@ envían. Cada persona firma una sola vez por sílabo.
   y a Coordinación y Biblioteca que solo pueden revisar lo ya enviado.
   En pausa, la franja dice quién pausó solo cuando importa (2026-11-02): al docente,
   «La convocatoria está en pausa · Le avisaremos cuando se reanude para que siga con sus
-  sílabos»; a Coordinación y a Biblioteca, si pausó Administración, que fue ella, que pueden
-  seguir revisando lo ya enviado y que les avisaremos al reanudar, y si la pausó Coordinación, «La convocatoria de su carrera está en pausa ·
+  sílabos»; a Coordinación y a Biblioteca, si pausó Administración, que fue ella, que las revisiones
+  se retoman al reanudar y que les avisaremos (en pausa nadie aprueba, firma ni devuelve), y si la pausó Coordinación, «La convocatoria de su carrera está en pausa ·
   Puede reanudarla desde Revisión». Administración solo ve la franja cuando ella pausó la
   convocatoria institucional: «Puede reanudarla desde Convocatorias». Con la convocatoria cerrada, la franja dice que los sílabos quedan solo para consulta.
 - **Sin Panel.** Cada rol entra a su lista de trabajo y ve ahí sus indicadores:

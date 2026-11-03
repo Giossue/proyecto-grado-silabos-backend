@@ -9,6 +9,7 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Auth\Access\Response;
 
 class SyllabusPolicy
@@ -66,8 +67,15 @@ class SyllabusPolicy
         if ($syllabus->estado !== 'aprobado' || ! $this->roles->hasRole(request(), RoleCode::Coordinator)) {
             return Response::deny();
         }
+        // Reiniciar sigue permitido en pausa (2026-11-01); solo la convocatoria cerrada lo impide.
+        if (! $this->review($user, $syllabus)) {
+            return Response::deny();
+        }
+        if (! self::convocationAllowsDecisions($syllabus->convocation()->value('estado'))) {
+            return Response::deny(self::CLOSED);
+        }
 
-        return $this->decide($user, $syllabus);
+        return Response::allow();
     }
 
     public function decide(User $user, Syllabus $syllabus): Response
@@ -75,11 +83,31 @@ class SyllabusPolicy
         if (! $this->review($user, $syllabus)) {
             return Response::deny();
         }
-        if (! self::convocationAllowsDecisions($syllabus->convocation()->value('estado'))) {
-            return Response::deny('La convocatoria está cerrada: la revisión queda solo para consulta y no admite decisiones.');
+        $block = self::decisionBlock($syllabus);
+
+        return $block === null ? Response::allow() : Response::deny($block);
+    }
+
+    private const CLOSED = 'La convocatoria está cerrada: la revisión queda solo para consulta y no admite decisiones.';
+
+    /**
+     * Por qué Coordinación o Biblioteca no pueden decidir ahora (aprobar, firmar, pedir corrección, devolver):
+     * convocatoria cerrada, o en pausa (de la carrera o institucional), igual que el docente (2026-11-02).
+     */
+    public static function decisionBlock(Syllabus $syllabus): ?string
+    {
+        $convocation = $syllabus->convocation()->with('process:id,estado')->first();
+        if ($convocation === null || ! self::convocationAllowsDecisions($convocation->estado)) {
+            return self::CLOSED;
+        }
+        if ($convocation->estado === Convocation::STATE_PAUSED) {
+            return 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.';
+        }
+        if ($convocation->process->estado === SyllabusProcess::STATE_PAUSED) {
+            return 'Administración pausó la convocatoria institucional: las revisiones se retoman cuando se reanude.';
         }
 
-        return Response::allow();
+        return null;
     }
 
     public static function convocationAllowsDecisions(mixed $state): bool

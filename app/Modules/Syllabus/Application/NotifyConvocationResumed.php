@@ -10,7 +10,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 /**
  * Avisa al reanudar: el banner de pausa promete «le avisaremos cuando se reanude».
  * Docentes de cada convocatoria que vuelve a estar abierta; Coordinación y Biblioteca, solo si quien reanudó fue
- * Administración (ellas pueden seguir revisando durante la pausa; el aviso les dice que los docentes vuelven).
+ * Administración: en la pausa nadie edita ni revisa, y el aviso dice que se retoma.
  */
 final class NotifyConvocationResumed
 {
@@ -55,7 +55,7 @@ final class NotifyConvocationResumed
                 deduplicationKey: "proceso.reanudado:{$process->id}:{$coordinatorId}:{$at}",
                 recipientIds: [$coordinatorId],
                 title: 'Se reanudó la convocatoria institucional',
-                message: "Administración reanudó la convocatoria {$process->academicPeriod->codigo}. Los docentes vuelven a editar y enviar sus sílabos.",
+                message: "Administración reanudó la convocatoria {$process->academicPeriod->codigo}. Se retoman la edición y las revisiones de los sílabos.",
                 resourceType: 'proceso_silabos',
                 resourceId: $process->id,
             );
