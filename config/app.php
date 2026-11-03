@@ -10,7 +10,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'trusted_proxies' => env('TRUSTED_PROXIES', '*'),
+    // Por defecto solo localhost y redes privadas (donde está el proxy de Dokploy); nunca «*».
+    'trusted_proxies' => env('TRUSTED_PROXIES', '127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16'),
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 

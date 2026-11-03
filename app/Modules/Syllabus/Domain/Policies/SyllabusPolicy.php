@@ -97,7 +97,29 @@ class SyllabusPolicy
      */
     public static function decisionBlock(Syllabus $syllabus): ?string
     {
-        $convocation = $syllabus->convocation()->with('process:id,estado')->first();
+        return self::blockOf($syllabus->convocation()->with('process:id,estado')->first());
+    }
+
+    /**
+     * Igual que decisionBlock, pero dentro de la transacción de la decisión: bloquea en modo compartido
+     * el proceso y luego la convocatoria (el mismo orden que las pausas y cierres) para que nadie los
+     * pause o cierre entre esta comprobación y el fin de la decisión.
+     */
+    public static function lockedDecisionBlock(Syllabus $syllabus): ?string
+    {
+        $processId = Convocation::query()->find($syllabus->convocatoria_id)?->proceso_id;
+        if ($processId === null) {
+            return self::CLOSED;
+        }
+        SyllabusProcess::query()->whereKey($processId)->sharedLock()->first();
+        $convocation = Convocation::query()->whereKey($syllabus->convocatoria_id)->sharedLock()->first();
+        $convocation?->load('process:id,estado');
+
+        return self::blockOf($convocation);
+    }
+
+    private static function blockOf(?Convocation $convocation): ?string
+    {
         if ($convocation === null || ! self::convocationAllowsDecisions($convocation->estado)) {
             return self::CLOSED;
         }

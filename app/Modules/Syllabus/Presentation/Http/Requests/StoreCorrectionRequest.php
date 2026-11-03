@@ -2,6 +2,8 @@
 
 namespace App\Modules\Syllabus\Presentation\Http\Requests;
 
+use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,7 +14,8 @@ class StoreCorrectionRequest extends FormRequest
     public function authorize(): Response
     {
         $revision = $this->route('revision');
-        if (! $revision instanceof SyllabusRevision) {
+        // Ruta de Coordinación: Biblioteca pide corrección con sus motivos enumerados en su propia ruta.
+        if (! $revision instanceof SyllabusRevision || ! app(ActiveRole::class)->hasRole($this, RoleCode::Coordinator)) {
             return Response::deny();
         }
 

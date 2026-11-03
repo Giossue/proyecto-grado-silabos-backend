@@ -8,6 +8,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
+use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Http\Request;
@@ -34,6 +35,8 @@ class RequestSyllabusCorrection
         abort_if($stage === null, 403);
 
         return DB::transaction(function () use ($actor, $activeRole, $justification, $revision, $stage): SyllabusRevision {
+            // Proceso y convocatoria primero (compartido), luego el sílabo: el orden de pausas y cierres.
+            $block = SyllabusPolicy::lockedDecisionBlock($revision->syllabus);
             $syllabus = Syllabus::query()->lockForUpdate()->findOrFail($revision->silabo_id);
             $latestId = SyllabusRevision::query()
                 ->where('silabo_id', $syllabus->id)
@@ -43,6 +46,9 @@ class RequestSyllabusCorrection
                 throw ValidationException::withMessages([
                     'revision' => 'La revisión dejó de estar disponible para solicitar corrección.',
                 ]);
+            }
+            if ($block !== null) {
+                throw ValidationException::withMessages(['revision' => $block]);
             }
             $locked = SyllabusRevision::query()->lockForUpdate()->findOrFail($revision->id);
             if ($locked->hasCorrectionRequest()) {

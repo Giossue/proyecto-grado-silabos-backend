@@ -23,9 +23,11 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\CanonicalHasher;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -591,6 +593,50 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsLibrarian()->getJson(route('api.v1.library.reviews.show', $revision))
             ->assertJsonPath('review.can_verify', false)->assertJsonPath('review.decision_block', 'Administración pausó la convocatoria institucional: las revisiones se retoman cuando se reanude.');
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
+    }
+
+    public function test_only_the_coordinator_requests_a_correction_on_the_coordination_route(): void
+    {
+        [$syllabus, $revision] = $this->submitValidDraft();
+        $payload = ['justification' => 'Texto libre fuera de los motivos de biblioteca.'];
+
+        $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), $payload)->assertForbidden();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+            'signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator), 'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
+        // En la etapa de biblioteca, el bibliotecario solo usa su ruta con motivos enumerados.
+        $this->actingAsLibrarian()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), $payload)->assertForbidden();
+
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertFalse($revision->fresh()->hasCorrectionRequest());
+    }
+
+    public function test_a_pause_that_lands_after_authorization_still_blocks_the_decision_under_the_lock(): void
+    {
+        [$syllabus, $revision] = $this->submitValidDraft();
+        $pauseOnNextTransaction = function () use ($syllabus): void {
+            $armed = true;
+            Event::listen(TransactionBeginning::class, function () use (&$armed, $syllabus): void {
+                if ($armed) {
+                    $armed = false;
+                    Convocation::query()->whereKey($syllabus->convocatoria_id)->update(['estado' => Convocation::STATE_PAUSED]);
+                }
+            });
+        };
+        $paused = 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.';
+
+        $pauseOnNextTransaction();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+            'signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator), 'idempotency_key' => (string) Str::uuid(),
+        ])->assertUnprocessable()->assertJsonPath('errors.revision.0', $paused);
+        $this->assertDatabaseCount('revisiones_coordinacion', 0);
+
+        Convocation::query()->whereKey($syllabus->convocatoria_id)->update(['estado' => Convocation::STATE_OPEN]);
+        $pauseOnNextTransaction();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), ['justification' => 'Falta alinear los resultados.'])
+            ->assertUnprocessable()->assertJsonPath('errors.revision.0', $paused);
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertFalse($revision->fresh()->hasCorrectionRequest());
     }
 
     public function test_the_coordinator_returning_a_syllabus_notifies_the_teacher_and_the_librarys_approval_notifies_the_teacher(): void

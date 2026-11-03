@@ -23,10 +23,12 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\InstitutionDate;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -358,6 +360,34 @@ class LibraryReviewTest extends TestCase
             'reasons' => ['codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
         ])->assertForbidden()->assertJsonPath('message', $message);
         $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->people['librarian'][0])])->assertForbidden();
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertNull($revision->fresh()->correccion_etapa);
+    }
+
+    public function test_una_pausa_que_llega_tras_autorizar_igual_frena_la_decision_de_biblioteca_con_la_fila_bloqueada(): void
+    {
+        [$syllabus, $revision] = $this->submittedRevision();
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->people['coordinator'][0]), 'idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        $pauseOnNextTransaction = function () use ($syllabus): void {
+            $armed = true;
+            Event::listen(TransactionBeginning::class, function () use (&$armed, $syllabus): void {
+                if ($armed) {
+                    $armed = false;
+                    Convocation::query()->whereKey($syllabus->convocatoria_id)->update(['estado' => Convocation::STATE_PAUSED]);
+                }
+            });
+        };
+        $paused = 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.';
+
+        $pauseOnNextTransaction();
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->people['librarian'][0])])
+            ->assertUnprocessable()->assertJsonPath('errors.revision.0', $paused);
+        $this->assertDatabaseCount('aprobaciones', 0);
+
+        Convocation::query()->whereKey($syllabus->convocatoria_id)->update(['estado' => Convocation::STATE_OPEN]);
+        $pauseOnNextTransaction();
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), ['reasons' => ['codigo_incorrecto']])
+            ->assertUnprocessable()->assertJsonPath('errors.revision.0', $paused);
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertNull($revision->fresh()->correccion_etapa);
     }

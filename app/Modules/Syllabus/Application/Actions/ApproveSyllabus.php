@@ -12,6 +12,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
+use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -32,6 +33,8 @@ class ApproveSyllabus
     public function execute(SyllabusRevision $revision, ?DecisionSignature $signature, User $actor, Request $request): CoordinationReview
     {
         return DB::transaction(function () use ($actor, $request, $revision, $signature): CoordinationReview {
+            // Proceso y convocatoria primero (compartido), luego el sílabo: el orden de pausas y cierres.
+            $block = SyllabusPolicy::lockedDecisionBlock($revision->syllabus);
             $syllabus = Syllabus::query()->lockForUpdate()->findOrFail($revision->silabo_id);
             $existing = CoordinationReview::query()->where('revision_silabo_id', $revision->id)->first();
             if ($existing !== null) {
@@ -46,6 +49,9 @@ class ApproveSyllabus
             }
             if (ReviewStage::ofRevision($revision) !== ReviewStage::COORDINATION) {
                 throw ValidationException::withMessages(['revision' => 'La revisión ya no espera la decisión de coordinación.']);
+            }
+            if ($block !== null) {
+                throw ValidationException::withMessages(['revision' => $block]);
             }
 
             $this->signing->execute($revision, SyllabusSignature::ROLE_COORDINATION, $signature, $actor, $request);

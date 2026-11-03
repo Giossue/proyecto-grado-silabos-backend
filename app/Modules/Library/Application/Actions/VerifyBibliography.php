@@ -13,6 +13,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
+use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -39,6 +40,8 @@ class VerifyBibliography
         abort_unless($actor->can('decide', $revision->syllabus), 403);
 
         return DB::transaction(function () use ($actor, $request, $revision, $signature): LibrarySubmission {
+            // Proceso y convocatoria primero (compartido), luego el sílabo: el orden de pausas y cierres.
+            $block = SyllabusPolicy::lockedDecisionBlock($revision->syllabus);
             $syllabus = Syllabus::query()->lockForUpdate()->findOrFail($revision->silabo_id);
             $submission = LibrarySubmission::query()->where('revision_silabo_id', $revision->id)->lockForUpdate()->firstOrFail();
             if (Approval::query()->where('revision_silabo_id', $revision->id)->exists()) {
@@ -47,6 +50,9 @@ class VerifyBibliography
             $latestId = SyllabusRevision::query()->where('silabo_id', $syllabus->id)->orderByDesc('numero_revision')->value('id');
             if ($syllabus->estado !== 'en_revision' || $latestId !== $revision->id || ReviewStage::ofRevision($revision) !== ReviewStage::LIBRARY) {
                 throw ValidationException::withMessages(['revision' => 'Este sílabo ya no espera la revisión de biblioteca.']);
+            }
+            if ($block !== null) {
+                throw ValidationException::withMessages(['revision' => $block]);
             }
 
             $this->signing->execute($revision, SyllabusSignature::ROLE_LIBRARY, $signature, $actor, $request);
