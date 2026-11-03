@@ -9,7 +9,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\InProgressWork;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -44,10 +44,9 @@ class DeleteSyllabus
                     'syllabus' => 'Solo se reinicia un sílabo aprobado.',
                 ]);
             }
-            if (! in_array($locked->convocation->estado, [Convocation::STATE_OPEN, Convocation::STATE_PAUSED], true)) {
-                throw ValidationException::withMessages([
-                    'syllabus' => 'La convocatoria ya no admite cambios en sus expedientes.',
-                ]);
+            $block = SyllabusPolicy::decisionBlock($locked);
+            if ($block !== null) {
+                throw ValidationException::withMessages(['syllabus' => $block]);
             }
 
             $deleted = [

@@ -242,7 +242,7 @@ class ReviewController extends Controller
             'decisions_allowed' => $decisionsAllowed,
             'decision_block' => $decisionBlock,
             'reset' => [
-                'allowed' => SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation->estado) && $myStage === ReviewStage::COORDINATION && $syllabus->estado === 'aprobado',
+                'allowed' => $decisionBlock === null && $myStage === ReviewStage::COORDINATION && $syllabus->estado === 'aprobado',
                 'erases_history' => $syllabus->estado === 'aprobado',
                 'revisions' => $syllabus->revisions->count(),
                 'signatures' => SyllabusSignature::query()->where('silabo_id', $syllabus->id)->count(),

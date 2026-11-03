@@ -67,12 +67,13 @@ class SyllabusPolicy
         if ($syllabus->estado !== 'aprobado' || ! $this->roles->hasRole(request(), RoleCode::Coordinator)) {
             return Response::deny();
         }
-        // Reiniciar sigue permitido en pausa (2026-11-01); solo la convocatoria cerrada lo impide.
         if (! $this->review($user, $syllabus)) {
             return Response::deny();
         }
-        if (! self::convocationAllowsDecisions($syllabus->convocation()->value('estado'))) {
-            return Response::deny(self::CLOSED);
+        // Reiniciar es una decisión más: en pausa tampoco se reinicia (2026-11-02).
+        $block = self::decisionBlock($syllabus);
+        if ($block !== null) {
+            return Response::deny($block);
         }
 
         return Response::allow();
