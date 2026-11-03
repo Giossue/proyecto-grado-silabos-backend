@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Identity\Presentation\Http\Requests\Api\ConfirmCurrentPasswordRequest;
 use App\Modules\Identity\Presentation\Http\Requests\Api\ConfirmTwoFactorRequest;
+use App\Modules\Identity\Presentation\Http\Requests\Api\DisableTwoFactorRequest;
 use App\Modules\Identity\Presentation\Http\Requests\Api\TwoFactorChallengeRequest;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use Illuminate\Http\JsonResponse;
@@ -56,9 +57,24 @@ class TwoFactorController extends Controller
         ]);
     }
 
-    public function disable(ConfirmCurrentPasswordRequest $request, DisableTwoFactorAuthentication $disable): JsonResponse
-    {
+    public function disable(
+        DisableTwoFactorRequest $request,
+        DisableTwoFactorAuthentication $disable,
+        TwoFactorAuthenticationProvider $provider,
+    ): JsonResponse {
         $user = $this->authenticatedUser($request);
+        if ($user->hasEnabledTwoFactorAuthentication()) {
+            $throttleKey = 'two-factor-disable:'.$user->id;
+            if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+                return response()->json(['message' => 'Demasiados intentos. Intente nuevamente en unos minutos.'], 429);
+            }
+            if (! $this->verifySecondFactor($user, $provider, $request->string('code')->toString(), $request->string('recovery_code')->toString())) {
+                RateLimiter::hit($throttleKey, 300);
+
+                throw ValidationException::withMessages(['code' => 'El código de autenticación no es válido.']);
+            }
+            RateLimiter::clear($throttleKey);
+        }
         $disable($user);
 
         return response()->json($this->statusPayload($user->fresh()));
@@ -99,17 +115,7 @@ class TwoFactorController extends Controller
             return response()->json(['message' => 'Demasiados intentos. Intente nuevamente en unos minutos.'], 429);
         }
 
-        $code = $request->string('code')->toString();
-        $recoveryCode = $request->string('recovery_code')->toString();
-        $valid = $code !== '' && $provider->verify(Fortify::currentEncrypter()->decrypt($user->two_factor_secret), $code);
-        if (! $valid && $recoveryCode !== '') {
-            $valid = collect($user->recoveryCodes())->contains(
-                fn (string $stored): bool => hash_equals($stored, $recoveryCode),
-            );
-            if ($valid) {
-                $user->replaceRecoveryCode($recoveryCode);
-            }
-        }
+        $valid = $this->verifySecondFactor($user, $provider, $request->string('code')->toString(), $request->string('recovery_code')->toString());
         if (! $valid) {
             RateLimiter::hit($throttleKey, 300);
 
@@ -131,6 +137,25 @@ class TwoFactorController extends Controller
         );
 
         return response()->json(['message' => 'Segundo factor verificado.']);
+    }
+
+    /** Checks a TOTP code or, failing that, an unused recovery code, which is consumed. */
+    private function verifySecondFactor(User $user, TwoFactorAuthenticationProvider $provider, string $code, string $recoveryCode): bool
+    {
+        if ($code !== '' && $provider->verify(Fortify::currentEncrypter()->decrypt($user->two_factor_secret), $code)) {
+            return true;
+        }
+        if ($recoveryCode === '') {
+            return false;
+        }
+        $valid = collect($user->recoveryCodes())->contains(
+            fn (string $stored): bool => hash_equals($stored, $recoveryCode),
+        );
+        if ($valid) {
+            $user->replaceRecoveryCode($recoveryCode);
+        }
+
+        return $valid;
     }
 
     private function authenticatedUser(Request $request): User

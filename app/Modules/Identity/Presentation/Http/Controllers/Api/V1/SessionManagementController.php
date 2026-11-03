@@ -4,10 +4,12 @@ namespace App\Modules\Identity\Presentation\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Identity\Application\Actions\RevokeUserSessions;
 use App\Modules\Identity\Presentation\Http\Requests\Api\ConfirmCurrentPasswordRequest;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -52,15 +54,19 @@ class SessionManagementController extends Controller
         return response()->json(['message' => 'La sesión seleccionada fue cerrada.']);
     }
 
-    public function destroyOthers(ConfirmCurrentPasswordRequest $request): JsonResponse
+    public function destroyOthers(ConfirmCurrentPasswordRequest $request, RevokeUserSessions $revoke): JsonResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
 
-        $deleted = DB::table((string) config('session.table', 'sesiones'))
-            ->where('user_id', $user->id)
-            ->where('id', '!=', $request->session()->getId())
-            ->delete();
+        // Rotating the remember token ends «Mantener la sesión iniciada» on every other device;
+        // this device gets a fresh recaller only if it was using one.
+        $guard = Auth::guard('web');
+        $remembered = $guard->viaRemember() || $request->cookies->has($guard->getRecallerName());
+        $deleted = $revoke->execute($user, $request->session()->getId());
+        if ($remembered) {
+            $guard->login($user, true);
+        }
 
         $this->record($request, $user, 'sesiones.remotas_cerradas', ['closed_sessions' => $deleted]);
 
