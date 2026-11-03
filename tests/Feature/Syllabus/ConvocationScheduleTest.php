@@ -300,6 +300,8 @@ class ConvocationScheduleTest extends TestCase
         Mail::assertQueued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo($this->coordinator->correo_electronico)
             && str_contains($mail->body, 'Administración reanudó'));
         $this->assertNotified($this->coordinator->id, 'proceso.reanudado', 'Administración reanudó');
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+        $this->assertNotified($librarian->id, 'proceso.reanudado', 'Los docentes vuelven a editar y enviar');
         $this->assertNotNotified($this->teacher->id, 'proceso.reanudado');
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();

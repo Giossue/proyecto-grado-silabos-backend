@@ -112,7 +112,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   importar mayúsculas, tildes ni espacios de más.
 - Al reanudar una convocatoria (2026-11-02) se avisa a los docentes de cada convocatoria
   que vuelve a quedar abierta («convocatoria.reanudada», también por correo); si quien
-  reanuda es Administración, Coordinación recibe «proceso.reanudado» en la campana.
+  reanuda es Administración, Coordinación y Biblioteca reciben «proceso.reanudado» (también por
+  correo si no lo apagaron): ellas siguen revisando lo ya enviado durante la pausa.
   Pausar y cerrar siguen sin aviso. El plazo informa `paused_by` (Administración o
   Coordinación), y Administración recibe plazo solo con su convocatoria en pausa.
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener

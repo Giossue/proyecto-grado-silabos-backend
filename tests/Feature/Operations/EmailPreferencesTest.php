@@ -33,7 +33,7 @@ class EmailPreferencesTest extends TestCase
             'docente.resumen_diario:si', 'convocatoria.abierta:si', 'convocatoria.reanudada:si', 'silabo.correccion_solicitada:si', 'silabo.devuelto_borrador:si', 'silabo.aprobado:si',
         ], $types('docente@silabos.test'));
         $this->assertSame(['coordinacion.resumen_diario:si', 'proceso.reanudado:si'], $types('coordinador@silabos.test'));
-        $this->assertSame(['biblioteca.resumen_diario:si', 'coordinacion.aprobado:si', 'silabo.reenviado_biblioteca:si'], $types('bibliotecario@silabos.test'));
+        $this->assertSame(['biblioteca.resumen_diario:si', 'coordinacion.aprobado:si', 'silabo.reenviado_biblioteca:si', 'proceso.reanudado:si'], $types('bibliotecario@silabos.test'));
         $this->assertSame([], $types('admin@silabos.test'));
     }
 
