@@ -531,6 +531,15 @@ class CareerTeacherTest extends TestCase
         $active = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $active))->assertForbidden();
         $this->assertDatabaseMissing('invitaciones_activacion', ['usuario_id' => $outsider->id]);
+
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
+        $removed = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
+        ActivationInvitation::query()->where('usuario_id', $removed->id)->update(['expira_en' => now()->subMinute()]);
+        $removed->roleAssignments()->update(['activo' => false]);
+        $this->travel(2)->minutes();
+        $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $removed))->assertForbidden();
+        $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $this->coordinator))->assertForbidden();
+        $this->assertDatabaseCount('invitaciones_activacion', 1);
     }
 
     public function test_coordinator_cannot_delete_a_pending_teacher_it_created(): void
