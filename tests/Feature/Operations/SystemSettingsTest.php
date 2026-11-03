@@ -18,7 +18,7 @@ class SystemSettingsTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const KEY = 'sk-prueba-0000000000004c2e';
+    private const KEY = 'clave-prueba-0000000000004c2e';
 
     protected function setUp(): void
     {
