@@ -248,7 +248,7 @@ Abajo ve los dispositivos donde su cuenta está abierta. Si no reconoce alguno, 
 
 Debajo tiene un sílabo por cada materia que dicta. Pulse uno para empezar o seguir.
 
-Cuando lo envía, no se puede cambiar mientras lo revisan. Si le piden correcciones, puede volver a editarlo. Sus sílabos de períodos anteriores están en «Historial».',
+Cuando lo envía, no se puede cambiar mientras lo revisan. Si le piden correcciones, puede volver a editarlo. Sus sílabos de períodos anteriores están en «Historial». Si Coordinación compartió material de la carrera, el ícono de carpeta «Documentos de apoyo» lo muestra; cada documento se abre en una ventana aparte.',
         ],
         '/docente/mis-silabos/:syllabus' => [
             'title' => 'Su sílabo',
