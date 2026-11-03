@@ -211,21 +211,24 @@ Antes hay que verificar el dominio en el panel de Resend con los registros DNS q
 los mensajes se rechazan o llegan a spam, y el fallo solo se ve en el panel del proveedor.
 
 Además de las invitaciones, llegan por correo pocos avisos del sistema, solo los que piden
-actuar. Para el docente: convocatoria abierta, convocatoria reanudada tras una pausa,
-corrección solicitada, sílabo devuelto a borrador y sílabo aprobado. Se manda un correo por aviso y persona, solo a cuentas activas con correo
-verificado; los demás avisos quedan en la campana.
+actuar. Docente: convocatoria abierta, convocatoria reanudada tras una pausa, corrección
+solicitada, sílabo devuelto a borrador y sílabo aprobado. Biblioteca: sílabo por revisar
+(aprobado por Coordinación) y sílabo reenviado. Coordinación: el resumen diario. Cada persona
+elige cuáles recibe en su Configuración › Notificaciones (sin elegir, llegan todos). Se manda un
+correo por aviso y persona, solo a cuentas activas con correo verificado; los demás avisos quedan
+en la campana. Los correos de la cuenta (invitación, contraseña, verificación) no se pueden apagar.
 
 | Variable | Por defecto | Efecto |
 |---|---|---|
 | `NOTIFICATION_EMAILS` | `true` | `false` apaga estos correos; las invitaciones de activación no cambian. |
-| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,convocatoria.reanudada,silabo.correccion_solicitada,silabo.devuelto_borrador,silabo.aprobado` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
-| `NOTIFICATION_DIGEST` | `true` | `false` apaga el resumen diario de Coordinación. |
+| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,convocatoria.reanudada,silabo.correccion_solicitada,silabo.devuelto_borrador,silabo.aprobado,coordinacion.aprobado,silabo.reenviado_biblioteca` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
+| `NOTIFICATION_DIGEST` | `true` | `false` apaga el resumen diario para todos. Cada coordinador también puede apagarlo en su Configuración › Notificaciones. |
 | `NOTIFICATION_DIGEST_TIME` | `08:00` | Hora del resumen (`HH:MM`), en la hora de la institución. Vacía o con otro formato vale 08:00. |
 
 Coordinación no recibe correo por cada aviso: recibe un resumen al día, de lunes a viernes, y
 solo si tiene sílabos por revisar. Requiere que el programador (`schedule:work`) y
 el worker estén activos. Con `MAIL_MAILER=log` ninguno sale del sistema. Los tipos disponibles
-están en `NotificationDestination` (`silabo.enviado`, `coordinacion.aprobado`, etc.).
+están en `NotificationDestination`; los que se pueden recibir por correo, en `EmailNoticeCatalog`.
 
 ## 3. Qué hace el arranque
 
