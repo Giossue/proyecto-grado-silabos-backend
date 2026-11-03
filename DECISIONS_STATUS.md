@@ -92,7 +92,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   hacerlo, todo se reabre. El aviso de plazo vencido sale en rojo.
 - Cada persona elige qué avisos recibe por correo (2026-11-02), en Configuración › Notificaciones,
   no Administración: Docente (convocatoria abierta y reanudada, corrección solicitada, devuelto a
-  borrador, aprobado), Coordinación (resumen diario) y Biblioteca (sílabo por revisar y reenviado,
+  borrador, aprobado), Coordinación (resumen diario y convocatoria reanudada por Administración) y Biblioteca (sílabo por revisar y reenviado,
   que antes no llegaban por correo). Sin elegir, llegan todos. Administración conserva solo el
   interruptor general (que también apaga los resúmenes) y la hora del resumen. Coordinación ya no
   recibe «sílabo enviado» ni «reenviado» en la campana: los ve en Revisión y en el resumen.

@@ -30,6 +30,7 @@ final class EmailNoticeCatalog
         ],
         'coordinador' => [
             self::DAILY_SUMMARY => ['label' => 'Resumen diario', 'description' => 'Sílabos por revisar, de lunes a viernes, solo si hay pendientes'],
+            'proceso.reanudado' => ['label' => 'Convocatoria reanudada por Administración', 'description' => 'Puede seguir revisando tras una pausa institucional'],
         ],
         'bibliotecario' => [
             self::LIBRARY_SUMMARY => ['label' => 'Resumen diario', 'description' => 'Sílabos por revisar, de lunes a viernes, solo si hay pendientes'],

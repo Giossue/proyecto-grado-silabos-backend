@@ -8,6 +8,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Mail\DailySummaryMail;
+use App\Modules\Operations\Infrastructure\Mail\WorkflowNotificationMail;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
@@ -291,9 +292,13 @@ class ConvocationScheduleTest extends TestCase
         foreach ([$this->teacher, $this->coordinator] as $user) {
             $this->assertNotNotified($user->id, 'proceso.pausado');
         }
+        Mail::fake();
+        $this->coordinator->forceFill(['correo_verificado_en' => now()])->save();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']))->assertSuccessful();
 
         $this->assertNotified($this->teacher->id, 'convocatoria.reanudada', 'Ya puede seguir con sus sílabos');
+        Mail::assertQueued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo($this->coordinator->correo_electronico)
+            && str_contains($mail->body, 'Administración reanudó'));
         $this->assertNotified($this->coordinator->id, 'proceso.reanudado', 'Administración reanudó');
         $this->assertNotNotified($this->teacher->id, 'proceso.reanudado');
 
