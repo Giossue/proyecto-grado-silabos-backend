@@ -215,7 +215,9 @@ actuar. Docente: convocatoria abierta, convocatoria reanudada tras una pausa, co
 solicitada, sílabo devuelto a borrador y sílabo aprobado. Biblioteca: sílabo por revisar
 (aprobado por Coordinación) y sílabo reenviado. Los tres roles tienen además un resumen diario de
 lo pendiente (`avisos:resumen-coordinacion` y `avisos:resumen-diario`), de lunes a viernes a la
-hora configurada y solo si hay algo. Cada persona
+hora configurada y solo si hay algo. Docentes y Coordinación reciben además, 3 días antes del
+último día de clases y a esa misma hora, el aviso de cierre de la convocatoria
+(`convocatorias:avisar-cierre`) si tienen sílabos sin aprobar. Cada persona
 elige cuáles recibe en su Configuración › Notificaciones (sin elegir, llegan todos). Se manda un
 correo por aviso y persona, solo a cuentas activas con correo verificado; los demás avisos quedan
 en la campana. Los correos de la cuenta (invitación, contraseña, verificación) no se pueden apagar.
@@ -223,7 +225,7 @@ en la campana. Los correos de la cuenta (invitación, contraseña, verificación
 | Variable | Por defecto | Efecto |
 |---|---|---|
 | `NOTIFICATION_EMAILS` | `true` | `false` apaga estos correos; las invitaciones de activación no cambian. |
-| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,convocatoria.reanudada,silabo.correccion_solicitada,silabo.devuelto_borrador,silabo.aprobado,coordinacion.aprobado,silabo.reenviado_biblioteca,proceso.reanudado,silabo.eliminado,silabo.regenerado,proceso.plantilla_rehecho,proceso.eliminado` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
+| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,convocatoria.reanudada,silabo.correccion_solicitada,silabo.devuelto_borrador,silabo.aprobado,coordinacion.aprobado,silabo.reenviado_biblioteca,proceso.reanudado,silabo.eliminado,silabo.regenerado,proceso.plantilla_rehecho,proceso.eliminado,proceso.cierre_proximo` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
 | `NOTIFICATION_DIGEST` | `true` | `false` apaga el resumen diario para todos. Cada coordinador también puede apagarlo en su Configuración › Notificaciones. |
 | `NOTIFICATION_DIGEST_TIME` | `08:00` | Hora del resumen (`HH:MM`), en la hora de la institución. Vacía o con otro formato vale 08:00. |
 

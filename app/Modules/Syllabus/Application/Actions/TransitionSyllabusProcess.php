@@ -9,9 +9,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\NotifyConvocationResumed;
-use App\Modules\Syllabus\Application\SyllabusSnapshot;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Modules\Syllabus\Application\ProcessClosing;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
@@ -38,7 +36,7 @@ class TransitionSyllabusProcess
         private readonly RecordAuditEvent $audit,
         private readonly TemplateStructureValidator $templateStructure,
         private readonly RegenerateProcessSyllabi $regenerate,
-        private readonly SyllabusSnapshot $snapshots,
+        private readonly ProcessClosing $closing,
         private readonly NotifyConvocationResumed $resumed,
     ) {}
 
@@ -106,25 +104,17 @@ class TransitionSyllabusProcess
                     metadata: $metadata,
                 );
             }
-            $locked->update([
-                'estado' => $rule['to'],
-            ]);
+            if ($rule['to'] === SyllabusProcess::STATE_CLOSED) {
+                $this->closing->close($locked);
+            } else {
+                $locked->update([
+                    'estado' => $rule['to'],
+                ]);
+            }
             if ($rule['to'] === SyllabusProcess::STATE_PAUSED) {
                 DB::table('convocatorias_universidad')
                     ->where('convocatoria_universidad_id', $locked->id)
                     ->update(['pausado_en' => DB::raw('clock_timestamp()')]);
-            }
-            if ($rule['to'] === SyllabusProcess::STATE_CLOSED) {
-                $syllabi = Syllabus::query()->whereHas('convocation', fn ($query) => $query->where('proceso_id', $locked->id))
-                    ->whereNotIn('estado', ['en_revision', 'aprobado'])->lockForUpdate()->get();
-                foreach ($syllabi as $syllabus) {
-                    $snapshot = $this->snapshots->build($syllabus);
-                    $syllabus->update(['contexto_academico' => [...$syllabus->contexto_academico, 'closed_document' => $snapshot]]);
-                }
-                Convocation::query()
-                    ->where('proceso_id', $locked->id)
-                    ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
-                    ->update(['estado' => Convocation::STATE_CLOSED]);
             }
             $this->audit->execute(
                 actorId: $actor->id,

@@ -134,7 +134,8 @@ y el botón «Documentos» (DOC-10).
   aprobar, solo los estados que tienen alguno, y su total, con «Lo que no esté aprobado
   quedará solo para consulta»; si no queda ninguno dice «Todos los sílabos están
   aprobados». Pide la frase «finalizar convocatoria» y no deja confirmar sin ella ni sin
-  el conteo. Deja el estado «Cerrado». Una cerrada ya no ofrece «Finalizar» ni
+  el conteo. Deja el estado «Cerrado». Si nadie la finaliza, el sistema la deja
+  «Cerrado» el día después del último día de clases. Una cerrada ya no ofrece «Finalizar» ni
   «Eliminar». «Eliminar» se ofrece con la convocatoria abierta o pausada, aunque haya
   sílabos enviados o aprobados: explica que se borra todo de verdad, muestra cuántos
   sílabos se borran por estado y el total, y pide el «Mensaje para docentes, coordinación

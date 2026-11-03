@@ -30,6 +30,26 @@ class WorkflowNotificationRecipients
             $careerIds = Career::query()->where('activo', true)->pluck('id');
         }
 
+        return $this->coordinatorsForCareers($careerIds->all());
+    }
+
+    /** @return list<string> */
+    public function coordinatorsWithPendingWork(SyllabusProcess $process): array
+    {
+        $careerIds = Convocation::query()->where('proceso_id', $process->id)
+            ->whereHas('syllabi', fn ($query) => $query->whereNotIn('estado', ['aprobado']))
+            ->pluck('carrera_id')
+            ->all();
+
+        return $careerIds === [] ? [] : $this->coordinatorsForCareers($careerIds);
+    }
+
+    /**
+     * @param  array<mixed>  $careerIds
+     * @return list<string>
+     */
+    private function coordinatorsForCareers(array $careerIds): array
+    {
         $ids = CoordinatorAssignment::query()
             ->whereIn('carrera_id', $careerIds)
             ->effective()

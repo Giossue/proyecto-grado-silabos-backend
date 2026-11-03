@@ -123,6 +123,15 @@ el estado: el sílabo sigue «En revisión».
   firman). Antes de confirmar se ve cuántos sílabos quedan sin aprobar, por estado, y se
   pide la frase «finalizar convocatoria». Finalizar no se deshace. Mientras siga abierta o
   pausada no se puede crear otra.
+- Si Administración no la finaliza, el sistema lo hace solo el día después del último día
+  de clases (`fecha_fin`), a las 00:10 de la hora de la institución, abierta o pausada y con
+  el mismo efecto que Finalizar (`convocatorias:cerrar-vencidas`). En la auditoría queda como
+  acción del «Sistema» (`automatic: true`). No manda aviso al cerrar.
+- 3 días antes del último día de clases, a la hora del resumen diario, el sistema avisa
+  «La convocatoria se cierra pronto» (`proceso.cierre_proximo`, campana y correo) a los
+  docentes con sílabos sin aprobar y a Coordinación de las carreras con sílabos sin aprobar,
+  también con la convocatoria pausada (`convocatorias:avisar-cierre`). Un solo aviso por
+  convocatoria y persona. El correo se puede apagar en las preferencias.
 
 Al cerrar, los sílabos sin revisión enviada o aprobada guardan una fotografía del
 documento y su definición en el contexto existente. La consulta posterior usa esa

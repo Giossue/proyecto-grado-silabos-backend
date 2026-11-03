@@ -92,7 +92,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   hacerlo, todo se reabre. El aviso de plazo vencido sale en rojo.
 - Cada persona elige qué avisos recibe por correo (2026-11-02), en Configuración › Notificaciones,
   no Administración: Docente (convocatoria abierta y reanudada, corrección solicitada, devuelto a
-  borrador, aprobado), Coordinación (resumen diario y convocatoria reanudada por Administración) y Biblioteca (sílabo por revisar y reenviado,
+  borrador, aprobado, cierre de la convocatoria), Coordinación (resumen diario, convocatoria reanudada por Administración y cierre de la convocatoria) y Biblioteca (sílabo por revisar y reenviado,
   que antes no llegaban por correo). Sin elegir, llegan todos. Administración conserva solo el
   interruptor general (que también apaga los resúmenes) y la hora del resumen. Coordinación ya no
   recibe «sílabo enviado» ni «reenviado» en la campana: los ve en Revisión y en el resumen.
@@ -127,7 +127,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   aprueban, firman, piden corrección ni devuelven, igual que el docente no edita ni envía. La API
   dice el motivo en `decision_block` y los resúmenes diarios no cuentan convocatorias en pausa.
   «Reiniciar sílabo» tampoco se permite en pausa (2026-11-02): es una decisión más.
-  Pausar y finalizar siguen sin aviso. El plazo informa `paused_by` (Administración o
+  Pausar y finalizar siguen sin aviso al momento; el cierre se anuncia antes (ver cierre
+  automático). El plazo informa `paused_by` (Administración o
   Coordinación), y Administración recibe plazo solo con su convocatoria en pausa.
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener
   coordinación y el período no debe haber terminado.
@@ -144,6 +145,16 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - La acción manual de cierre se llama «Finalizar» (2026-11-02); la ruta sigue siendo `cerrar`
   y el estado `cerrado`. Antes de confirmar muestra cuántos sílabos quedan sin aprobar, por
   estado, y pide «finalizar convocatoria». Se puede finalizar abierta o pausada.
+- Cierre automático (2026-11-02): si Administración no la finaliza, el sistema finaliza la
+  convocatoria abierta o pausada el día después del último día de clases (`fecha_fin`), a las
+  00:10 de la hora de la institución (`convocatorias:cerrar-vencidas`), con el mismo efecto que
+  Finalizar; queda en la auditoría como acción del «Sistema» (`automatic: true`) y no avisa al
+  cerrar. 3 días antes del último día de clases, a la hora del resumen diario, avisa «La
+  convocatoria se cierra pronto» (`proceso.cierre_proximo`, campana y correo, que cada uno puede
+  apagar como los demás avisos) a los docentes con sílabos sin aprobar y a Coordinación de las
+  carreras con sílabos sin aprobar, también en pausa; un solo aviso por convocatoria y persona
+  (`convocatorias:avisar-cierre`). El aviso sale solo ese día: si el programador no corre, no
+  se repite después.
 - Administración solo prorroga la fecha de entrega (I-114), como máximo 2 veces por
   convocatoria (2026-11-02, constante en código `SyllabusProcess::MAX_EXTENSIONS`, no un ajuste
   del sistema) y sin pasar del último día de clases del período (`fecha_fin`). El contador

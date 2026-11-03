@@ -17,3 +17,11 @@ foreach (['avisos:resumen-coordinacion', 'avisos:resumen-diario'] as $summary) {
         ->timezone((string) config('app.display_timezone', 'America/Guayaquil'))
         ->withoutOverlapping();
 }
+Schedule::command('convocatorias:cerrar-vencidas')
+    ->dailyAt('00:10')
+    ->timezone((string) config('app.display_timezone', 'America/Guayaquil'))
+    ->withoutOverlapping();
+Schedule::command('convocatorias:avisar-cierre')
+    ->dailyAt((string) config('notifications.digest.time'))
+    ->timezone((string) config('app.display_timezone', 'America/Guayaquil'))
+    ->withoutOverlapping();

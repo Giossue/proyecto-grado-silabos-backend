@@ -30,9 +30,9 @@ class EmailPreferencesTest extends TestCase
             ->map(fn (array $option): string => $option['type'].':'.($option['enabled'] ? 'si' : 'no'))->all();
 
         $this->assertSame([
-            'docente.resumen_diario:si', 'convocatoria.abierta:si', 'convocatoria.reanudada:si', 'silabo.correccion_solicitada:si', 'silabo.devuelto_borrador:si', 'silabo.aprobado:si', 'silabo.reiniciado:si',
+            'docente.resumen_diario:si', 'convocatoria.abierta:si', 'convocatoria.reanudada:si', 'silabo.correccion_solicitada:si', 'silabo.devuelto_borrador:si', 'silabo.aprobado:si', 'silabo.reiniciado:si', 'proceso.cierre_proximo:si',
         ], $types('docente@silabos.test'));
-        $this->assertSame(['coordinacion.resumen_diario:si', 'proceso.reanudado:si'], $types('coordinador@silabos.test'));
+        $this->assertSame(['coordinacion.resumen_diario:si', 'proceso.reanudado:si', 'proceso.cierre_proximo:si'], $types('coordinador@silabos.test'));
         $this->assertSame(['biblioteca.resumen_diario:si', 'coordinacion.aprobado:si', 'silabo.reenviado_biblioteca:si', 'proceso.reanudado:si'], $types('bibliotecario@silabos.test'));
         $this->assertSame([], $types('admin@silabos.test'));
     }
