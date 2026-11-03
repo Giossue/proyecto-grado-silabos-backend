@@ -97,11 +97,10 @@ y el botón «Documentos» (DOC-10).
     complementaria, o Firmas), nombre, subir, bajar y eliminar;
   - con una sección elegida: vertical u horizontal, subir, bajar y eliminar;
   - un ícono con ayuda al pasar el cursor, junto a las demás herramientas: «Opciones
-    avanzadas», cuyo menú tiene «Diseño», «Listas» y «Editar JSON»;
+    avanzadas», cuyo menú tiene «Diseño» y «Editar JSON»;
   - «Diseño» (diálogo): márgenes y tamaños de letra;
-  - «Listas» (diálogo): mínimo, máximo y «Empieza con» (cuántos elementos ya aparecen al abrir el sílabo) de
-    cada lista de los bloques, por ejemplo «Unidades» y «Semanas por unidad». La lista de libros de la
-    bibliografía no aparece aquí: es parte del diseño de la plantilla;
+  - los límites de las listas (unidades, semanas por unidad) no se cambian desde la pantalla
+    (2026-11-02): quedan en la definición de la plantilla y solo se tocan por JSON;
   - «Guardar» (también Ctrl+S). Nada se guarda hasta «Guardar».
 - En la hoja se agregan secciones y campos («Nueva sección», «Agregar campo»), se editan
   títulos en línea y se cambia el logo de la universidad.

@@ -37,7 +37,7 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 - Cada semana tiene contenidos, horas ACD, APE y AA, actividades de cada componente y
   evaluación.
 - El docente declara sus unidades («Agregar unidad», «Quitar») dentro de los límites que
-  fija el administrador en la plantilla («Editar → Listas»): mínimo, máximo y con cuántas
+  fija la definición de la plantilla (no se cambian desde la pantalla): mínimo, máximo y con cuántas
   empieza, para las unidades y para las semanas de cada unidad. La plantilla oficial trae
   de 1 a 8 unidades (empieza con 4) y de 0 a 52 semanas por unidad (empieza con 4). Si
   el mínimo sube, las listas cortas se completan con elementos vacíos.

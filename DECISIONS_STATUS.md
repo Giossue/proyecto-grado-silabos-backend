@@ -170,8 +170,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   formato oficial de una tabla por unidad y el docente escribe cada unidad.
 - Administración la crea en blanco o con el formato oficial. La edita en un editor
   visual tipo Word. «Editar» es la acción principal; «Opciones avanzadas» contiene
-  «Diseño», «Listas» y «Editar JSON» (este abre el diálogo de edición, exportación e
-  importación JSON). Diseño y Listas se abren en diálogos desde ese menú (2026-10-31).
+  «Diseño» y «Editar JSON» (este abre el diálogo de edición, exportación e
+  importación JSON). Diseño se abre en un diálogo desde ese menú (2026-10-31). «Listas» se
+  retiró (2026-11-02): los límites de unidades y semanas quedan en la definición, para que
+  Administración no los cambie por error.
   Importar reemplaza la plantilla entera, pero los proyectos de carrera pasan a los campos de
   Coordinación con la misma clave (2026-10-27).
   La barra de acciones se alinea con el borde derecho de la primera hoja según
