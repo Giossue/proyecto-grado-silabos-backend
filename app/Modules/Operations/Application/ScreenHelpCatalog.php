@@ -24,7 +24,9 @@ Solo se puede consultar.',
             'title' => 'Seguridad',
             'content' => 'Aquí cambia su contraseña. Si no la recuerda, puede pedir un enlace por correo para crear otra.
 
-También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.',
+También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.
+
+Abajo ve los dispositivos donde su cuenta está abierta. Si no reconoce alguno, use «Cerrar otras sesiones» (pide su contraseña) y cambie la contraseña.',
         ],
         '/admin/configuracion/sistema' => [
             'title' => 'Sistema',
@@ -98,7 +100,9 @@ Pulse una persona para ver sus datos, cambiar sus roles o quitarle el acceso. Un
             'title' => 'Seguridad',
             'content' => 'Aquí cambia su contraseña. Si no la recuerda, puede pedir un enlace por correo para crear otra.
 
-También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.',
+También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.
+
+Abajo ve los dispositivos donde su cuenta está abierta. Si no reconoce alguno, use «Cerrar otras sesiones» (pide su contraseña) y cambie la contraseña.',
         ],
         '/biblioteca/historial' => [
             'title' => 'Historial de biblioteca',
@@ -138,7 +142,9 @@ Si todo está bien, pulse «Firmar y aprobar» y use su archivo de firma electr�
             'title' => 'Seguridad',
             'content' => 'Aquí cambia su contraseña. Si no la recuerda, puede pedir un enlace por correo para crear otra.
 
-También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.',
+También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.
+
+Abajo ve los dispositivos donde su cuenta está abierta. Si no reconoce alguno, use «Cerrar otras sesiones» (pide su contraseña) y cambie la contraseña.',
         ],
         '/coordinacion/docentes' => [
             'title' => 'Docentes de la carrera',
@@ -220,7 +226,9 @@ Su formación y experiencia se escribe una sola vez y pasa a todos sus sílabos.
             'title' => 'Seguridad',
             'content' => 'Aquí cambia su contraseña. Si no la recuerda, puede pedir un enlace por correo para crear otra.
 
-También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.',
+También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.
+
+Abajo ve los dispositivos donde su cuenta está abierta. Si no reconoce alguno, use «Cerrar otras sesiones» (pide su contraseña) y cambie la contraseña.',
         ],
         '/docente/documentos-apoyo' => [
             'title' => 'Documentos de apoyo',
