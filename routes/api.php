@@ -25,6 +25,7 @@ use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
 use App\Modules\Library\Presentation\Http\Controllers\BibliographicCatalogController;
 use App\Modules\Library\Presentation\Http\Controllers\LibraryReviewController;
 use App\Modules\Operations\Presentation\Http\Controllers\AuditEventController;
+use App\Modules\Operations\Presentation\Http\Controllers\EmailPreferencesController;
 use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
 use App\Modules\Operations\Presentation\Http\Controllers\ScreenHelpController;
 use App\Modules\Operations\Presentation\Http\Controllers\SystemSettingsController;
@@ -102,6 +103,10 @@ Route::prefix('v1')->group(function (): void {
                 ->name('api.v1.notifications.index');
             Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])
                 ->name('api.v1.notifications.read-all');
+            Route::get('notifications/email-preferences', [EmailPreferencesController::class, 'show'])
+                ->name('api.v1.notifications.email-preferences.show');
+            Route::put('notifications/email-preferences', [EmailPreferencesController::class, 'update'])
+                ->middleware('throttle:20,1')->name('api.v1.notifications.email-preferences.update');
             Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])
                 ->name('api.v1.notifications.read');
             Route::post('notifications/{notification}/open', [NotificationController::class, 'open'])

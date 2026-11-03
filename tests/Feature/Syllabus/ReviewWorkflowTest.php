@@ -201,7 +201,8 @@ class ReviewWorkflowTest extends TestCase
             'detalles->from_state' => 'borrador',
             'detalles->to_state' => 'en_revision',
         ]);
-        $this->assertWorkflowNotification($syllabus->id, 'silabo.enviado');
+        // Coordinación ya no recibe aviso por cada envío: lo ve en Revisión y en el resumen diario.
+        $this->assertNoWorkflowNotification($syllabus->id, 'silabo.enviado');
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'signature' => $this->teacherSignature($syllabus, $this->teacher),
@@ -569,7 +570,8 @@ class ReviewWorkflowTest extends TestCase
     {
         [$syllabus, $revision] = $this->submitValidDraft();
 
-        $this->assertWorkflowNotification($syllabus->id, 'silabo.enviado');
+        // Coordinación ya no recibe aviso por cada envío: lo ve en Revisión y en el resumen diario.
+        $this->assertNoWorkflowNotification($syllabus->id, 'silabo.enviado');
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
             'justification' => 'Falta alinear los resultados de aprendizaje.',
         ])->assertSuccessful();
@@ -824,6 +826,11 @@ class ReviewWorkflowTest extends TestCase
                 DROP COLUMN quien_llena_definicion_campo, DROP COLUMN contenido_definicion_campo;
             ALTER TABLE secciones_plantilla DROP CONSTRAINT secciones_plantilla_orientacion_check, DROP COLUMN orientacion_seccion_plantilla;
             SQL);
+    }
+
+    private function assertNoWorkflowNotification(string $syllabusId, string $eventType): void
+    {
+        $this->assertFalse(InternalNotification::query()->where('tipo', $eventType)->where('recurso_id', $syllabusId)->exists());
     }
 
     private function assertWorkflowNotification(string $syllabusId, string $eventType): void

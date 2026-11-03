@@ -22,7 +22,6 @@ class UpdateSystemSettingsRequest extends FormRequest
         return match ((string) $this->route('section')) {
             'notificaciones' => [
                 'emails' => ['required', 'boolean'],
-                'digest' => ['required', 'boolean'],
                 'digest_time' => ['required', 'string', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
             ],
             'ia' => [
@@ -65,7 +64,6 @@ class UpdateSystemSettingsRequest extends FormRequest
         if ($section === 'notificaciones') {
             return [
                 'notifications.emails' => $this->boolean('emails'),
-                'notifications.digest' => $this->boolean('digest'),
                 'notifications.digest_time' => $this->string('digest_time')->toString(),
             ];
         }

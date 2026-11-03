@@ -59,18 +59,19 @@ class SystemSettingsTest extends TestCase
     public function test_notifications_change_at_once_without_password_and_are_audited(): void
     {
         $this->as('admin@silabos.test')->putJson(route('api.v1.admin.system-settings.update', 'notificaciones'), [
-            'emails' => false, 'digest' => true, 'digest_time' => '07:30',
+            'emails' => false, 'digest_time' => '07:30',
         ])->assertOk()
             ->assertJsonPath('notifications.emails.value', false)
             ->assertJsonPath('notifications.emails.source', 'pantalla')
-            ->assertJsonPath('notifications.digest_time.value', '07:30');
+            ->assertJsonPath('notifications.digest_time.value', '07:30')
+            ->assertJsonMissingPath('notifications.digest');
 
         $this->assertFalse(config('notifications.email.enabled'));
         $this->assertSame('07:30', config('notifications.digest.time'));
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'ajustes.notificaciones.actualizados']);
 
         $this->as('admin@silabos.test')->putJson(route('api.v1.admin.system-settings.update', 'notificaciones'), [
-            'emails' => true, 'digest' => true, 'digest_time' => '25:00',
+            'emails' => true, 'digest_time' => '25:00',
         ])->assertUnprocessable()->assertJsonValidationErrors('digest_time');
     }
 
@@ -116,7 +117,7 @@ class SystemSettingsTest extends TestCase
     public function test_queued_work_reads_the_latest_value_without_restarting(): void
     {
         $this->as('admin@silabos.test')->putJson(route('api.v1.admin.system-settings.update', 'notificaciones'), [
-            'emails' => false, 'digest' => true, 'digest_time' => '08:00',
+            'emails' => false, 'digest_time' => '08:00',
         ])->assertOk();
         config(['notifications.email.enabled' => true]);
 

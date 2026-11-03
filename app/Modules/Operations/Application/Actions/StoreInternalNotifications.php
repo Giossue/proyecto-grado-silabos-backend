@@ -3,6 +3,7 @@
 namespace App\Modules\Operations\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Operations\Application\EmailNoticeCatalog;
 use App\Modules\Operations\Application\NotificationPeriod;
 use App\Modules\Operations\Infrastructure\Mail\WorkflowNotificationMail;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
@@ -51,12 +52,14 @@ class StoreInternalNotifications
         return $recipients->count();
     }
 
-    // Un correo por aviso y persona, solo para los avisos que piden actuar y a cuentas con correo verificado.
+    // Un correo por aviso y persona, solo para los avisos que piden actuar, a cuentas con correo verificado
+    // y si la persona no lo apagó en Configuración › Notificaciones.
     private function email(User $recipient, string $eventType, string $title, string $message): void
     {
         if (! config('notifications.email.enabled')
             || ! in_array($eventType, (array) config('notifications.email.events'), true)
-            || ! $recipient->hasVerifiedEmail()) {
+            || ! $recipient->hasVerifiedEmail()
+            || ! app(EmailNoticeCatalog::class)->wants($recipient, $eventType)) {
             return;
         }
         $url = rtrim((string) config('app.frontend_url'), '/').'/';

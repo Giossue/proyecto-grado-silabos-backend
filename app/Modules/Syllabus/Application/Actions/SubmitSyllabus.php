@@ -131,18 +131,16 @@ class SubmitSyllabus
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision, 'from_state' => $from, 'to_state' => 'en_revision', 'fingerprint' => $revision->huella_sha256],
             );
-            $eventType = match (true) {
-                $toLibrary => 'silabo.reenviado_biblioteca',
-                $action === 'enviar' => 'silabo.enviado',
-                default => 'silabo.reenviado',
-            };
-            $this->notifications->execute(
-                syllabus: $locked,
-                eventType: $eventType,
-                deduplicationKey: "{$eventType}:{$revision->id}",
-                recipientIds: $toLibrary ? $this->recipients->librarians() : $this->recipients->coordinatorsFor($locked),
-                revisionNumber: $revision->numero_revision,
-            );
+            // Coordinación no recibe aviso por cada envío: lo ve en Revisión y en el resumen diario.
+            if ($toLibrary) {
+                $this->notifications->execute(
+                    syllabus: $locked,
+                    eventType: 'silabo.reenviado_biblioteca',
+                    deduplicationKey: "silabo.reenviado_biblioteca:{$revision->id}",
+                    recipientIds: $this->recipients->librarians(),
+                    revisionNumber: $revision->numero_revision,
+                );
+            }
 
             return $revision;
         });

@@ -148,7 +148,7 @@ class LibraryReviewTest extends TestCase
     public function test_biblioteca_revisa_tras_coordinacion_y_devuelve_al_docente_que_reenvia_directo(): void
     {
         [$syllabus, $revision] = $this->submittedRevision();
-        $this->assertNotified($this->people['coordinator'][0]->id, 'silabo.enviado', 'coordinación lo revisa primero');
+        $this->assertNotNotified($this->people['coordinator'][0]->id, 'silabo.enviado');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 0);
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
             'reasons' => ['codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
@@ -342,6 +342,18 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->people['librarian'][0])])->assertForbidden();
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertNull($revision->fresh()->correccion_etapa);
+    }
+
+    public function test_el_coordinador_que_apago_el_resumen_diario_no_lo_recibe(): void
+    {
+        Mail::fake();
+        $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
+        $coordinator->forceFill(['correo_verificado_en' => now(), 'preferencias_correo' => ['coordinacion.resumen_diario' => false]])->save();
+        $this->submittedRevision();
+
+        Artisan::call('avisos:resumen-coordinacion');
+
+        Mail::assertNotQueued(CoordinatorSummaryMail::class);
     }
 
     public function test_el_resumen_diario_avisa_a_coordinacion_solo_de_lo_que_espera_su_revision(): void

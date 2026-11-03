@@ -24,7 +24,6 @@ final class SystemSettings
     /** @var array<string, array{section: string, config: string}> */
     public const FIELDS = [
         'notifications.emails' => ['section' => 'notificaciones', 'config' => 'notifications.email.enabled'],
-        'notifications.digest' => ['section' => 'notificaciones', 'config' => 'notifications.digest.enabled'],
         'notifications.digest_time' => ['section' => 'notificaciones', 'config' => 'notifications.digest.time'],
         'ai.driver' => ['section' => 'ia', 'config' => 'ai.driver'],
         'ai.base_url' => ['section' => 'ia', 'config' => 'ai.hosted.base_url'],
