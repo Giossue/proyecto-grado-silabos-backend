@@ -30,7 +30,7 @@ Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si p
             'title' => 'Convocatorias',
             'content' => 'Cada fila es un período lectivo y su convocatoria institucional: las fechas de clases y las fechas en que los docentes elaboran y entregan sus sílabos. Solo puede haber una convocatoria abierta o pausada a la vez.
 
-Desde el menú de la fila puede abrir, pausar, reanudar, finalizar o eliminar la convocatoria, y extender el plazo de entrega. Cada coordinación inicia después la convocatoria de su carrera.
+Al pulsar una fila se abren sus opciones: pausar, reanudar, prorrogar el plazo, finalizar o eliminar la convocatoria; un período sin convocatoria se puede abrir o eliminar. Cada coordinación inicia después la convocatoria de su carrera.
 
 El plazo se puede prorrogar 2 veces como máximo, y nunca después del último día de clases del período.
 
@@ -40,7 +40,7 @@ Eliminar solo se puede con la convocatoria abierta o pausada. Borra todos sus s�
 
 Mientras la convocatoria esté abierta, la plantilla del sílabo no se puede modificar; para corregirla, pause el proceso.
 
-Arriba están los indicadores de la convocatoria vigente. El botón rojo de check, abajo a la derecha, abre «Antes de empezar»: los pasos previos (facultades, carreras, cuentas, coordinadores y plantilla); al pulsar uno le muestra en el menú dónde se hace. «Nueva convocatoria» se habilita cuando están todos.',
+Arriba están los indicadores de la convocatoria vigente. El botón rojo de check, abajo a la derecha, abre «Antes de empezar»: los pasos previos (facultades, carreras, cuentas, coordinadores y plantilla); al pulsar uno le muestra en el menú dónde se hace. «Nueva convocatoria» se habilita cuando están todos y no hay otra abierta o pausada.',
         ],
         '/admin/estructura-academica' => [
             'title' => 'Facultades y carreras',
