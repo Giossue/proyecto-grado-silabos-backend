@@ -144,7 +144,7 @@ También puede activar la doble verificación: al entrar le pedirá un código d
             'title' => 'Docentes de la carrera',
             'content' => 'Aquí están los docentes de su carrera.
 
-Cree uno o suba varios con un Excel; cada uno recibe un correo para entrar. Pulse un docente para ver sus datos, reenviarle la invitación o quitarlo de la carrera. Mientras haya una convocatoria en curso no se puede quitar a nadie.',
+Cree uno o suba varios con un Excel; cada uno recibe un correo para entrar. Si la persona ya tiene cuenta, solo se suma a su carrera; si no, recibe el enlace de registro. Pulse un docente para ver sus datos o quitarlo de la carrera; su cuenta (contraseña, datos, invitaciones) la gestiona Administración. Mientras haya una convocatoria en curso no se puede quitar a nadie.',
         ],
         '/coordinacion/malla' => [
             'title' => 'Malla curricular',

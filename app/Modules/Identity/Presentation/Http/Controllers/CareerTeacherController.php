@@ -7,13 +7,11 @@ use App\Models\User;
 use App\Modules\Identity\Application\Actions\CreateCareerTeacher;
 use App\Modules\Identity\Application\Actions\ImportCareerTeachers;
 use App\Modules\Identity\Application\Actions\RemoveCareerTeacher;
-use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetTemplate;
 use App\Modules\Identity\Domain\PersonNameColumns;
 use App\Modules\Identity\Presentation\Http\Requests\CreateCareerTeacherRequest;
 use App\Modules\Identity\Presentation\Http\Requests\ImportSpreadsheetRequest;
-use App\Modules\Identity\Presentation\Http\Requests\UpdateCareerTeacherRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -54,20 +52,6 @@ class CareerTeacherController extends Controller
         $rows = $reader->read($request->file('file'), ImportCareerTeachers::COLUMNS);
 
         return response()->json($action->execute($rows, $actor, $request, $request->boolean('confirm')));
-    }
-
-    public function update(User $user, UpdateCareerTeacherRequest $request, UpdateManagedUserProfile $action): JsonResponse
-    {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $previousEmail = $user->correo_electronico;
-        $updated = $action->execute($user, $request->profileData(), $actor, $request);
-
-        $message = $updated->correo_electronico !== $previousEmail
-            ? 'Docente actualizado. La invitación anterior se invalidó y se envió una nueva al correo corregido.'
-            : 'Docente actualizado.';
-
-        return response()->json(['message' => $message]);
     }
 
     public function destroy(User $user, Request $request, RemoveCareerTeacher $action): JsonResponse

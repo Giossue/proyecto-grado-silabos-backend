@@ -78,16 +78,15 @@ class CareerTeacherTest extends TestCase
         $this->assertDatabaseHas('usuarios', ['correo_electronico' => 'nuevo@silabos.test']);
     }
 
-    public function test_coordinator_can_resend_a_pending_teacher_activation_for_its_career(): void
+    public function test_adding_a_pending_teacher_again_sends_a_new_link_when_the_previous_one_expired(): void
     {
         $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
         $user = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
-        $invitation = ActivationInvitation::query()->where('usuario_id', $user->id)->firstOrFail();
-        $invitation->update(['expira_en' => now()->subMinute()]);
+        ActivationInvitation::query()->where('usuario_id', $user->id)->firstOrFail()->update(['expira_en' => now()->subMinute()]);
 
-        $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $user))
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())
             ->assertSuccessful()
-            ->assertJsonPath('message', 'Invitación de activación enviada a nuevo@silabos.test.');
+            ->assertJsonPath('message', 'El docente ya está disponible en su carrera. Conserva su nombre y acceso actuales.');
 
         $this->assertDatabaseCount('invitaciones_activacion', 2);
         Mail::assertQueued(ManagedUserActivationMail::class, 2);
@@ -460,75 +459,96 @@ class CareerTeacherTest extends TestCase
         $this->assertNull($teachers->firstWhere('id', $inactive->id));
     }
 
-    public function test_coordinator_corrects_name_and_email_of_a_pending_teacher_and_reissues_the_invitation(): void
+    public function test_coordinator_only_adds_a_pending_account_and_cannot_edit_reinvite_or_delete_it(): void
+    {
+        $otherCareer = Career::query()->create([
+            'facultad_id' => Career::query()->firstOrFail()->facultad_id,
+            'nombre' => 'Turismo',
+            'codigo_carrera' => 'TURISMO',
+            'cantidad_ciclos_malla' => 8,
+            'activo' => true,
+        ]);
+        $pending = User::query()->create([
+            'nombre' => 'Coordinador Pendiente De Turismo',
+            'correo_electronico' => 'pendiente.turismo@silabos.test',
+            'contrasena' => Hash::make('Original-2026!'),
+            'activo' => true,
+        ]);
+        RoleAssignment::query()->create(['usuario_id' => $pending->id, 'rol' => RoleCode::Coordinator->value, 'carrera_id' => $otherCareer->id, 'activo' => true]);
+        $original = $pending->fresh()->getAttributes();
+
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => $pending->correo_electronico])
+            ->assertOk()
+            ->assertJsonPath('message', 'Docente incorporado a su carrera. Conserva su nombre y acceso actuales.');
+        $this->assertTrue($pending->roleAssignments()->effective()->where(['rol' => RoleCode::Teacher->value, 'carrera_id' => $this->context->carrera_id])->exists());
+        Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo('pendiente.turismo@silabos.test'));
+
+        $this->patchJson("/api/v1/coordination/academic/teachers/{$pending->id}", [
+            'nombre' => 'Otra Persona Con Nombre',
+            'correo_electronico' => 'atacante@silabos.test',
+        ])->assertMethodNotAllowed();
+        $this->postJson("/api/v1/coordination/academic/teachers/{$pending->id}/resend-activation")->assertNotFound();
+        $this->postJson(route('api.v1.admin.users.activation.resend', $pending))->assertForbidden();
+        $this->deleteJson(route('api.v1.admin.users.destroy', $pending))->assertForbidden();
+
+        $this->assertSame($original, $pending->fresh()->getAttributes());
+        $this->assertTrue(Hash::check('Original-2026!', $pending->fresh()->contrasena));
+        $this->assertNull($pending->fresh()->correo_verificado_en);
+        $this->assertTrue($pending->roleAssignments()->effective()->where('rol', RoleCode::Coordinator->value)->exists());
+        $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'atacante@silabos.test']);
+    }
+
+    public function test_coordinator_cannot_delete_a_pending_teacher_it_created(): void
     {
         $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
         $user = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
-        $first = ActivationInvitation::query()->where('usuario_id', $user->id)->firstOrFail();
 
-        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $user), [
-            'nombre' => 'ana maría pérez gómez',
-            'correo_electronico' => ' Corregido@silabos.test ',
-        ])->assertOk()->assertJsonPath('message', 'Docente actualizado. La invitación anterior se invalidó y se envió una nueva al correo corregido.');
+        $this->deleteJson(route('api.v1.admin.users.destroy', $user))->assertForbidden();
+        $this->postJson(route('api.v1.admin.users.activation.resend', $user))->assertForbidden();
 
-        $user->refresh();
-        $this->assertSame('corregido@silabos.test', $user->correo_electronico);
-        $this->assertNotSame('ana maría pérez gómez', $user->nombre);
-        $this->assertStringContainsStringIgnoringCase('ana maría pérez gómez', $user->nombre);
-        $this->assertNotNull($first->fresh()->invalidada_en);
-        $this->assertDatabaseCount('invitaciones_activacion', 2);
-        Mail::assertQueued(ManagedUserActivationMail::class, 2);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.perfil_actualizado', 'usuario_id' => $this->coordinator->id, 'recurso_id' => $user->id]);
+        $this->assertDatabaseHas('usuarios', ['usuario_id' => $user->id]);
+        $this->assertDatabaseCount('invitaciones_activacion', 1);
     }
 
-    public function test_coordinator_cannot_change_the_name_or_the_email_of_an_activated_teacher(): void
+    public function test_a_librarian_cannot_be_incorporated_as_a_teacher(): void
     {
-        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
 
-        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
-            'nombre' => $teacher->nombre,
-            'correo_electronico' => 'otro@silabos.test',
-        ])->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => $librarian->correo_electronico])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.correo_electronico.0', 'No se puede incorporar como docente una cuenta con el rol Bibliotecario.');
 
-        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
-            'nombre' => 'Docente Demo Cuarto Nombre',
-            'correo_electronico' => 'docente@silabos.test',
-        ])->assertUnprocessable()->assertJsonValidationErrors('nombre');
-
-        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
-            'nombre' => $teacher->nombre,
-            'correo_electronico' => 'docente@silabos.test',
-        ])->assertOk();
-
-        $this->assertNotSame('DOCENTE DEMO CUARTO NOMBRE', $teacher->fresh()->nombre);
-        $this->assertSame('docente@silabos.test', $teacher->fresh()->correo_electronico);
+        $this->assertSame([RoleCode::Librarian->value], $librarian->roleAssignments()->effective()->pluck('rol')->all());
         Mail::assertNothingQueued();
     }
 
-    public function test_coordinator_cannot_edit_accounts_outside_its_teachers(): void
+    public function test_coordinator_adds_a_verified_teacher_of_another_career_and_can_remove_it_from_its_own(): void
     {
-        $admin = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
-        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $admin), $this->payload())->assertForbidden();
-
-        $outsider = User::query()->create([
-            'nombre' => 'Docente Ajeno',
-            'correo_electronico' => 'ajeno@silabos.test',
+        $other = User::query()->create([
+            'nombre' => 'Docente Compartido Entre Carreras',
+            'correo_electronico' => 'compartido@silabos.test',
             'contrasena' => Hash::make('Demo-2026!'),
+            'correo_verificado_en' => now(),
             'activo' => true,
         ]);
-        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $outsider), $this->payload())->assertForbidden();
+        $career = Career::query()->create([
+            'facultad_id' => Career::query()->firstOrFail()->facultad_id,
+            'nombre' => 'Turismo',
+            'codigo_carrera' => 'TURISMO',
+            'cantidad_ciclos_malla' => 8,
+            'activo' => true,
+        ]);
+        RoleAssignment::query()->create(['usuario_id' => $other->id, 'rol' => RoleCode::Teacher->value, 'carrera_id' => $career->id, 'activo' => true]);
+        $original = $other->fresh()->getAttributes();
 
-        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
-            'nombre' => $teacher->nombre,
-            'correo_electronico' => $teacher->correo_electronico,
-            'active' => false,
-        ])->assertUnprocessable()->assertJsonValidationErrors('active');
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => $other->correo_electronico])
+            ->assertOk()
+            ->assertJsonPath('message', 'Docente incorporado a su carrera. Conserva su nombre y acceso actuales.');
+        $this->assertSame($original, $other->fresh()->getAttributes());
+        $this->assertSame(2, $other->roleAssignments()->effective()->count());
+        Mail::assertNothingQueued();
 
-        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
-            'nombre' => $teacher->nombre,
-            'correo_electronico' => 'admin@silabos.test',
-        ])->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
-        $this->assertTrue($teacher->fresh()->activo);
+        $this->deleteJson(route('api.v1.coordination.academic.teachers.destroy', $other))->assertOk();
+        $this->assertSame([$career->id], $other->roleAssignments()->effective()->pluck('carrera_id')->all());
     }
 }

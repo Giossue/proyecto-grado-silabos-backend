@@ -5,6 +5,7 @@ namespace App\Modules\Identity\Application\Actions;
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Identity\Domain\RoleCombination;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\CoordinationHandover;
@@ -48,6 +49,10 @@ class AssignRole
                         ? 'El rol Administrador es exclusivo y no puede agregarse mientras la cuenta conserve otro rol activo.'
                         : 'Una cuenta con el rol Administrador solo puede conservar ese rol.',
                 ]);
+            }
+
+            if (RoleCombination::conflicts($role, $activeRoles)) {
+                throw ValidationException::withMessages(['role_code' => RoleCombination::MESSAGE]);
             }
 
             $careerId = $role->hasCareerScope() ? ($data['career_id'] ?? null) : null;

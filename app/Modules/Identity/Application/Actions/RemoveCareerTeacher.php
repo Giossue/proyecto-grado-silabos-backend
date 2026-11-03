@@ -26,7 +26,7 @@ class RemoveCareerTeacher
     /** @return array{removed_parallel_assignments: int} */
     public function execute(User $target, User $actor, Request $request): array
     {
-        Gate::forUser($actor)->authorize('updateCareerTeacher', $target);
+        Gate::forUser($actor)->authorize('removeCareerTeacher', $target);
         $activeRole = $this->roles->resolve($request);
         abort_unless($activeRole?->carrera_id !== null, 403);
         $careerId = $activeRole->carrera_id;

@@ -17,6 +17,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Identity\Domain\RoleCombination;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
@@ -200,6 +201,10 @@ class CreateAcademicRecord
         $isCoordinator = RoleAssignment::query()->effective()
             ->where(['usuario_id' => $userId, 'carrera_id' => $careerId, 'rol' => RoleCode::Coordinator->value])
             ->exists();
+
+        if ($isCoordinator && RoleCombination::conflicts(RoleCode::Teacher, RoleAssignment::query()->effective()->where('usuario_id', $userId)->pluck('rol'))) {
+            throw ValidationException::withMessages(['user_id' => RoleCombination::MESSAGE]);
+        }
 
         if ($isCoordinator) {
             $assignment = RoleAssignment::query()->where($identity)->orderByDesc('activo')->first();

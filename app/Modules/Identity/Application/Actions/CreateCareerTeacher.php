@@ -98,7 +98,10 @@ class CreateCareerTeacher
         });
     }
 
-    /** Por qué una cuenta que ya existe no puede incorporarse como docente; null si puede. */
+    /**
+     * Por qué una cuenta que ya existe no puede incorporarse como docente; null si puede.
+     * Administración y Biblioteca no pueden ser docentes (RoleCombination).
+     */
     public function blockedReason(?User $user): ?string
     {
         if ($user === null) {
@@ -113,6 +116,13 @@ class CreateCareerTeacher
             ->where('rol', RoleCode::Administrator->value)
             ->exists()) {
             return 'No se puede incorporar como docente una cuenta con el rol Administrador.';
+        }
+        if (RoleAssignment::query()
+            ->where('usuario_id', $user->id)
+            ->effective()
+            ->where('rol', RoleCode::Librarian->value)
+            ->exists()) {
+            return 'No se puede incorporar como docente una cuenta con el rol Bibliotecario.';
         }
 
         return null;

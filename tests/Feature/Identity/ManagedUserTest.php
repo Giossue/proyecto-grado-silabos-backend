@@ -345,6 +345,37 @@ class ManagedUserTest extends TestCase
         ]);
     }
 
+    public function test_library_and_career_roles_are_never_combined_in_any_order(): void
+    {
+        $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $message = 'Administración y Biblioteca no pueden tener los roles Docente ni Coordinador.';
+
+        foreach ([RoleCode::Teacher, RoleCode::Coordinator] as $role) {
+            $this->actingAsAdministrator()
+                ->patchJson(route('api.v1.admin.users.update', $librarian), [
+                    ...$this->identityOf($librarian),
+                    'role_code' => $role->value,
+                    'career_id' => $career->id,
+                    'replace_coordinator' => true,
+                ])
+                ->assertUnprocessable()
+                ->assertJsonPath('errors.role_code.0', $message);
+        }
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.users.update', $teacher), [
+                ...$this->identityOf($teacher),
+                'role_code' => RoleCode::Librarian->value,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.role_code.0', $message);
+
+        $this->assertSame([RoleCode::Librarian->value], $librarian->roleAssignments()->effective()->pluck('rol')->all());
+        $this->assertSame([RoleCode::Teacher->value], $teacher->roleAssignments()->effective()->pluck('rol')->all());
+        $this->assertTrue($this->coordinatorHolder()->roleAssignments()->effective()->where('rol', RoleCode::Coordinator->value)->exists());
+    }
+
     public function test_administrator_can_assign_the_same_coordinator_to_another_career(): void
     {
         $coordinator = $this->coordinatorHolder();

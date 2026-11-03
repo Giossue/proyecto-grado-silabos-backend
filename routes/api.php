@@ -255,8 +255,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.import-template');
             Route::post('coordination/academic/teachers/import', [CareerTeacherController::class, 'import'])
                 ->middleware(['active-role', 'throttle:10,1'])->name('api.v1.coordination.academic.teachers.import');
-            Route::patch('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'update'])
-                ->middleware('active-role')->name('api.v1.coordination.academic.teachers.update');
             Route::delete('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'destroy'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.destroy');
             Route::get('coordination/support-documents', [SupportDocumentController::class, 'coordinationIndex'])
@@ -267,8 +265,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid('document')->name('api.v1.coordination.support-documents.destroy');
             Route::get('support-documents/{document}/view', [SupportDocumentController::class, 'view'])
                 ->middleware('active-role')->whereUuid('document')->name('api.v1.support-documents.view');
-            Route::post('coordination/academic/teachers/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
-                ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.coordination.academic.teachers.activation.resend');
             Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.parallels.store');
             Route::patch('coordination/academic/parallels/{parallel}', [CareerAcademicStructureController::class, 'updateParallel'])

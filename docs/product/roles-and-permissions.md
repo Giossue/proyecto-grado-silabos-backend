@@ -21,13 +21,13 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 | Administrador | No | Exclusivo: no se combina con otro rol activo. |
 | Coordinador | Sí | Una sola coordinación activa por carrera. Se asigna en «Usuarios y roles»; si la carrera ya tiene coordinador, se confirma el reemplazo y el saliente deja de coordinarla en el mismo paso. En la convocatoria en curso no queda ninguna firma del saliente: lo que aprobó vuelve a «En coordinación» para que el entrante lo revise y firme, y biblioteca verifica de nuevo. El contenido y la firma del docente no cambian. |
 | Docente | Sí | Trabaja solo en los sílabos de sus paralelos. |
-| Bibliotecario | No | Revisa toda la universidad. Se combina con Coordinador o Docente. |
+| Bibliotecario | No | Revisa toda la universidad. No se combina con Coordinador ni Docente. |
 
 ## Matriz
 
 | Capacidad | Administrador | Coordinador | Docente | Bibliotecario |
 |---|---|---|---|---|
-| Usuarios y roles (también por Excel) | Sí | Solo docentes de su carrera: crear, editar nombre y correo, quitar de la carrera, reenviar invitación, importar desde Excel | No | No |
+| Usuarios y roles (también por Excel) | Sí; solo Administración reinvita o elimina cuentas pendientes | Solo agrega docentes a su carrera (también desde Excel) y los quita de ella; no edita, activa, reinvita ni elimina cuentas | No | No |
 | Facultades, carreras (también por Excel), logos y coordinador de carrera | Sí | No | No | No |
 | Malla: asignaturas, requisitos y ciclos (también por Excel) | No | Sí, en su carrera, con la convocatoria de la carrera pausada o sin abrir | No | No |
 | Paralelos y docente de cada paralelo | No | Sí, en su carrera, también con la convocatoria abierta | No | No |
@@ -69,11 +69,17 @@ Fuente: `app/Modules/Identity/Application/ActiveRole.php`.
 
 - Administración crea cuentas y asigna roles. La persona recibe un enlace para verificar
   su correo y crear su contraseña.
-- Coordinación crea o incorpora docentes en su carrera. Si el correo ya existe, conserva
-  la cuenta y le agrega el rol.
-- El correo solo se corrige mientras la cuenta está pendiente de activación. Corregirlo
-  invalida el enlace anterior y envía otro.
-- El docente no edita su nombre ni su correo; lo pide a Coordinación o Administración.
+- Coordinación solo agrega docentes a su carrera. Si el correo ya existe, sea cual sea su
+  estado, conserva la cuenta tal cual y solo le agrega el rol docente de esa carrera; si
+  está pendiente y su enlace venció, se le envía uno nuevo a su propio correo. Si no existe,
+  se crea y recibe el enlace de registro como en el alta de Administración. Coordinación
+  no corrige nombre ni correo, no activa, no reinvita ni elimina cuentas: eso es de
+  Administración. Un docente puede serlo de varias carreras y facultades.
+- Administración y Biblioteca no pueden ser docentes ni coordinadores, en ningún orden
+  (`RoleCombination`). Se valida en la aplicación al asignar un rol, no en la base.
+- El correo solo se corrige, en Administración, mientras la cuenta está pendiente de
+  activación. Corregirlo invalida el enlace anterior y envía otro.
+- El docente no edita su nombre ni su correo; lo pide a Administración.
 - Un rol se retira desde «Editar usuario». El único rol vigente no se retira: se
   desactiva la cuenta.
 

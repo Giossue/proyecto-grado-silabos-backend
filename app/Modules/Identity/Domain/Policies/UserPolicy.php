@@ -34,7 +34,11 @@ class UserPolicy
         return $this->viewAny($actor);
     }
 
-    public function updateCareerTeacher(User $actor, User $target): bool
+    /**
+     * El coordinador solo agrega docentes a su carrera y los quita de ella: no edita, activa,
+     * reinvita ni borra la cuenta, aunque esté pendiente o tenga roles en otras carreras.
+     */
+    public function removeCareerTeacher(User $actor, User $target): bool
     {
         if (! $this->createCareerTeacher($actor) || ! $target->activo) {
             return false;
@@ -42,15 +46,7 @@ class UserPolicy
 
         $careerId = $this->roles->resolve(request())?->carrera_id;
 
-        if ($careerId === null || $target->roleAssignments()->effective()->where('rol', RoleCode::Administrator->value)->exists()) {
-            return false;
-        }
-
-        $outsideCareer = $target->roleAssignments()
-            ->effective()
-            ->where(fn ($query) => $query->whereNull('carrera_id')->orWhere('carrera_id', '!=', $careerId))
-            ->exists();
-        if ($outsideCareer && $target->hasVerifiedEmail()) {
+        if ($careerId === null) {
             return false;
         }
 
@@ -66,24 +62,14 @@ class UserPolicy
         return $this->viewAny($actor) && $actor->id !== $target->id;
     }
 
+    /** Reinvitar o borrar una cuenta pendiente es solo de Administración. */
     public function managePending(User $actor, User $target): bool
     {
         if (! $actor->activo || $actor->id === $target->id || ! $target->activo || $target->hasVerifiedEmail()) {
             return false;
         }
 
-        $activeRole = $this->roles->resolve(request());
-        if ($activeRole?->role->codigo_rol === RoleCode::Administrator->value) {
-            return true;
-        }
-
-        return $activeRole?->role->codigo_rol === RoleCode::Coordinator->value
-            && $activeRole->carrera_id !== null
-            && $target->roleAssignments()
-                ->effective()
-                ->where('rol', RoleCode::Teacher->value)
-                ->where('carrera_id', $activeRole->carrera_id)
-                ->exists();
+        return $this->roles->resolve(request())?->role->codigo_rol === RoleCode::Administrator->value;
     }
 
     public function updateProfileData(User $actor, User $target): bool
