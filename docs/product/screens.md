@@ -47,7 +47,7 @@ muestra «Página no encontrada».
 | COR-16 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Pestañas «Materias» (proyectos de carrera de las asignaturas e importación mediante plantilla Excel) y «Documentos de apoyo» (COR-17). Detalle abajo. |
 | COR-17 | Documentos de apoyo | pestaña en COR-16 (`/coordinacion/proyecto-carrera?tab=documentos`; `/coordinacion/documentos-apoyo` redirige ahí) | Material de la carrera para sus docentes (proyecto de carrera, TIC y TAC, habilidades blandas, etc.). «Subir documento» acepta un PDF, Word o Excel de hasta 20 MB y pide escribir su nombre. Tabla con documento, tamaño y fecha de subida, sin tipo ni quién lo subió: todos se ven como PDF. Pulsar la fila abre el documento en una ventana aparte. «Subir documento» va en la cabecera solo con esta pestaña abierta (con «Materias», «Importar desde Excel»). Botón de papelera en la fila (tooltip «Eliminar»), con confirmación, que borra el documento del servidor; al abrir un documento no aparece indicador de carga junto al nombre. Word y Excel muestran «Preparando vista» hasta que el servidor los pasa a PDF; si no se puede, «No se pudo preparar la vista» y hay que volver a subirlo. No depende de la convocatoria ni muestra el aviso de edición bloqueada. |
 
-COR-06 también ofrece «Reiniciar sílabo» (COR-10) solo con el sílabo aprobado y la convocatoria abierta o pausada,
+COR-06 también ofrece «Reiniciar sílabo» (COR-10) solo con el sílabo aprobado y la convocatoria abierta (no en pausa),
 y el botón «Documentos» (DOC-10).
 
 ## Docente

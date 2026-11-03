@@ -43,7 +43,7 @@ class NotificationEmailTest extends TestCase
         Mail::assertQueued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo('docente@silabos.test')
             && $mail->title === 'Título del aviso' && $mail->body === 'Mensaje del aviso.' && $mail->name === $this->teacher->nombre);
 
-        foreach (['silabo.eliminado', 'proceso.plantilla_rehecho', 'proceso.plazo_extendido', 'silabo.regenerado', 'documento.exportacion_fallida'] as $event) {
+        foreach (['biblioteca.aprobado', 'biblioteca.correccion_solicitada', 'proceso.plazo_extendido', 'documento.exportacion_fallida', 'aviso.prueba'] as $event) {
             $this->notify($event, key: $event);
         }
         Mail::assertQueued(WorkflowNotificationMail::class, 3);
@@ -110,7 +110,7 @@ class NotificationEmailTest extends TestCase
                 }
             }
         };
-        $defaults = ['convocatoria.abierta', 'convocatoria.reanudada', 'silabo.correccion_solicitada', 'silabo.devuelto_borrador', 'silabo.aprobado', 'coordinacion.aprobado', 'silabo.reenviado_biblioteca', 'proceso.reanudado'];
+        $defaults = ['convocatoria.abierta', 'convocatoria.reanudada', 'silabo.correccion_solicitada', 'silabo.devuelto_borrador', 'silabo.aprobado', 'coordinacion.aprobado', 'silabo.reenviado_biblioteca', 'proceso.reanudado', 'silabo.eliminado', 'silabo.regenerado', 'proceso.plantilla_rehecho'];
 
         foreach ([['TRUE', ''], ['', '8am'], ['1,true', '25:00'], ['silabo.eliminado, silabo.regenerado', '07:30']] as [$events, $time]) {
             $config = $load(['NOTIFICATION_EMAIL_EVENTS' => $events, 'NOTIFICATION_DIGEST_TIME' => $time]);

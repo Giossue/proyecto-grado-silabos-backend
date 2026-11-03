@@ -149,7 +149,6 @@ class LibraryReviewTest extends TestCase
     public function test_biblioteca_revisa_tras_coordinacion_y_devuelve_al_docente_que_reenvia_directo(): void
     {
         [$syllabus, $revision] = $this->submittedRevision();
-        $this->assertNotNotified($this->people['coordinator'][0]->id, 'silabo.enviado');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 0);
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
             'reasons' => ['codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
@@ -198,6 +197,9 @@ class LibraryReviewTest extends TestCase
         ])->assertCreated();
         $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id, 'correccion_etapa' => 'biblioteca']);
         $this->assertNotified($this->people['teacher'][0]->id, 'silabo.correccion_solicitada', 'Corríjalo y reenvíelo');
+        $notice = $this->assertNotified($this->people['coordinator'][0]->id, 'biblioteca.correccion_solicitada', 'Biblioteca pidió corregir la bibliografía');
+        $this->as('coordinator')->postJson(route('api.v1.notifications.open', $notice))
+            ->assertOk()->assertJsonPath('path', "/coordinacion/revisiones/{$revision->id}");
         $this->assertSame('correccion_solicitada', $syllabus->fresh()->estado);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertJsonPath('reviews.data.0.state', 'atendido')->assertJsonPath('reviews.data.0.outcome', 'devuelto');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
@@ -307,6 +309,9 @@ class LibraryReviewTest extends TestCase
         );
         $this->assertNotified($this->people['teacher'][0]->id, 'silabo.aprobado', 'Ya puede descargar el PDF firmado');
         $this->assertNotNotified($this->people['coordinator'][0]->id, 'silabo.aprobado');
+        $notice = $this->assertNotified($this->people['coordinator'][0]->id, 'biblioteca.aprobado', 'Biblioteca aprobó el sílabo');
+        $this->as('coordinator')->postJson(route('api.v1.notifications.open', $notice))
+            ->assertOk()->assertJsonPath('path', "/coordinacion/revisiones/{$revision->id}");
     }
 
     public function test_con_otro_motivo_biblioteca_escribe_el_texto_y_se_une_a_los_motivos_marcados(): void

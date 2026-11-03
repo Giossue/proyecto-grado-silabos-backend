@@ -39,6 +39,14 @@ final class WorkflowNotificationMessages
                 'Corrección solicitada',
                 "Se solicitó corregir el sílabo {$subject}{$revisionLabel}. Corríjalo y reenvíelo.",
             ],
+            'biblioteca.aprobado' => [
+                'Biblioteca aprobó un sílabo',
+                "Biblioteca aprobó el sílabo {$subject}{$revisionLabel}. Quedó aprobado y firmado.",
+            ],
+            'biblioteca.correccion_solicitada' => [
+                'Biblioteca pidió una corrección',
+                "Biblioteca pidió corregir la bibliografía del sílabo {$subject}{$revisionLabel}. El docente lo corrige y lo reenvía directo a biblioteca.",
+            ],
             'silabo.aprobado' => [
                 'Sílabo aprobado',
                 "Biblioteca aprobó el sílabo {$subject}{$revisionLabel}. Ya puede descargar el PDF firmado.",

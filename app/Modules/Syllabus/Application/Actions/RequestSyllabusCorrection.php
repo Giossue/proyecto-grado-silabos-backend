@@ -80,6 +80,15 @@ class RequestSyllabusCorrection
                 recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
             );
+            if ($stage === ReviewStage::LIBRARY) {
+                $this->notifications->execute(
+                    syllabus: $syllabus,
+                    eventType: 'biblioteca.correccion_solicitada',
+                    deduplicationKey: "biblioteca.correccion_solicitada:{$revision->id}",
+                    recipientIds: $this->recipients->coordinatorsFor($syllabus),
+                    revisionNumber: $revision->numero_revision,
+                );
+            }
 
             return $locked;
         });

@@ -10,6 +10,8 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
+use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -28,6 +30,8 @@ class VerifyBibliography
         private readonly CanonicalHasher $hasher,
         private readonly RequestSyllabusExport $exports,
         private readonly SignSyllabusDecision $signing,
+        private readonly ScheduleWorkflowNotification $notifications,
+        private readonly WorkflowNotificationRecipients $recipients,
     ) {}
 
     public function execute(SyllabusRevision $revision, ?DecisionSignature $signature, User $actor, Request $request): LibrarySubmission
@@ -87,6 +91,13 @@ class VerifyBibliography
                     'fingerprint' => $fingerprint,
                     'self_approved' => $revision->enviado_por === $actor->id,
                 ],
+            );
+            $this->notifications->execute(
+                syllabus: $syllabus,
+                eventType: 'biblioteca.aprobado',
+                deduplicationKey: "biblioteca.aprobado:{$revision->id}",
+                recipientIds: $this->recipients->coordinatorsFor($syllabus),
+                revisionNumber: $revision->numero_revision,
             );
             $this->exports->execute($revision, $approval->id, $actor, $request);
 

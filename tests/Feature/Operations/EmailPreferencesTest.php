@@ -30,7 +30,7 @@ class EmailPreferencesTest extends TestCase
             ->map(fn (array $option): string => $option['type'].':'.($option['enabled'] ? 'si' : 'no'))->all();
 
         $this->assertSame([
-            'docente.resumen_diario:si', 'convocatoria.abierta:si', 'convocatoria.reanudada:si', 'silabo.correccion_solicitada:si', 'silabo.devuelto_borrador:si', 'silabo.aprobado:si',
+            'docente.resumen_diario:si', 'convocatoria.abierta:si', 'convocatoria.reanudada:si', 'silabo.correccion_solicitada:si', 'silabo.devuelto_borrador:si', 'silabo.aprobado:si', 'silabo.reiniciado:si',
         ], $types('docente@silabos.test'));
         $this->assertSame(['coordinacion.resumen_diario:si', 'proceso.reanudado:si'], $types('coordinador@silabos.test'));
         $this->assertSame(['biblioteca.resumen_diario:si', 'coordinacion.aprobado:si', 'silabo.reenviado_biblioteca:si', 'proceso.reanudado:si'], $types('bibliotecario@silabos.test'));
@@ -53,6 +53,25 @@ class EmailPreferencesTest extends TestCase
         $this->as('docente@silabos.test')->putJson(route('api.v1.notifications.email-preferences.update'), [
             'preferences' => ['coordinacion.resumen_diario' => false],
         ])->assertUnprocessable()->assertJsonValidationErrors('preferences');
+    }
+
+    public function test_every_syllabus_restart_is_emailed_and_one_switch_turns_them_all_off(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $restarts = ['silabo.eliminado', 'silabo.regenerado', 'proceso.plantilla_rehecho'];
+        foreach ($restarts as $event) {
+            $this->notify($event, $teacher);
+        }
+        Mail::assertQueued(WorkflowNotificationMail::class, 3);
+
+        $this->as('docente@silabos.test')->putJson(route('api.v1.notifications.email-preferences.update'), [
+            'preferences' => ['silabo.reiniciado' => false],
+        ])->assertOk()->assertJsonPath('options.6.type', 'silabo.reiniciado')->assertJsonPath('options.6.enabled', false);
+        foreach ($restarts as $event) {
+            $this->notify($event, $teacher->fresh());
+        }
+        Mail::assertQueued(WorkflowNotificationMail::class, 3);
+        $this->assertSame(6, InternalNotification::query()->where('usuario_id', $teacher->id)->count());
     }
 
     public function test_the_library_now_gets_its_notices_by_email(): void
@@ -78,7 +97,7 @@ class EmailPreferencesTest extends TestCase
     private function notify(string $event, User $user): void
     {
         app(StoreInternalNotifications::class)->execute(
-            $event, $event, [$user->id], 'Título del aviso', 'Mensaje del aviso.', 'silabo', (string) Str::uuid(),
+            $event, $event.':'.Str::uuid(), [$user->id], 'Título del aviso', 'Mensaje del aviso.', 'silabo', (string) Str::uuid(),
         );
     }
 

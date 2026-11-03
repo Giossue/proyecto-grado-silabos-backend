@@ -712,6 +712,27 @@ class ReviewWorkflowTest extends TestCase
         return ['version_bloqueo' => $lockVersion, 'value' => $this->answeredValue($field, "Contenido académico {$field->clave}")];
     }
 
+    public function test_an_approved_syllabus_is_not_restarted_while_the_convocation_is_paused(): void
+    {
+        [$syllabus, $revision] = $this->submitValidDraft();
+        $this->approveThroughChain($revision);
+        $convocation = $syllabus->convocation;
+        $reset = fn () => $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'El docente cambió de materia y debe empezar otra vez.']);
+
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))->assertSuccessful();
+        $reset()->assertForbidden()->assertJsonPath('message', 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.');
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertJsonPath('reset.allowed', false);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertSuccessful();
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$convocation->process, 'pausar']))->assertSuccessful();
+        $reset()->assertForbidden()->assertJsonPath('message', 'Administración pausó la convocatoria institucional: las revisiones se retoman cuando se reanude.');
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$convocation->process, 'reanudar']))->assertSuccessful();
+
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertJsonPath('reset.allowed', true);
+        $reset()->assertSuccessful();
+    }
+
     public function test_only_an_approved_syllabus_can_be_restarted(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();

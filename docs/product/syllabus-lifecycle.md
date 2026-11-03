@@ -34,7 +34,7 @@ Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revi
 | En revisión · biblioteca | Devolver al docente | Biblioteca | Corrección solicitada | Uno o más motivos predefinidos, sin texto libre. Quien devuelve queda como responsable: cuando el docente reenvíe, los demás bibliotecarios ven quién lo atiende y deben confirmar antes de actuar; no hay bloqueo. |
 | Aprobado | Reiniciar | Coordinación | Sin iniciar (sílabo nuevo) | Pide un motivo y el nombre de la materia. Borra el sílabo con revisiones, aprobación, documentos, firmas y chat; crea uno nuevo para el paralelo. |
 
-Reiniciar solo se ofrece con el sílabo aprobado y exige la convocatoria de la carrera abierta o pausada. Un sílabo en borrador, en revisión o en corrección no se reinicia. Lo mismo
+Reiniciar solo se ofrece con el sílabo aprobado y exige la convocatoria de la carrera abierta; en pausa (de la carrera o de Administración) no se reinicia. Un sílabo en borrador, en revisión o en corrección no se reinicia. Lo mismo
 vale para aprobar y pedir corrección.
 
 ## Etapas de revisión

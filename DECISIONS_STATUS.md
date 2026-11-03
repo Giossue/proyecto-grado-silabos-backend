@@ -84,7 +84,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   límites del día en la zona institucional y la API las publica como `YYYY-MM-DD`.
   Un plazo de entrega cierra al final del día local, no a las 19:00.
 - La cola de revisión de Coordinación solo trae lo que espera su decisión (en revisión y todavía sin pasar a Biblioteca); lo demás (en biblioteca, devuelto, aprobado) está en Seguimiento, cuyas filas abren la revisión (2026-10-31). Coordinación no ve el comentario ni quién verificó de Biblioteca: solo que lo devolvió; Biblioteca ve únicamente su bibliografía.
-- Coordinación tiene una sola acción para descartar un sílabo, «Reiniciar sílabo» (2026-10-31), solo con el sílabo aprobado y la convocatoria abierta o pausada (2026-11-01), con motivo obligatorio que ve el docente y queda en la auditoría y, si está aprobado (borra todo y no hay reapertura), el nombre de la materia. Se retiró «Eliminar sílabo» (`DELETE /coordination/syllabi/{syllabus}`); `POST .../reset` borra el sílabo aprobado y crea uno nuevo para el paralelo.
+- Coordinación tiene una sola acción para descartar un sílabo, «Reiniciar sílabo» (2026-10-31), solo con el sílabo aprobado y la convocatoria abierta (en pausa tampoco, 2026-11-02), con motivo obligatorio que ve el docente y queda en la auditoría y, si está aprobado (borra todo y no hay reapertura), el nombre de la materia. Se retiró «Eliminar sílabo» (`DELETE /coordination/syllabi/{syllabus}`); `POST .../reset` borra el sílabo aprobado y crea uno nuevo para el paralelo.
 - El historial de un sílabo para Coordinación es una pantalla de versiones como la de Google Docs (documento a la izquierda, panel de versiones agrupadas por día a la derecha; los cambios respecto a la versión anterior se marcan solos), no una lista de revisiones (2026-10-31): envíos, correcciones de Coordinación con su comentario, aprobación de Coordinación y aprobación final. De lo que hace Biblioteca solo se ve «Biblioteca lo devolvió al docente», sin nombre ni comentario. Cada envío a partir del segundo ofrece «Ver qué cambió», y el detalle puede resaltar en el documento los campos cambiados desde el envío anterior.
 - Con el plazo de entrega vencido (2026-10-31) el docente queda en solo lectura: el servidor
   rechaza iniciar, editar y enviar, y la API explica el motivo en `edit_block_reason`.
@@ -99,6 +99,15 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   Todos los roles tienen un resumen diario como el de Coordinación, de lunes a viernes y solo si hay
   pendientes: Docente, sus sílabos por elaborar o corregir y el plazo; Biblioteca, lo que espera
   su revisión (`avisos:resumen-diario`).
+- Avisos de la campana revisados (2026-11-02): cada uno abre su pantalla. Plazo extendido lleva a
+  Mis sílabos; la reanudación de Administración, a la bandeja de revisiones de Coordinación o
+  Biblioteca; la exportación fallida, a Auditoría filtrada. Si se reinician varios sílabos de un
+  docente a la vez, recibe un solo aviso con todas las materias; cambiar el código o la jornada
+  de un paralelo con el sílabo enviado o aprobado también le avisa. Coordinación recibe un aviso
+  (solo campana) cuando Biblioteca aprueba un sílabo de su carrera o pide corregir la bibliografía.
+  Los reinicios de sílabo (por Coordinación, por la malla o el paralelo, o por la plantilla) llegan
+  también por correo al docente, con un solo interruptor «Sílabo reiniciado». Los correos siguen
+  abriendo la página de inicio, sin enlace al aviso.
 - Notificaciones, Asistente de IA y Biblioteca se configuran en Administración › Configuración ›
   Sistema (2026-11-02), tabla `ajustes_sistema`. Lo guardado manda sobre la variable de entorno,
   que queda como respaldo mientras el ajuste no se guarde; se aplica al arrancar y antes de cada
@@ -117,7 +126,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - En pausa (de la carrera o institucional) nadie decide (2026-11-02): Coordinación y Biblioteca no
   aprueban, firman, piden corrección ni devuelven, igual que el docente no edita ni envía. La API
   dice el motivo en `decision_block` y los resúmenes diarios no cuentan convocatorias en pausa.
-  «Reiniciar sílabo» sigue permitido en pausa; solo la convocatoria cerrada lo impide.
+  «Reiniciar sílabo» tampoco se permite en pausa (2026-11-02): es una decisión más.
   Pausar y cerrar siguen sin aviso. El plazo informa `paused_by` (Administración o
   Coordinación), y Administración recibe plazo solo con su convocatoria en pausa.
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener

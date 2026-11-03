@@ -16,6 +16,9 @@ final class NotificationDestination
 {
     private const ADMINISTRATION_EVENTS = ['documento.exportacion_fallida'];
 
+    /** Avisos a Coordinación sobre un sílabo de su carrera: abren la revisión aunque también sea su docente. */
+    private const COORDINATION_EVENTS = ['biblioteca.aprobado', 'biblioteca.correccion_solicitada'];
+
     private const LIBRARY_EVENTS = ['coordinacion.aprobado', 'silabo.reenviado_biblioteca'];
 
     /** Avisos a Coordinación y Biblioteca sobre todo el proceso: llevan a la bandeja de revisiones. */
@@ -156,7 +159,9 @@ final class NotificationDestination
             $revision !== null ? "/coordinacion/revisiones/{$revision}" : '/coordinacion/revisiones',
         );
 
-        return [...$teacher, ...$coordinator];
+        return in_array($notification->tipo, self::COORDINATION_EVENTS, true)
+            ? [...$coordinator, ...$teacher]
+            : [...$teacher, ...$coordinator];
     }
 
     /**
