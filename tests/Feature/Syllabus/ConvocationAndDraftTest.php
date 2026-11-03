@@ -672,14 +672,16 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()
             ->assertJsonPath('syllabus.editable', true)
-            ->assertJsonPath('syllabus.edit_block_reason', null);
+            ->assertJsonPath('syllabus.edit_block_reason', null)
+            ->assertJsonPath('syllabus.edit_blocked_by_convocation', false);
 
         $syllabus->convocation()->update(['estado' => Convocation::STATE_PAUSED]);
 
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()
             ->assertJsonPath('syllabus.editable', false)
-            ->assertJsonPath('syllabus.edit_block_reason', 'La convocatoria está en pausa. Podrá seguir editando cuando se reanude.');
+            ->assertJsonPath('syllabus.edit_block_reason', 'La convocatoria está en pausa. Podrá seguir editando cuando se reanude.')
+            ->assertJsonPath('syllabus.edit_blocked_by_convocation', true);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertForbidden();
     }
 

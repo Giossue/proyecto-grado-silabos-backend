@@ -349,26 +349,32 @@ class SyllabusController extends Controller
     }
 
     /**
-     * @return array{editable: bool, edit_block_reason: string|null}
+     * `edit_blocked_by_convocation`: pausa, cierre o plazo vencido; la franja de la pantalla ya lo explica.
+     *
+     * @return array{editable: bool, edit_block_reason: string|null, edit_blocked_by_convocation: bool}
      */
     private function teacherEditability(Syllabus $syllabus): array
     {
         $user = request()->user();
         $ability = $syllabus->estado === 'sin_iniciar' ? 'start' : 'edit';
         if ($user instanceof User && Gate::forUser($user)->allows($ability, $syllabus)) {
-            return ['editable' => true, 'edit_block_reason' => null];
+            return ['editable' => true, 'edit_block_reason' => null, 'edit_blocked_by_convocation' => false];
         }
 
         $convocationState = $syllabus->convocation->estado;
+        $editableState = in_array($syllabus->estado, ['sin_iniciar', 'borrador', 'correccion_solicitada'], true);
+        $byConvocation = $editableState && ($convocationState === Convocation::STATE_CLOSED
+            || ! $syllabus->convocation->isRunning()
+            || $syllabus->convocation->deadlinePassed());
         $reason = match (true) {
-            ! in_array($syllabus->estado, ['sin_iniciar', 'borrador', 'correccion_solicitada'], true) => 'El sílabo no admite cambios en su estado actual.',
+            ! $editableState => 'El sílabo no admite cambios en su estado actual.',
             $convocationState === Convocation::STATE_CLOSED => 'La convocatoria está cerrada: el sílabo queda solo para consulta.',
             ! $syllabus->convocation->isRunning() => 'La convocatoria está en pausa. Podrá seguir editando cuando se reanude.',
             $syllabus->convocation->deadlinePassed() => 'El plazo de entrega venció. Pida una prórroga a Administración.',
             default => 'No tiene una asignación vigente para editar este sílabo.',
         };
 
-        return ['editable' => false, 'edit_block_reason' => $reason];
+        return ['editable' => false, 'edit_block_reason' => $reason, 'edit_blocked_by_convocation' => $byConvocation];
     }
 
     /**

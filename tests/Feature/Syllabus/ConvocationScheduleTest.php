@@ -160,7 +160,8 @@ class ConvocationScheduleTest extends TestCase
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()
             ->assertJsonPath('syllabus.editable', false)
-            ->assertJsonPath('syllabus.edit_block_reason', 'El plazo de entrega venció. Pida una prórroga a Administración.');
+            ->assertJsonPath('syllabus.edit_block_reason', 'El plazo de entrega venció. Pida una prórroga a Administración.')
+            ->assertJsonPath('syllabus.edit_blocked_by_convocation', true);
         $this->actingAsTeacher()->patchJson(
             route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
             $this->validFieldPayload($field, $syllabus->fresh()->version_bloqueo),
