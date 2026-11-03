@@ -23,7 +23,6 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
-use App\Support\InstitutionDate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
@@ -95,8 +94,8 @@ class AcademicStructureViewData
                         return [
                             'id' => $period->id,
                             'code' => $period->codigo,
-                            'starts_on' => InstitutionDate::dateOf($period->fecha_inicio),
-                            'ends_on' => InstitutionDate::dateOf($period->fecha_fin),
+                            'starts_on' => $period->fecha_inicio->toDateString(),
+                            'ends_on' => $period->fecha_fin->toDateString(),
                             'teaching_weeks' => $period->semanas_lectivas,
                             'status' => $this->periodPlanning->status($period),
                             'status_label' => $this->periodPlanning->label($period),

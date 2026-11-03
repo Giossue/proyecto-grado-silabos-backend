@@ -3,6 +3,7 @@
 namespace Tests\Feature\Academic;
 
 use App\Models\User;
+use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
@@ -504,6 +505,23 @@ class AcademicStructureTest extends TestCase
             ->json('catalogs.periods');
 
         $this->assertSame('Convocatoria activa', collect($payload)->firstWhere('id', $period->id)['lock_reason']);
+    }
+
+    public function test_a_period_shows_its_real_dates_and_is_current_on_its_last_day(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2027-02-26 20:00:00', 'America/Guayaquil'));
+        $period = AcademicPeriod::query()->firstOrFail();
+        $period->update(['fecha_inicio' => '2026-10-05', 'fecha_fin' => '2027-02-26']);
+
+        $row = collect($this->actingAsAdministrator()
+            ->getJson(route('api.v1.admin.academic.index'))
+            ->assertOk()
+            ->json('catalogs.periods'))->firstWhere('id', $period->id);
+
+        $this->assertSame('2026-10-05', $row['starts_on']);
+        $this->assertSame('2027-02-26', $row['ends_on']);
+        $this->assertSame(AcademicPeriodPlanning::CURRENT, $row['status']);
+        $this->assertSame(AcademicPeriodPlanning::FINISHED, app(AcademicPeriodPlanning::class)->status($period->fresh()->setAttribute('fecha_fin', '2027-02-25')));
     }
 
     public function test_faculties_and_careers_stay_editable_while_one_of_their_convocations_runs(): void

@@ -19,11 +19,11 @@ final class AcademicPeriodPlanning
     {
         $today = InstitutionDate::todayOn();
 
-        if (InstitutionDate::dateOf($period->fecha_fin) < $today) {
+        if ($period->fecha_fin->toDateString() < $today) {
             return self::FINISHED;
         }
 
-        return InstitutionDate::dateOf($period->fecha_inicio) > $today ? self::UPCOMING : self::CURRENT;
+        return $period->fecha_inicio->toDateString() > $today ? self::UPCOMING : self::CURRENT;
     }
 
     public function label(AcademicPeriod $period): string

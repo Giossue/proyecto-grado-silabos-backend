@@ -58,7 +58,7 @@ class StoreSyllabusProcessRequest extends FormRequest
             if ($period === null) {
                 return;
             }
-            $endOn = InstitutionDate::dateOf($period->fecha_fin);
+            $endOn = $period->fecha_fin->toDateString();
             if ($endOn < $today) {
                 $validator->errors()->add('period_id', 'El período académico ya terminó ('.$period->fecha_fin->format('d/m/Y').'). Elija uno vigente.');
 

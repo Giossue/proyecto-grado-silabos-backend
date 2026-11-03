@@ -519,6 +519,32 @@ class SyllabusProcessTest extends TestCase
             ->assertJsonValidationErrors('due_at');
     }
 
+    public function test_the_due_date_can_be_the_last_class_day_of_the_period(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-11-03 10:00:00', 'America/Guayaquil'));
+        $template = $this->publishedTemplate();
+        AcademicPeriod::query()->firstOrFail()->update(['fecha_fin' => '2027-02-26']);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.store'), [
+                ...$this->processPayload($template),
+                'starts_at' => '2026-11-03',
+                'due_at' => '2027-02-27',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['due_at' => 'La fecha no puede pasar del fin del período (26/02/2027).']);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.store'), [
+                ...$this->processPayload($template),
+                'starts_at' => '2026-11-03',
+                'due_at' => '2027-02-26',
+            ])
+            ->assertSuccessful();
+
+        $this->assertSame('2027-02-26', InstitutionDate::dateOf(SyllabusProcess::query()->firstOrFail()->entrega_en));
+    }
+
     public function test_the_start_can_be_today_even_when_utc_already_moved_to_the_next_day(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-22T00:30:00Z'));
