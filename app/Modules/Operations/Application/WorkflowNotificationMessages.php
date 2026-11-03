@@ -27,10 +27,6 @@ final class WorkflowNotificationMessages
         $reasonLabel = $reason === null || trim($reason) === '' ? '' : ' Motivo: '.trim($reason);
 
         return match ($eventType) {
-            'silabo.enviado', 'silabo.reenviado' => [
-                'Sílabo listo para revisión',
-                "El sílabo {$subject}{$revisionLabel} fue enviado; coordinación lo revisa primero.",
-            ],
             'coordinacion.aprobado' => [
                 'Sílabo listo para revisión',
                 "Coordinación aprobó el sílabo {$subject}{$revisionLabel}. Falta que biblioteca apruebe la bibliografía.",
@@ -54,10 +50,6 @@ final class WorkflowNotificationMessages
             'silabo.devuelto_borrador' => [
                 'Su sílabo volvió a borrador',
                 "Coordinación cambió la malla o el proyecto de carrera de {$subject}. Lo que escribió se conserva; revíselo, envíelo y fírmelo de nuevo.",
-            ],
-            'silabo.reiniciado' => [
-                'Su sílabo volvió a empezar',
-                "Coordinación reinició su sílabo de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.{$reasonLabel}",
             ],
             'documento.exportacion_fallida' => [
                 'No se pudieron generar los documentos',

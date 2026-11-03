@@ -18,7 +18,7 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
+use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
@@ -305,7 +305,7 @@ class DocumentOperationsTest extends TestCase
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.notifications.open', $notice))
             ->assertOk()
-            ->assertJsonPath('path', '/admin/auditoria');
+            ->assertJsonPath('path', '/admin/auditoria?action=documento.exportacion_fallida');
     }
 
     public function test_cp_f_workflow_notification_is_stored_once_and_enforces_ownership(): void
@@ -313,11 +313,12 @@ class DocumentOperationsTest extends TestCase
         Queue::fake();
         Mail::fake();
         [$syllabus] = $this->approvedRevision();
-        $recorder = app(ScheduleWorkflowNotification::class);
+        $recorder = app(ScheduleInternalNotification::class);
         $key = "syllabus.approved:{$syllabus->id}";
+        $period = $syllabus->convocation->process->periodo_academico_id;
 
-        $recorder->execute($syllabus, 'silabo.enviado', $key, [$this->coordinator->id], 1);
-        $recorder->execute($syllabus, 'silabo.enviado', $key, [$this->coordinator->id], 1);
+        $recorder->execute('aviso.prueba', $key, [$this->coordinator->id], 'Sílabo listo para revisión', 'Mensaje de prueba.', 'silabo', $syllabus->id, $period);
+        $recorder->execute('aviso.prueba', $key, [$this->coordinator->id], 'Sílabo listo para revisión', 'Mensaje de prueba.', 'silabo', $syllabus->id, $period);
 
         $this->assertDatabaseCount('notificaciones', 1);
         $notification = InternalNotification::query()->firstOrFail();

@@ -43,7 +43,7 @@ class NotificationEmailTest extends TestCase
         Mail::assertQueued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo('docente@silabos.test')
             && $mail->title === 'Título del aviso' && $mail->body === 'Mensaje del aviso.' && $mail->name === $this->teacher->nombre);
 
-        foreach (['silabo.enviado', 'silabo.reenviado', 'proceso.plazo_extendido', 'silabo.regenerado', 'documento.exportacion_fallida'] as $event) {
+        foreach (['silabo.eliminado', 'proceso.plantilla_rehecho', 'proceso.plazo_extendido', 'silabo.regenerado', 'documento.exportacion_fallida'] as $event) {
             $this->notify($event, key: $event);
         }
         Mail::assertQueued(WorkflowNotificationMail::class, 3);
@@ -79,9 +79,9 @@ class NotificationEmailTest extends TestCase
         $this->notify('silabo.aprobado', key: 'apagado');
         Mail::assertNothingQueued();
 
-        config(['notifications.email.enabled' => true, 'notifications.email.events' => ['silabo.enviado']]);
+        config(['notifications.email.enabled' => true, 'notifications.email.events' => ['silabo.regenerado']]);
         $this->notify('silabo.aprobado', key: 'otro');
-        $this->notify('silabo.enviado', key: 'ajustado');
+        $this->notify('silabo.regenerado', key: 'ajustado');
         Mail::assertQueued(WorkflowNotificationMail::class, 1);
     }
 
@@ -112,9 +112,9 @@ class NotificationEmailTest extends TestCase
         };
         $defaults = ['convocatoria.abierta', 'convocatoria.reanudada', 'silabo.correccion_solicitada', 'silabo.devuelto_borrador', 'silabo.aprobado', 'coordinacion.aprobado', 'silabo.reenviado_biblioteca', 'proceso.reanudado'];
 
-        foreach ([['TRUE', ''], ['', '8am'], ['1,true', '25:00'], ['silabo.enviado, silabo.reenviado', '07:30']] as [$events, $time]) {
+        foreach ([['TRUE', ''], ['', '8am'], ['1,true', '25:00'], ['silabo.eliminado, silabo.regenerado', '07:30']] as [$events, $time]) {
             $config = $load(['NOTIFICATION_EMAIL_EVENTS' => $events, 'NOTIFICATION_DIGEST_TIME' => $time]);
-            $this->assertSame($events === 'silabo.enviado, silabo.reenviado' ? ['silabo.enviado', 'silabo.reenviado'] : $defaults, $config['email']['events']);
+            $this->assertSame($events === 'silabo.eliminado, silabo.regenerado' ? ['silabo.eliminado', 'silabo.regenerado'] : $defaults, $config['email']['events']);
             $this->assertSame($time === '07:30' ? '07:30' : '08:00', $config['digest']['time']);
         }
     }

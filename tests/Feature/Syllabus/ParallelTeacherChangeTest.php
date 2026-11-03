@@ -189,6 +189,10 @@ class ParallelTeacherChangeTest extends TestCase
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertSame('nocturna', $fresh->academicParallelShift());
         $this->assertSame([$this->teacher->id], $fresh->teachers()->pluck('usuarios.id')->all());
+
+        $notice = $this->assertNotified($this->teacher->id, 'silabo.regenerado', 'cambió el código o la jornada del paralelo');
+        $this->actingAsTeacher()->postJson(route('api.v1.notifications.open', $notice))
+            ->assertOk()->assertJsonPath('path', "/docente/mis-silabos/{$fresh->id}");
     }
 
     public function test_reassigning_the_same_teacher_also_starts_from_scratch(): void

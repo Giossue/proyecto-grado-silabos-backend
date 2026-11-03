@@ -149,18 +149,27 @@ final class InProgressWork
         $periods = Convocation::query()->whereKey($convocationIds)->with('process')->get()
             ->mapWithKeys(fn (Convocation $convocation): array => [$convocation->id => $convocation->process->periodo_academico_id]);
         $this->deleteAggregates($syllabusIds);
+        $rows = [];
         foreach ($syllabi as $syllabus) {
-            $subject = $syllabus->academicSubjectName();
-            $this->notifications->execute(
-                eventType: 'silabo.regenerado',
-                deduplicationKey: "silabo.regenerado:{$syllabus->id}:".Str::uuid(),
-                recipientIds: $teachers[$syllabus->id] ?? [],
-                title: 'Su sílabo volvió a empezar',
-                message: "Su sílabo de {$subject} volvió a empezar porque ".($reason ?? self::DEFAULT_REASON)
-                    .'. Se perdió el contenido anterior (borrador, revisiones, aprobación, firmas y análisis de IA); complételo otra vez.',
-                resourceType: 'carrera',
-                resourceId: (string) $syllabus->convocation->carrera_id,
-                periodId: $periods[$syllabus->convocatoria_id] ?? null,
+            foreach ($teachers[$syllabus->id] ?? [] as $teacherId) {
+                $rows[] = [
+                    'teacher' => $teacherId,
+                    'career' => (string) $syllabus->convocation->carrera_id,
+                    'period' => $periods[$syllabus->convocatoria_id] ?? null,
+                    'subject' => $syllabus->academicSubjectName(),
+                ];
+            }
+        }
+        foreach (collect($rows)->groupBy(fn (array $row): string => "{$row['teacher']}|{$row['career']}|{$row['period']}") as $group) {
+            $first = $group->first();
+            $this->notifyRestarted(
+                [$first['teacher']],
+                array_values(array_unique(array_map('strval', $group->pluck('subject')->all()))),
+                $group->count(),
+                $reason ?? self::DEFAULT_REASON,
+                'carrera',
+                $first['career'],
+                $first['period'],
             );
         }
 
@@ -175,6 +184,33 @@ final class InProgressWork
         }
 
         return ['deleted' => count($syllabusIds), 'generated' => $generated];
+    }
+
+    /**
+     * Un solo aviso por docente aunque se reinicien varios de sus sílabos a la vez.
+     *
+     * @param  list<string>  $recipientIds
+     * @param  list<string>  $subjects
+     */
+    private function notifyRestarted(array $recipientIds, array $subjects, int $count, string $reason, string $resourceType, string $resourceId, ?string $periodId): void
+    {
+        $names = count($subjects) > 1
+            ? implode(', ', array_slice($subjects, 0, -1)).' y '.$subjects[array_key_last($subjects)]
+            : ($subjects[0] ?? '');
+        [$title, $lead] = $count > 1
+            ? ['Sus sílabos volvieron a empezar', "Sus sílabos de {$names} volvieron a empezar"]
+            : ['Su sílabo volvió a empezar', "Su sílabo de {$names} volvió a empezar"];
+
+        $this->notifications->execute(
+            eventType: 'silabo.regenerado',
+            deduplicationKey: "silabo.regenerado:{$resourceId}:".Str::uuid(),
+            recipientIds: $recipientIds,
+            title: $title,
+            message: "{$lead} porque {$reason}. Se perdió el contenido anterior (borrador, revisiones, aprobación, firmas y análisis de IA); ".($count > 1 ? 'complételos' : 'complételo').' otra vez.',
+            resourceType: $resourceType,
+            resourceId: $resourceId,
+            periodId: $periodId,
+        );
     }
 
     /**
@@ -299,13 +335,20 @@ final class InProgressWork
     {
         $syllabi = $this->inProgress(null)->where('paralelo_id', $parallelId)->whereIn('estado', ['en_revision', 'aprobado'])
             ->with(['convocation.process', 'parallel'])->lockForUpdate()->get();
-        if ($syllabi->isEmpty()) {
-            return 0;
-        }
-
-        $this->deleteAggregates(array_values(array_map('strval', $syllabi->pluck('id')->all())));
+        $teachers = $this->currentTeachers(array_values(array_map('strval', $syllabi->pluck('id')->all())));
         foreach ($syllabi as $syllabus) {
-            $this->generator->generateForParallel($syllabus->convocation, $syllabus->parallel);
+            $subject = $syllabus->academicSubjectName();
+            $periodId = $syllabus->convocation->process->periodo_academico_id;
+            $fresh = $this->restartSyllabus($syllabus);
+            $this->notifyRestarted(
+                $teachers[$syllabus->id] ?? [],
+                [$subject],
+                1,
+                'Coordinación cambió el código o la jornada del paralelo',
+                'silabo',
+                (string) $fresh->id,
+                $periodId,
+            );
         }
 
         return $syllabi->count();

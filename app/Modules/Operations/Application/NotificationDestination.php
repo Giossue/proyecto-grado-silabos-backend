@@ -3,7 +3,6 @@
 namespace App\Modules\Operations\Application;
 
 use App\Models\User;
-use App\Modules\AiAssistance\Application\Queries\AiHistorySyllabusLookup;
 use App\Modules\Documents\Application\Queries\ExportArtifactLookup;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -17,22 +16,17 @@ final class NotificationDestination
 {
     private const ADMINISTRATION_EVENTS = ['documento.exportacion_fallida'];
 
-    private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado'];
-
-    public const INFORMATIONAL_EVENTS = [
-        'proceso.plazo_extendido',
-        'proceso.reanudado',
-    ];
-
     private const LIBRARY_EVENTS = ['coordinacion.aprobado', 'silabo.reenviado_biblioteca'];
 
-    private const PROCESS_TEACHER_EVENTS = ['proceso.plantilla_rehecho'];
+    /** Avisos a Coordinación y Biblioteca sobre todo el proceso: llevan a la bandeja de revisiones. */
+    private const PROCESS_STAFF_EVENTS = ['proceso.reanudado'];
+
+    private const PROCESS_TEACHER_EVENTS = ['proceso.plantilla_rehecho', 'proceso.plazo_extendido'];
 
     private const TEACHER_EVENTS = [
         'convocatoria.abierta',
         'convocatoria.reanudada',
         'silabo.correccion_solicitada',
-        'silabo.reiniciado',
         'silabo.devuelto_borrador',
         'silabo.eliminado',
         'silabo.regenerado',
@@ -42,7 +36,6 @@ final class NotificationDestination
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly SyllabusNavigationLookup $syllabi,
-        private readonly AiHistorySyllabusLookup $aiHistory,
         private readonly ExportArtifactLookup $artifacts,
     ) {}
 
@@ -52,33 +45,42 @@ final class NotificationDestination
      */
     public function resolve(InternalNotification $notification, User $user, ?RoleAssignment $active, ?Collection $eligible = null): ?array
     {
-        if (in_array($notification->tipo, self::INFORMATIONAL_EVENTS, true)) {
-            return null;
-        }
+        $eligible ??= $this->roles->eligible($user);
         if (in_array($notification->tipo, self::ADMINISTRATION_EVENTS, true)) {
-            return $this->withRole($eligible ?? $this->roles->eligible($user), RoleCode::Administrator, null, '/admin/auditoria')[0] ?? null;
+            $path = '/admin/auditoria?'.http_build_query(['action' => $notification->tipo]);
+
+            return $this->withRole($eligible, RoleCode::Administrator, null, $path)[0] ?? null;
         }
-        if ($notification->tipo_recurso === 'asignacion_rol') {
-            return ['assignment' => null, 'path' => '/rol'];
-        }
-        if ($notification->tipo_recurso === 'proceso_silabos'
-            && in_array($notification->tipo, self::PROCESS_TEACHER_EVENTS, true)
-            && is_string($notification->recurso_id)) {
-            return $this->withRole(
-                $this->roles->eligible($user),
-                RoleCode::Teacher,
-                $this->syllabi->processCareerIds($notification->recurso_id),
-                '/docente/mis-silabos',
-            )[0] ?? null;
+        if ($notification->tipo_recurso === 'proceso_silabos' && is_string($notification->recurso_id)) {
+            $careers = $this->syllabi->processCareerIds($notification->recurso_id);
+            if (in_array($notification->tipo, self::PROCESS_TEACHER_EVENTS, true)) {
+                return $this->withRole($eligible, RoleCode::Teacher, $careers, '/docente/mis-silabos')[0] ?? null;
+            }
+            if (in_array($notification->tipo, self::PROCESS_STAFF_EVENTS, true)) {
+                return $this->preferActive([
+                    ...$this->withRole($eligible, RoleCode::Coordinator, $careers, '/coordinacion/revisiones'),
+                    ...$this->withRole($eligible, RoleCode::Librarian, null, '/biblioteca/revisiones'),
+                ], $active);
+            }
         }
 
-        $options = $this->options($notification, $user, $eligible ?? $this->roles->eligible($user));
+        $options = $this->options($notification, $user, $eligible);
         if (in_array($notification->tipo, self::TEACHER_EVENTS, true)) {
             $options = array_values(array_filter(
                 $options,
                 fn (array $option): bool => $option['assignment']?->role->codigo_rol === RoleCode::Teacher->value,
             ));
         }
+
+        return $this->preferActive($options, $active);
+    }
+
+    /**
+     * @param  list<Destination>  $options
+     * @return Destination|null
+     */
+    private function preferActive(array $options, ?RoleAssignment $active): ?array
+    {
         foreach ($options as $option) {
             if ($active !== null && $option['assignment']?->id === $active->id) {
                 return $option;
@@ -116,7 +118,6 @@ final class NotificationDestination
 
         return match ($notification->tipo_recurso) {
             'silabo' => $this->syllabusOptions($id, $notification, $user, $eligible),
-            'ejecucion_ia', 'revision_ia_silabo' => $this->aiOptions($id, $user, $eligible),
             'artefacto_exportacion' => $this->artifactOptions($id, $user, $eligible),
             'convocatoria' => $this->careerOptions(
                 $this->syllabi->convocationCareerIds($id),
@@ -129,10 +130,6 @@ final class NotificationDestination
                 teacherFirst: true,
             ),
             'carrera' => $this->withRole($eligible, RoleCode::Teacher, [$id], '/docente/mis-silabos'),
-            'usuario' => [
-                ...$this->withRole($eligible, RoleCode::Administrator, null, '/admin/usuarios?'.http_build_query(['q' => User::query()->whereKey($id)->value('correo_electronico') ?? ''])),
-                ...$this->withRole($eligible, RoleCode::Coordinator, null, '/coordinacion/asignaciones-docentes'),
-            ],
             default => [],
         };
     }
@@ -159,22 +156,7 @@ final class NotificationDestination
             $revision !== null ? "/coordinacion/revisiones/{$revision}" : '/coordinacion/revisiones',
         );
 
-        return in_array($notification->tipo, self::COORDINATION_EVENTS, true)
-            ? [...$coordinator, ...$teacher]
-            : [...$teacher, ...$coordinator];
-    }
-
-    /**
-     * @param  Collection<int, RoleAssignment>  $eligible
-     * @return list<Destination>
-     */
-    private function aiOptions(string $entryId, User $user, Collection $eligible): array
-    {
-        $syllabusId = $this->aiHistory->syllabusId($entryId);
-
-        return $syllabusId === null || ! $this->syllabi->exists($syllabusId)
-            ? []
-            : $this->teacherOptions($syllabusId, $user, $eligible, "/docente/mis-silabos/{$syllabusId}");
+        return [...$teacher, ...$coordinator];
     }
 
     /**

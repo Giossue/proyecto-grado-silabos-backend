@@ -10,13 +10,14 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class NotificationLinksTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_informational_notices_have_no_destination_and_actionable_ones_do(): void
+    public function test_notices_without_a_screen_for_the_user_have_no_destination_and_the_rest_do(): void
     {
         $this->seed(DatabaseSeeder::class);
         config(['sanctum.stateful' => ['localhost:5173']]);
@@ -26,8 +27,8 @@ class NotificationLinksTest extends TestCase
             'titulo' => $title, 'mensaje' => 'Mensaje de prueba.', 'tipo_recurso' => $resourceType, 'recurso_id' => $resourceId,
             'periodo_academico_id' => AcademicPeriod::query()->valueOrFail('id'), 'notificado_en' => now(),
         ]);
-        $informational = $create('proceso.plazo_extendido', 'proceso_silabos', $admin->id, 'Plazo extendido');
-        $actionable = $create('usuario.rol_asignado', 'asignacion_rol', $admin->id, 'Nuevo rol disponible');
+        $informational = $create('silabo.correccion_solicitada', 'silabo', (string) Str::uuid(), 'Corrección solicitada');
+        $actionable = $create('documento.exportacion_fallida', 'artefacto_exportacion', (string) Str::uuid(), 'No se pudieron generar los documentos');
 
         $response = $this->actingAs($admin)
             ->withSession(['active_role_assignment_id' => $admin->roleAssignments()->firstOrFail()->id])

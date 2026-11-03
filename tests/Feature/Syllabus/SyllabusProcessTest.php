@@ -9,12 +9,15 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
+use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
+use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -26,6 +29,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
@@ -887,6 +891,33 @@ class SyllabusProcessTest extends TestCase
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))
             ->assertSuccessful();
         $this->assertSame(1, Syllabus::query()->forSubjects([$subject->id])->count());
+    }
+
+    public function test_a_regeneration_sends_one_notice_per_teacher_naming_every_subject(): void
+    {
+        $convocation = $this->openedConvocation();
+        $mine = Syllabus::query()->whereHas('teachers', fn ($query) => $query->whereKey($this->teacher->id))->firstOrFail();
+        $second = Parallel::query()->create(['asignatura_id' => $mine->parallel->asignatura_id, 'codigo' => 'Z', 'jornada' => $mine->parallel->jornada]);
+        TeacherAssignment::query()->create([
+            'asignacion_rol_id' => $this->teacher->roleAssignments()->where('rol', 'docente')->firstOrFail()->id,
+            'paralelo_id' => $second->id,
+            'activo' => true,
+        ]);
+        app(GenerateConvocationSyllabi::class)->generateForParallel($convocation, $second);
+        $this->assertSame(2, Syllabus::query()->whereHas('teachers', fn ($query) => $query->whereKey($this->teacher->id))->count());
+        $subjects = Syllabus::query()->whereHas('teachers', fn ($query) => $query->whereKey($this->teacher->id))->get()
+            ->map(fn (Syllabus $syllabus): string => $syllabus->academicSubjectName())->unique()->values();
+
+        DB::transaction(fn () => app(InProgressWork::class)->regenerate(null, null, 'cambió la malla'));
+
+        $notice = InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo', 'silabo.regenerado')->sole();
+        $this->assertStringContainsString('porque cambió la malla', $notice->mensaje);
+        foreach ($subjects as $subject) {
+            $this->assertStringContainsString($subject, $notice->mensaje);
+        }
+        $this->assertSame('/docente/mis-silabos', $this->actingAs($this->teacher)
+            ->withSession(['active_role_assignment_id' => $this->teacher->roleAssignments()->firstOrFail()->id])
+            ->postJson(route('api.v1.notifications.open', $notice))->assertOk()->json('path'));
     }
 
     public function test_a_purge_never_replaces_an_approved_syllabus(): void

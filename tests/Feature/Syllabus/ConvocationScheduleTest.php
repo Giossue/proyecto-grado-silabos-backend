@@ -217,6 +217,7 @@ class ConvocationScheduleTest extends TestCase
         $this->assertNotified($this->teacher->id, 'proceso.plazo_extendido', 'se amplió hasta el');
         $this->assertNotNotified($this->coordinator->id, 'proceso.plazo_extendido');
         $this->assertNotNotified($this->administrator->id, 'proceso.plazo_extendido');
+        $this->assertSame('/docente/mis-silabos', $this->openPath($this->teacher, 'proceso.plazo_extendido'));
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'signature' => $this->teacherSignature($syllabus, $this->teacher),
@@ -303,6 +304,8 @@ class ConvocationScheduleTest extends TestCase
         $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
         $this->assertNotified($librarian->id, 'proceso.reanudado', 'Se retoman la edición y las revisiones');
         $this->assertNotNotified($this->teacher->id, 'proceso.reanudado');
+        $this->assertSame('/coordinacion/revisiones', $this->openPath($this->coordinator, 'proceso.reanudado'));
+        $this->assertSame('/biblioteca/revisiones', $this->openPath($librarian, 'proceso.reanudado'));
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();
         foreach ([$this->teacher, $this->coordinator, $this->administrator] as $user) {
@@ -416,6 +419,17 @@ class ConvocationScheduleTest extends TestCase
         $this->actingAs($this->coordinator)->withSession(['active_role_assignment_id' => $this->coordinatorContext->id]);
 
         return $this;
+    }
+
+    private function openPath(User $user, string $type): ?string
+    {
+        $notice = InternalNotification::query()->where('usuario_id', $user->id)->where('tipo', $type)->latest('notificado_en')->firstOrFail();
+
+        return $this->actingAs($user)
+            ->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id])
+            ->postJson(route('api.v1.notifications.open', $notice))
+            ->assertOk()
+            ->json('path');
     }
 
     private function actingAsTeacher(): static
