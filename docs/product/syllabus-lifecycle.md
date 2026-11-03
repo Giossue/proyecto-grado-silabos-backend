@@ -108,11 +108,13 @@ el estado: el sílabo sigue «En revisión».
   editar ni enviar (el servidor lo rechaza) y se le dice que pida una prórroga a
   Administración. Coordinación y Biblioteca siguen revisando lo ya enviado. Al prorrogar,
   todo se reabre. El cierre de la convocatoria no cambia.
-- Administración puede eliminar una convocatoria abierta o pausada mientras ningún
-  docente haya enviado su sílabo. Entonces se borra de verdad, con las de cada carrera y
-  los sílabos en borrador, y el período queda libre para abrir otra. Si ya hay sílabos
-  enviados, no se puede eliminar: hay que cerrar la convocatoria, que es la acción
-  final. Una convocatoria cerrada no se elimina nunca.
+- Administración puede eliminar una convocatoria abierta o pausada aunque tenga sílabos
+  enviados, en revisión o aprobados. Se borra de verdad, con las de cada carrera y todos
+  sus sílabos (borradores, revisiones, aprobaciones, firmas y PDF), y el período queda
+  libre para abrir otra. Antes se muestra cuántos sílabos se borran por estado y se pide
+  la frase «eliminar convocatoria» y un mensaje. Ese mensaje llega como aviso y por correo
+  a los docentes con sílabo, a Coordinación de sus carreras y a Biblioteca; ese correo no
+  se puede apagar en las preferencias. Una convocatoria cerrada no se elimina nunca.
 - Administración cierra la convocatoria cuando termina el período. Se cierran también
   las de cada carrera. Sus sílabos quedan solo para consulta (no se editan, envían,
   revisan ni firman). Cerrar no se deshace. Mientras

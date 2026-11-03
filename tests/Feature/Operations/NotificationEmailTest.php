@@ -110,7 +110,7 @@ class NotificationEmailTest extends TestCase
                 }
             }
         };
-        $defaults = ['convocatoria.abierta', 'convocatoria.reanudada', 'silabo.correccion_solicitada', 'silabo.devuelto_borrador', 'silabo.aprobado', 'coordinacion.aprobado', 'silabo.reenviado_biblioteca', 'proceso.reanudado', 'silabo.eliminado', 'silabo.regenerado', 'proceso.plantilla_rehecho'];
+        $defaults = ['convocatoria.abierta', 'convocatoria.reanudada', 'silabo.correccion_solicitada', 'silabo.devuelto_borrador', 'silabo.aprobado', 'coordinacion.aprobado', 'silabo.reenviado_biblioteca', 'proceso.reanudado', 'silabo.eliminado', 'silabo.regenerado', 'proceso.plantilla_rehecho', 'proceso.eliminado'];
 
         foreach ([['TRUE', ''], ['', '8am'], ['1,true', '25:00'], ['silabo.eliminado, silabo.regenerado', '07:30']] as [$events, $time]) {
             $config = $load(['NOTIFICATION_EMAIL_EVENTS' => $events, 'NOTIFICATION_DIGEST_TIME' => $time]);

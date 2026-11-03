@@ -223,7 +223,7 @@ en la campana. Los correos de la cuenta (invitación, contraseña, verificación
 | Variable | Por defecto | Efecto |
 |---|---|---|
 | `NOTIFICATION_EMAILS` | `true` | `false` apaga estos correos; las invitaciones de activación no cambian. |
-| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,convocatoria.reanudada,silabo.correccion_solicitada,silabo.devuelto_borrador,silabo.aprobado,coordinacion.aprobado,silabo.reenviado_biblioteca,proceso.reanudado,silabo.eliminado,silabo.regenerado,proceso.plantilla_rehecho` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
+| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,convocatoria.reanudada,silabo.correccion_solicitada,silabo.devuelto_borrador,silabo.aprobado,coordinacion.aprobado,silabo.reenviado_biblioteca,proceso.reanudado,silabo.eliminado,silabo.regenerado,proceso.plantilla_rehecho,proceso.eliminado` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
 | `NOTIFICATION_DIGEST` | `true` | `false` apaga el resumen diario para todos. Cada coordinador también puede apagarlo en su Configuración › Notificaciones. |
 | `NOTIFICATION_DIGEST_TIME` | `08:00` | Hora del resumen (`HH:MM`), en la hora de la institución. Vacía o con otro formato vale 08:00. |
 

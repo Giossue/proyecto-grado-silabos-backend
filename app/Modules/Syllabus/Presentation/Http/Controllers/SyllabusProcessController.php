@@ -10,15 +10,15 @@ use App\Modules\Syllabus\Application\Actions\CreateSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\ExtendProcessDeadline;
 use App\Modules\Syllabus\Application\Actions\TransitionSyllabusProcess;
+use App\Modules\Syllabus\Application\Queries\ProcessSyllabusCounts;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use App\Modules\Syllabus\Presentation\Http\Requests\DeleteSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ExtendProcessDeadlineRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ManageSyllabusProcessesRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionSyllabusProcessRequest;
 use App\Support\InstitutionDate;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 
 class SyllabusProcessController extends Controller
 {
@@ -75,15 +75,21 @@ class SyllabusProcessController extends Controller
         ], 201);
     }
 
+    public function impact(SyllabusProcess $process, ManageSyllabusProcessesRequest $request, ProcessSyllabusCounts $counts): JsonResponse
+    {
+        $syllabi = $counts->byState($process);
+
+        return response()->json(['syllabi' => $syllabi, 'total' => array_sum($syllabi)]);
+    }
+
     public function destroy(
         SyllabusProcess $process,
-        Request $request,
+        DeleteSyllabusProcessRequest $request,
         DeleteSyllabusProcess $action,
     ): JsonResponse {
-        Gate::authorize('delete', $process);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute($process, $actor, $request);
+        $action->execute($process, $actor, $request, $request->notice());
 
         return response()->json(['message' => 'Convocatoria institucional eliminada.']);
     }

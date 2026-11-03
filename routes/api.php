@@ -162,6 +162,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('admin/processes', [SyllabusProcessController::class, 'index'])->middleware('active-role')->name('api.v1.admin.processes.index');
             Route::post('admin/processes', [SyllabusProcessController::class, 'store'])->middleware('active-role')->name('api.v1.admin.processes.store');
             Route::delete('admin/processes/{process}', [SyllabusProcessController::class, 'destroy'])->middleware('active-role')->name('api.v1.admin.processes.destroy');
+            Route::get('admin/processes/{process}/impact', [SyllabusProcessController::class, 'impact'])->middleware('active-role')->name('api.v1.admin.processes.impact');
             Route::post('admin/processes/{process}/deadline', [SyllabusProcessController::class, 'extendDeadline'])->middleware('active-role')->name('api.v1.admin.processes.deadline.extend');
             Route::post('admin/processes/{process}/{transition}', [SyllabusProcessController::class, 'transition'])->middleware('active-role')->whereIn('transition', ['pausar', 'reanudar', 'cerrar'])->name('api.v1.admin.processes.transition');
             Route::get('admin/template', [TemplateController::class, 'index'])

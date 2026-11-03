@@ -92,16 +92,7 @@ class SyllabusProcess extends Model
 
     public function isDeletable(): bool
     {
-        return $this->estado !== self::STATE_CLOSED && $this->deliveredSyllabiCount() === 0;
-    }
-
-    public function deliveredSyllabiCount(): int
-    {
-        return (int) $this->convocations()
-            ->join('silabos', 'silabos.convocatoria_carrera_id', '=', 'convocatorias_carreras.convocatoria_carrera_id')
-            ->join('revisiones_silabo', 'revisiones_silabo.silabo_id', '=', 'silabos.silabo_id')
-            ->distinct()
-            ->count('silabos.silabo_id');
+        return $this->estado !== self::STATE_CLOSED;
     }
 
     /** @return BelongsTo<AcademicPeriod, $this> */

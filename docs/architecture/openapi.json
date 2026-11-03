@@ -832,6 +832,51 @@
                 ]
             }
         },
+        "/api/v1/admin/processes/{process}/impact": {
+            "get": {
+                "tags": [
+                    "Administración"
+                ],
+                "operationId": "api_v1_admin_processes_impact",
+                "summary": "api.v1.admin.processes.impact",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "process",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/processes/{process}/{transition}": {
             "post": {
                 "tags": [

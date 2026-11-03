@@ -187,12 +187,18 @@ La plantilla no se puede cambiar con un proceso `abierto`.
 
 ### Eliminar la convocatoria institucional
 
-- `DELETE admin/processes/{id}` borra de verdad la convocatoria institucional, la de
-  cada carrera y los sílabos que estén en borrador, y deja el período libre para abrir
-  otra convocatoria.
-- Solo se admite mientras ningún docente haya enviado su sílabo. Con sílabos enviados
-  la API responde `422` y la única salida es cerrar la convocatoria, que es la acción
-  final: una cerrada no se elimina (`403`).
+- `GET admin/processes/{id}/impact` devuelve cuántos sílabos tiene la convocatoria por
+  estado (`syllabi`) y el `total`. Solo Administración.
+- `DELETE admin/processes/{id}` con `mensaje` (obligatorio, hasta 1000 caracteres) borra de
+  verdad la convocatoria institucional, la de cada carrera y todos sus sílabos con su
+  historial (revisiones, aprobaciones, firmas, envíos a biblioteca, PDF y avisos), aunque
+  estén enviados o aprobados, y deja el período libre para abrir otra convocatoria.
+- Se admite con la convocatoria abierta o pausada; una cerrada no se elimina (`403`).
+  Sin `mensaje` responde `422`.
+- Antes de borrar se calculan los destinatarios: docentes vigentes de sus sílabos,
+  Coordinación de sus carreras y Biblioteca, sin repetir y sin quien elimina. Cada uno
+  recibe el aviso `proceso.eliminado` con el mensaje, sin enlace, y un correo que no se
+  apaga en las preferencias. Queda la auditoría `proceso_silabos.eliminado`.
 - El período tampoco se elimina si ya tiene una convocatoria.
 
 ### Malla, paralelos y proyecto de carrera

@@ -74,6 +74,26 @@ class EmailPreferencesTest extends TestCase
         $this->assertSame(6, InternalNotification::query()->where('usuario_id', $teacher->id)->count());
     }
 
+    public function test_the_deleted_process_notice_is_always_emailed_while_the_other_notices_still_follow_the_preferences(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $types = array_column($this->as('docente@silabos.test')->getJson(route('api.v1.notifications.email-preferences.show'))->json('options'), 'type');
+        $this->as('docente@silabos.test')->putJson(route('api.v1.notifications.email-preferences.update'), [
+            'preferences' => array_fill_keys($types, false),
+        ])->assertOk();
+        $this->as('docente@silabos.test')->putJson(route('api.v1.notifications.email-preferences.update'), [
+            'preferences' => ['proceso.eliminado' => false],
+        ])->assertUnprocessable()->assertJsonValidationErrors('preferences');
+
+        $this->notify('silabo.aprobado', $teacher->fresh());
+        $this->notify('silabo.correccion_solicitada', $teacher->fresh());
+        Mail::assertNothingQueued();
+
+        $this->notify('proceso.eliminado', $teacher->fresh());
+        Mail::assertQueued(WorkflowNotificationMail::class, 1);
+        $this->assertSame(3, InternalNotification::query()->where('usuario_id', $teacher->id)->count());
+    }
+
     public function test_the_library_now_gets_its_notices_by_email(): void
     {
         $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();

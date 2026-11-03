@@ -14,6 +14,7 @@ use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Operations\Infrastructure\Mail\WorkflowNotificationMail;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
@@ -30,6 +31,7 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
@@ -170,11 +172,14 @@ class SyllabusProcessTest extends TestCase
         $this->transition($process, 'cerrar')->assertSuccessful();
 
         $this->actingAsAdministrator()
-            ->deleteJson(route('api.v1.admin.processes.destroy', $process))
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => 'Se borra por error.'])
             ->assertForbidden();
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.index'))
+            ->assertOk()->assertJsonPath('processes.0.deletable', false);
 
         $this->assertSame(SyllabusProcess::STATE_CLOSED, $process->fresh()?->estado);
         $this->assertNotEmpty(Syllabus::query()->where('convocatoria_id', $convocation->id)->pluck('id'));
+        $this->assertFalse(InternalNotification::query()->where('tipo', 'proceso.eliminado')->exists());
     }
 
     public function test_deleting_a_process_without_sent_syllabi_erases_it_and_frees_the_period(): void
@@ -186,7 +191,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
 
         $this->actingAsAdministrator()
-            ->deleteJson(route('api.v1.admin.processes.destroy', $process))
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => 'Se abre de nuevo.'])
             ->assertOk()
             ->assertJsonPath('message', 'Convocatoria institucional eliminada.');
 
@@ -206,33 +211,75 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame(1, SyllabusProcess::query()->where('periodo_academico_id', $process->periodo_academico_id)->count());
     }
 
-    public function test_a_process_with_sent_syllabi_can_only_be_closed(): void
+    public function test_a_process_with_sent_syllabi_is_deleted_with_all_its_work_and_everyone_involved_is_told(): void
     {
         $convocation = $this->openedConvocation();
         $process = $convocation->process()->firstOrFail();
+        $name = $process->nombre;
         $syllabus = Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail();
         $this->submitSyllabus($syllabus);
+        $revisionIds = SyllabusRevision::query()->where('silabo_id', $syllabus->id)->pluck('id')->all();
+        $this->assertNotEmpty($revisionIds);
+        $total = Syllabus::query()->where('convocatoria_id', $convocation->id)->count();
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
 
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.index'))
+            ->assertOk()->assertJsonPath('processes.0.deletable', true);
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.impact', $process))
+            ->assertOk()
+            ->assertExactJson([
+                'syllabi' => ['sin_iniciar' => $total - 1, 'borrador' => 0, 'en_revision' => 1, 'correccion_solicitada' => 0, 'aprobado' => 0],
+                'total' => $total,
+            ]);
+
+        Mail::fake();
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => '  Abriremos otra con las fechas correctas.  '])
+            ->assertOk()
+            ->assertJsonPath('message', 'Convocatoria institucional eliminada.');
+
+        $this->assertDatabaseMissing('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
+        $this->assertDatabaseMissing('convocatorias_carreras', ['convocatoria_carrera_id' => $convocation->id]);
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
+        $this->assertSame(0, DB::table('revisiones_silabo')->whereIn('revision_silabo_id', $revisionIds)->count());
+        $this->assertSame(0, DB::table('firmas_silabo')->where('silabo_id', $syllabus->id)->count());
+        foreach ([$this->teacher, $this->coordinator, $librarian] as $person) {
+            $notice = InternalNotification::query()->where('usuario_id', $person->id)->where('tipo', 'proceso.eliminado')->sole();
+            $this->assertSame('Convocatoria eliminada', $notice->titulo);
+            $this->assertSame("Administración eliminó la convocatoria {$name} y todos sus sílabos. Mensaje: Abriremos otra con las fechas correctas.", $notice->mensaje);
+            $this->assertSame($process->periodo_academico_id, $notice->periodo_academico_id);
+            Mail::assertQueued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo($person->correo_electronico) && $mail->title === 'Convocatoria eliminada');
+        }
+        Mail::assertQueued(WorkflowNotificationMail::class, 3);
+        $this->assertFalse(InternalNotification::query()->where('usuario_id', $this->administrator->id)->where('tipo', 'proceso.eliminado')->exists());
+
+        $listed = collect($this->actingAsTeacher()->getJson(route('api.v1.notifications.index'))->assertOk()->json('notifications.data'))
+            ->firstWhere('tipo', 'proceso.eliminado');
+        $this->assertIsArray($listed);
+        $this->assertFalse($listed['has_destination']);
+        $this->actingAsTeacher()->postJson(route('api.v1.notifications.open', $listed['id']))
+            ->assertOk()->assertJsonPath('path', null);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'proceso_silabos.eliminado', 'recurso_id' => $process->id]);
+    }
+
+    public function test_deleting_a_process_asks_for_the_message_everyone_will_receive(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+
+        foreach ([[], ['mensaje' => '   '], ['mensaje' => str_repeat('a', 1001)]] as $payload) {
+            $this->actingAsAdministrator()
+                ->deleteJson(route('api.v1.admin.processes.destroy', $process), $payload)
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors(['mensaje']);
+        }
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.processes.destroy', $process))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['process']);
+            ->assertJsonPath('errors.mensaje.0', 'Escriba el mensaje para docentes, coordinación y biblioteca.');
 
-        $this->assertDatabaseHas('convocatorias_universidad', [
-            'convocatoria_universidad_id' => $process->id,
-            'estado_convocatoria_universidad' => SyllabusProcess::STATE_OPEN,
-        ]);
-
-        $this->transition($process, 'cerrar')->assertSuccessful();
-
-        $this->actingAsAdministrator()
-            ->deleteJson(route('api.v1.admin.processes.destroy', $process))
-            ->assertForbidden();
-
-        $this->assertDatabaseHas('convocatorias_universidad', [
-            'convocatoria_universidad_id' => $process->id,
-            'estado_convocatoria_universidad' => SyllabusProcess::STATE_CLOSED,
-        ]);
+        $this->assertDatabaseHas('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
+        $this->assertDatabaseHas('convocatorias_carreras', ['convocatoria_carrera_id' => $convocation->id]);
+        $this->assertFalse(InternalNotification::query()->where('tipo', 'proceso.eliminado')->exists());
     }
 
     public function test_coordination_cannot_delete_an_institutional_process(): void
@@ -240,7 +287,10 @@ class SyllabusProcessTest extends TestCase
         $process = $this->createProcess($this->publishedTemplate(), 'Proceso protegido');
 
         $this->actingAsCoordinator()
-            ->deleteJson(route('api.v1.admin.processes.destroy', $process))
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => 'Se borra.'])
+            ->assertForbidden();
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.admin.processes.impact', $process))
             ->assertForbidden();
 
         $this->assertDatabaseHas('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);

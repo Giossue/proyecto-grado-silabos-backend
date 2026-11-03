@@ -20,7 +20,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\InstitutionDate;
 use Database\Seeders\DatabaseSeeder;
@@ -30,6 +29,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
@@ -87,25 +87,37 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.teacher.syllabi.index'))->assertForbidden();
     }
 
-    public function test_una_convocatoria_con_silabos_enviados_no_se_elimina_y_biblioteca_la_sigue_viendo(): void
+    public function test_al_eliminar_una_convocatoria_se_borran_hasta_los_silabos_aprobados_y_firmados_y_biblioteca_recibe_el_aviso(): void
     {
         [$syllabus, $revision] = $this->submittedRevision();
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->people['coordinator'][0]), 'idempotency_key' => (string) Str::uuid()])->assertSuccessful();
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 1);
+        Queue::fake([GenerateSyllabusExportJob::class]);
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->people['librarian'][0])])->assertCreated();
+        (new GenerateSyllabusExportJob(ExportArtifact::query()->latest('solicitado_en')->firstOrFail()->id))->handle(
+            app(DocumentRenderer::class),
+            app(RecordAuditEvent::class),
+            app(DocumentBundleValidator::class),
+        );
+        $this->assertSame('aprobado', $syllabus->fresh()->estado);
+        $pdf = DB::table('archivos')->whereIn('archivo_id', DB::table('exportaciones_silabo')->whereNotNull('archivo_pdf_id')->select('archivo_pdf_id'))->sole();
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'atendido']))->assertOk()->assertJsonPath('reviews.total', 1);
 
         $process = $syllabus->convocation->process()->firstOrFail();
-        $this->as('admin')->deleteJson(route('api.v1.admin.processes.destroy', $process))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['process']);
+        $this->as('admin')->getJson(route('api.v1.admin.processes.impact', $process))
+            ->assertOk()->assertJsonPath('syllabi.aprobado', 1);
+        $this->as('admin')->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => 'Se abrirá otra convocatoria.'])
+            ->assertOk();
 
-        $this->assertDatabaseHas('convocatorias_universidad', [
-            'convocatoria_universidad_id' => $process->id,
-            'estado_convocatoria_universidad' => SyllabusProcess::STATE_OPEN,
-        ]);
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 1);
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertOk();
-        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 0);
-        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id]);
+        $this->assertDatabaseMissing('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
+        foreach (['silabos', 'revisiones_silabo', 'aprobaciones', 'firmas_silabo', 'envios_biblioteca', 'revisiones_coordinacion', 'exportaciones_silabo'] as $table) {
+            $this->assertDatabaseCount($table, 0);
+        }
+        $this->assertDatabaseMissing('archivos', ['archivo_id' => $pdf->archivo_id]);
+        Storage::disk($pdf->disco)->assertMissing($pdf->ruta_archivo);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'atendido']))->assertOk()->assertJsonPath('reviews.total', 0);
+        $this->assertNotified($this->people['librarian'][0]->id, 'proceso.eliminado', 'Mensaje: Se abrirá otra convocatoria.');
+        $this->assertNotified($this->people['coordinator'][0]->id, 'proceso.eliminado', 'Mensaje: Se abrirá otra convocatoria.');
+        $this->assertNotified($this->people['teacher'][0]->id, 'proceso.eliminado', 'Mensaje: Se abrirá otra convocatoria.');
     }
 
     public function test_cada_bibliotecario_filtra_su_bandeja_por_facultad(): void

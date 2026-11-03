@@ -143,10 +143,14 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   nunca se envió, al docente actual del paralelo (I-231).
 - Administración solo prorroga la fecha de entrega (I-114). Cerrar es la acción final:
   una convocatoria cerrada queda solo para consulta y no se elimina nunca. Eliminar
-  borra de verdad y solo se admite mientras ningún docente haya enviado su sílabo; con
-  sílabos enviados, la única salida es cerrar. Un período tiene una sola convocatoria,
-  para siempre, y no se elimina si ya tiene una. No hay restaurar ni borrado
-  definitivo (I-231).
+  (2026-11-02, reemplaza «solo mientras ningún docente haya enviado su sílabo») se admite
+  con la convocatoria abierta o pausada aunque tenga sílabos enviados, en revisión o
+  aprobados, y borra de verdad la convocatoria, las de cada carrera y todos sus sílabos con
+  su historial. Antes se ve cuántos sílabos se borran por estado y se escribe «eliminar
+  convocatoria» y un mensaje obligatorio. El mensaje llega como aviso «proceso.eliminado» y
+  por correo, que no se apaga en las preferencias, a los docentes con sílabo, a Coordinación
+  de sus carreras y a Biblioteca. El período queda libre para abrir otra convocatoria y no
+  se elimina mientras tenga una. No hay restaurar (I-231).
 - Cada carrera abre su propia convocatoria dentro de la institucional. Coordinación
   solo puede abrirla si hay asignaturas, cada una con paralelo, cada paralelo con
   docente, el proyecto de carrera completo, el logo de la facultad y el plazo vigente. El rechazo

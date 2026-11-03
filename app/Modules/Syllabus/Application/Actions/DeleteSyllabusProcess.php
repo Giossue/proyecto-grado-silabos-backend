@@ -6,6 +6,9 @@ use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
+use App\Modules\Operations\Application\WorkflowNotificationRecipients;
+use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -15,27 +18,26 @@ use Illuminate\Validation\ValidationException;
 
 final class DeleteSyllabusProcess
 {
+    public const EVENT = 'proceso.eliminado';
+
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly InProgressWork $work,
+        private readonly WorkflowNotificationRecipients $recipients,
+        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
-    public function execute(SyllabusProcess $process, User $actor, Request $request): void
+    public function execute(SyllabusProcess $process, User $actor, Request $request, string $message): void
     {
         $activeRole = $this->roles->resolve($request);
         abort_unless($activeRole?->role->codigo_rol === RoleCode::Administrator->value, 403);
 
-        DB::transaction(function () use ($activeRole, $actor, $process): void {
-            $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
+        DB::transaction(function () use ($activeRole, $actor, $message, $process): void {
+            $locked = SyllabusProcess::query()->with('academicPeriod')->lockForUpdate()->findOrFail($process->id);
             if ($locked->estado === SyllabusProcess::STATE_CLOSED) {
                 throw ValidationException::withMessages([
                     'process' => 'Una convocatoria cerrada no se elimina: queda como historial.',
-                ]);
-            }
-            $delivered = $locked->deliveredSyllabiCount();
-            if ($delivered > 0) {
-                throw ValidationException::withMessages([
-                    'process' => "La convocatoria tiene {$delivered} sílabos ya enviados: no se puede eliminar. Ciérrala para conservarla como historial.",
                 ]);
             }
 
@@ -43,18 +45,34 @@ final class DeleteSyllabusProcess
                 ->where('proceso_id', $locked->id)
                 ->lockForUpdate()
                 ->get();
-            $syllabusIds = Syllabus::query()
+            $syllabusIds = array_values(array_map('strval', Syllabus::query()
                 ->whereIn('convocatoria_id', $convocations->modelKeys())
+                ->lockForUpdate()
                 ->pluck('id')
-                ->all();
+                ->all()));
+            $recipientIds = array_values(array_diff(array_unique([
+                ...$this->recipients->teachersForProcess($locked),
+                ...$this->recipients->coordinatorsForProcess($locked),
+                ...$this->recipients->librarians(),
+            ]), [$actor->id]));
             $state = $locked->estado;
+            $name = $locked->nombre;
 
-            DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
-            DB::table('notificaciones')->whereIn('recurso_id', $syllabusIds)->delete();
+            $this->work->purge($syllabusIds);
             DB::statement("SET LOCAL app.reinicio_institucional = 'off'");
-            Syllabus::query()->whereKey($syllabusIds)->delete();
             Convocation::query()->whereKey($convocations->modelKeys())->delete();
             $locked->delete();
+
+            $this->notifications->execute(
+                eventType: self::EVENT,
+                deduplicationKey: self::EVENT.":{$locked->id}",
+                recipientIds: $recipientIds,
+                title: 'Convocatoria eliminada',
+                message: "Administración eliminó la convocatoria {$name} y todos sus sílabos. Mensaje: {$message}",
+                resourceType: 'periodo_academico',
+                resourceId: $locked->periodo_academico_id,
+                periodId: $locked->periodo_academico_id,
+            );
 
             $this->audit->execute(
                 actorId: $actor->id,
@@ -68,6 +86,7 @@ final class DeleteSyllabusProcess
                     'previous_state' => $state,
                     'deleted_convocations' => $convocations->count(),
                     'deleted_syllabi' => count($syllabusIds),
+                    'notified_people' => count($recipientIds),
                 ],
             );
         });
