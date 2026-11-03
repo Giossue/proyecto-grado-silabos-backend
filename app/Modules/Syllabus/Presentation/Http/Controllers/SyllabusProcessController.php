@@ -128,7 +128,7 @@ class SyllabusProcessController extends Controller
 
         if ($result['confirmation_required']) {
             return response()->json([
-                'message' => 'La plantilla cambió durante la pausa. Confirme para rehacer desde cero los sílabos del período.',
+                'message' => 'La plantilla cambió durante la pausa. Confirme para adaptar los sílabos del período: se conserva lo escrito y los enviados o aprobados vuelven a borrador.',
                 'code' => 'plantilla_cambiada',
                 'counts' => $result['counts'],
             ], 422);

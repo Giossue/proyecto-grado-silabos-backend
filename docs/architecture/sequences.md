@@ -178,7 +178,7 @@ sequenceDiagram
     A->>API: POST admin/processes/{id}/reanudar
     API-->>A: confirmation_required + conteo por estado
     A->>API: POST …/reanudar con confirmar_rehacer
-    API->>DB: borra y vuelve a crear cada sílabo del proceso, incluso aprobados y firmados
+    API->>DB: adapta cada sílabo por clave de campo; enviados y aprobados vuelven a borrador sin historial
     API->>DB: notificación a los docentes; auditoría proceso.plantilla_rehecho
     API->>DB: proceso abierto
 ```

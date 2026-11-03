@@ -24,7 +24,7 @@ final class EmailNoticeCatalog
     private const SWITCH_OF = [
         'silabo.eliminado' => self::SYLLABUS_RESTARTED,
         'silabo.regenerado' => self::SYLLABUS_RESTARTED,
-        'proceso.plantilla_rehecho' => self::SYLLABUS_RESTARTED,
+        'proceso.plantilla_rehecho' => 'silabo.devuelto_borrador',
     ];
 
     /** @var array<string, array<string, array{label: string, description: string}>> rol => tipo => textos */
@@ -34,9 +34,9 @@ final class EmailNoticeCatalog
             'convocatoria.abierta' => ['label' => 'Convocatoria abierta', 'description' => 'Tiene sílabos por elaborar'],
             'convocatoria.reanudada' => ['label' => 'Convocatoria reanudada', 'description' => 'Puede seguir con sus sílabos tras una pausa'],
             'silabo.correccion_solicitada' => ['label' => 'Corrección solicitada', 'description' => 'Coordinación o Biblioteca le pide corregir un sílabo'],
-            'silabo.devuelto_borrador' => ['label' => 'Sílabo devuelto a borrador', 'description' => 'Cambió un dato de la carrera o de la malla'],
+            'silabo.devuelto_borrador' => ['label' => 'Sílabo devuelto a borrador', 'description' => 'Cambió un dato de la carrera, de la malla o la plantilla'],
             'silabo.aprobado' => ['label' => 'Sílabo aprobado', 'description' => 'Su sílabo quedó aprobado, con el PDF listo'],
-            self::SYLLABUS_RESTARTED => ['label' => 'Sílabo reiniciado', 'description' => 'Su sílabo volvió a empezar: Coordinación lo reinició o cambió la malla, el paralelo o la plantilla'],
+            self::SYLLABUS_RESTARTED => ['label' => 'Sílabo reiniciado', 'description' => 'Su sílabo volvió a empezar: Coordinación lo reinició o cambió la malla o el paralelo'],
             'proceso.cierre_proximo' => ['label' => 'Cierre de la convocatoria', 'description' => '3 días antes del último día de clases, si tiene sílabos sin aprobar'],
         ],
         'coordinador' => [

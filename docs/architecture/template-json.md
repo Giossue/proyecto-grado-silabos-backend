@@ -27,7 +27,7 @@ El archivo exportado empieza con `"$schema"`, que apunta al esquema publicado de
 autocompleta y marca errores mientras se escribe; importar ignora esa clave. El servidor valida además lo que el
 esquema no puede expresar (rutas de las reglas, datos del diseño, campos obligatorios).
 
-Importar exige el proceso pausado y, al reanudar, los sílabos en curso se rehacen (I-188). **Un sílabo enviado o
+Importar exige el proceso pausado y, al reanudar, los sílabos en curso se adaptan a la plantilla nueva por la clave de cada campo (I-188). **Un sílabo enviado o
 aprobado guarda una copia de la definición** (`template_definition` en la fotografía de la revisión): cambiar la
 plantilla o el código después no altera cómo se ve.
 

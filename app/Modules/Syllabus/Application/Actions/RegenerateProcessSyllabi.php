@@ -10,6 +10,10 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Adapta a la plantilla vigente los sílabos de las convocatorias abiertas o en pausa del proceso:
+ * se conserva lo escrito que sigue encajando y los enviados o aprobados vuelven a borrador.
+ */
 final class RegenerateProcessSyllabi
 {
     /** @var array<string, int> */
@@ -65,7 +69,7 @@ final class RegenerateProcessSyllabi
         $teacherIds = $this->recipients->teachersForProcess($process);
 
         foreach ($syllabi as $syllabus) {
-            $this->work->restartSyllabus($syllabus);
+            $this->work->adaptToTemplate($syllabus);
         }
 
         $this->notifications->executeForResource(

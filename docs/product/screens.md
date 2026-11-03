@@ -108,8 +108,8 @@ y el botón «Documentos» (DOC-10).
   y «Aplicar y reemplazar». Si hay errores, no cambia nada y muestra la ruta de cada uno. Los bloques
   solo se agregan por JSON.
 - Con la convocatoria abierta, todo queda bloqueado y aparece el aviso de edición
-  bloqueada. Si la plantilla cambió durante una pausa, se avisa que al reanudar se
-  rehacen los sílabos.
+  bloqueada. Si la plantilla cambió durante una pausa, se avisa que al reanudar los
+  sílabos se adaptan: se conserva lo escrito y los enviados o aprobados vuelven a borrador.
 - Asistente (POR VALIDAR): solo al editar, botón flotante «Asistente» abajo a la derecha.
   Abre un panel de chat donde se pide un cambio en lenguaje natural. La IA trabaja sobre lo
   que hay en el editor, aunque no esté guardado. Cada propuesta lista sus cambios con
@@ -145,7 +145,7 @@ y el botón «Documentos» (DOC-10).
   materias, los paralelos y los docentes no se borran. Un período con convocatoria
   muestra el motivo y no deja eliminarlo.
 - Si la plantilla cambió durante la pausa, «Reanudar» muestra el conteo por estado y
-  pide «Reanudar y rehacer sílabos».
+  pide «Reanudar y adaptar sílabos».
 - «Prorrogar plazo» dice «Prórroga 1 de 2» (o «2 de 2») y «Hasta el último día de clases»
   con la fecha; el selector no deja elegir después. Con las 2 prórrogas usadas, el plazo
   ya en el último día de clases o las clases terminadas, la opción queda desactivada y

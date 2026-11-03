@@ -267,7 +267,7 @@ final class TemplateAssistant
 
         return match ($state) {
             SyllabusProcess::STATE_OPEN => ['estado' => 'abierta', 'aviso' => 'Hay una convocatoria abierta: la plantilla no se puede cambiar hasta pausarla.'],
-            SyllabusProcess::STATE_PAUSED => ['estado' => 'pausada', 'aviso' => 'La convocatoria está en pausa: si se aplican cambios, al reanudarla los sílabos en curso se rehacen desde cero.'],
+            SyllabusProcess::STATE_PAUSED => ['estado' => 'pausada', 'aviso' => 'La convocatoria está en pausa: si se aplican cambios, al reanudarla los sílabos en curso vuelven a borrador y conservan lo escrito en los campos que siguen encajando; los campos que cambien su estructura quedan vacíos.'],
             default => ['estado' => 'ninguna', 'aviso' => 'No hay convocatoria abierta ni en pausa: los cambios se aplican a los próximos sílabos.'],
         };
     }

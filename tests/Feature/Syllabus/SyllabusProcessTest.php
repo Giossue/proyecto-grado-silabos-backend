@@ -3,6 +3,7 @@
 namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
@@ -826,7 +827,7 @@ class SyllabusProcessTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc());
     }
 
-    public function test_changing_the_template_during_a_pause_waits_for_confirmed_process_resume_to_replace_syllabi(): void
+    public function test_changing_the_template_during_a_pause_waits_for_confirmed_process_resume_to_return_syllabi_to_draft(): void
     {
         $convocation = $this->openedConvocation();
         $process = $convocation->process()->firstOrFail();
@@ -910,13 +911,14 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']), ['confirmar_rehacer' => true])
             ->assertSuccessful();
-        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
-        $this->assertDatabaseMissing('silabos', ['silabo_id' => $approved->id]);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'borrador']);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $approved->id, 'estado_silabo' => 'borrador']);
         $this->assertDatabaseMissing('revisiones_silabo', ['revision_silabo_id' => $approvedRevision->id]);
         $this->assertDatabaseMissing('aprobaciones', ['revision_silabo_id' => $approvedRevision->id]);
         $this->assertDatabaseMissing('valores_campo', ['valor_campo_id' => $value->id]);
         $this->assertDatabaseCount('silabos', 2);
-        $this->assertSame(2, Syllabus::query()->where('estado', 'sin_iniciar')->count());
+        $this->assertFalse(FieldValue::query()->whereIn('silabo_id', [$syllabus->id, $approved->id])
+            ->whereNotIn('definicion_campo_id', FieldDefinition::query()->pluck('id'))->exists());
         $this->assertSame('abierto', $process->fresh()->estado);
 
         $auditEvent = AuditEvent::query()
@@ -930,8 +932,59 @@ class SyllabusProcessTest extends TestCase
             ->where('tipo', 'proceso.plantilla_rehecho')->sole();
         $this->assertSame('proceso_silabos', $deliveredNotice->tipo_recurso);
         $this->assertSame($process->id, $deliveredNotice->recurso_id);
-        $this->assertSame('Su sílabo volvió a empezar', $deliveredNotice->titulo);
-        $this->assertStringContainsString('volvieron a empezar desde cero', $deliveredNotice->mensaje);
+        $this->assertSame('Su sílabo volvió a borrador', $deliveredNotice->titulo);
+        $this->assertStringContainsString('se conservó lo que ya había escrito', $deliveredNotice->mensaje);
+    }
+
+    public function test_saving_the_whole_template_keeps_each_teacher_answer_that_still_fits_its_field(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+        $template = SyllabusTemplate::institutional();
+        $syllabus = Syllabus::query()->firstOrFail();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $answer = fn (string $key, string $text) => FieldValue::query()->where('silabo_id', $syllabus->id)
+            ->where('definicion_campo_id', FieldDefinition::query()->get()->firstWhere('clave', $key)->id)
+            ->update(['valor' => FreeText::fromText($text)]);
+        $answer('metodologia', 'Aprendizaje basado en proyectos.');
+        $answer('tecnicas_ensenanza', 'Debates guiados.');
+        $answer('ambientes_aprendizaje', 'Laboratorio de software.');
+        $chat = DB::table('mensajes_ia')->where('silabo_id', $syllabus->id)->count();
+        $this->transition($process, 'pausar', 'Ajuste de la plantilla con expedientes abiertos.')->assertSuccessful();
+
+        $json = $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.json.export', $template))->assertOk()->json();
+        foreach ($json['sections'] as &$section) {
+            if ($section['key'] !== 'metodologia') {
+                continue;
+            }
+            $section['fields'] = array_values(array_filter($section['fields'], fn (array $field): bool => $field['key'] !== 'ambientes_aprendizaje'));
+            foreach ($section['fields'] as &$field) {
+                if ($field['key'] === 'tecnicas_ensenanza') {
+                    $field['content'] = ['<p>Indique las técnicas por unidad.</p><p></p>'];
+                }
+            }
+            unset($field);
+        }
+        unset($section);
+        $this->putJson(route('api.v1.admin.template.json.import', $template), $json)->assertOk();
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']), ['confirmar_rehacer' => true])
+            ->assertSuccessful();
+
+        $syllabus->refresh();
+        $this->assertSame('borrador', $syllabus->estado);
+        $current = FieldDefinition::query()->get()->keyBy('clave');
+        $values = $syllabus->values()->get()->keyBy('definicion_campo_id');
+        $this->assertFalse($syllabus->values()->whereNotIn('definicion_campo_id', $current->pluck('id'))->exists());
+        $this->assertStringContainsString('Aprendizaje basado en proyectos.', json_encode($values[$current['metodologia']->id]->valor, JSON_UNESCAPED_UNICODE));
+        $this->assertEquals($current['tecnicas_ensenanza']->contenido, $values[$current['tecnicas_ensenanza']->id]->valor);
+        $this->assertArrayNotHasKey('ambientes_aprendizaje', $current->all());
+        $profile = app(SubjectProfileFields::class)->values((string) $syllabus->parallel->asignatura_id);
+        $this->assertEquals($profile[$current['descripcion']->id], $values[$current['descripcion']->id]->valor);
+        $this->assertSame($chat, DB::table('mensajes_ia')->where('silabo_id', $syllabus->id)->count());
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()
+            ->assertJsonPath('syllabus.state', 'borrador');
     }
 
     public function test_changing_the_cycle_count_or_requirements_refreshes_without_purging(): void

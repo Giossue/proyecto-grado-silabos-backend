@@ -58,11 +58,11 @@ class EmailPreferencesTest extends TestCase
     public function test_every_syllabus_restart_is_emailed_and_one_switch_turns_them_all_off(): void
     {
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-        $restarts = ['silabo.eliminado', 'silabo.regenerado', 'proceso.plantilla_rehecho'];
+        $restarts = ['silabo.eliminado', 'silabo.regenerado'];
         foreach ($restarts as $event) {
             $this->notify($event, $teacher);
         }
-        Mail::assertQueued(WorkflowNotificationMail::class, 3);
+        Mail::assertQueued(WorkflowNotificationMail::class, 2);
 
         $this->as('docente@silabos.test')->putJson(route('api.v1.notifications.email-preferences.update'), [
             'preferences' => ['silabo.reiniciado' => false],
@@ -70,8 +70,25 @@ class EmailPreferencesTest extends TestCase
         foreach ($restarts as $event) {
             $this->notify($event, $teacher->fresh());
         }
-        Mail::assertQueued(WorkflowNotificationMail::class, 3);
-        $this->assertSame(6, InternalNotification::query()->where('usuario_id', $teacher->id)->count());
+        Mail::assertQueued(WorkflowNotificationMail::class, 2);
+        $this->assertSame(4, InternalNotification::query()->where('usuario_id', $teacher->id)->count());
+    }
+
+    public function test_the_template_change_notice_follows_the_back_to_draft_switch(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $this->as('docente@silabos.test')->putJson(route('api.v1.notifications.email-preferences.update'), [
+            'preferences' => ['silabo.reiniciado' => false],
+        ])->assertOk();
+        $this->notify('proceso.plantilla_rehecho', $teacher->fresh());
+        Mail::assertQueued(WorkflowNotificationMail::class, 1);
+
+        $this->as('docente@silabos.test')->putJson(route('api.v1.notifications.email-preferences.update'), [
+            'preferences' => ['silabo.devuelto_borrador' => false],
+        ])->assertOk();
+        $this->notify('proceso.plantilla_rehecho', $teacher->fresh());
+        Mail::assertQueued(WorkflowNotificationMail::class, 1);
+        $this->assertSame(2, InternalNotification::query()->where('usuario_id', $teacher->id)->count());
     }
 
     public function test_the_deleted_process_notice_is_always_emailed_while_the_other_notices_still_follow_the_preferences(): void

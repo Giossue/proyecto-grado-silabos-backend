@@ -5,6 +5,8 @@ namespace App\Modules\Syllabus\Application;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldResponse;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
@@ -259,6 +261,70 @@ final class InProgressWork
             ->where('convocatoria_carrera_id', $convocation->id)
             ->where('paralelo_id', $parallel->id)
             ->firstOrFail();
+    }
+
+    /**
+     * Lleva un sílabo a la plantilla vigente sin perder lo escrito. Cada campo del docente conserva
+     * la respuesta del campo con su misma clave si todavía encaja en él; si no encaja, solo ese
+     * campo vuelve a quedar vacío. Los de Coordinación vuelven del proyecto de carrera y los campos
+     * quitados se descartan. Un sílabo enviado o aprobado vuelve a borrador sin historial ni firmas,
+     * para que se revise y firme otra vez con la plantilla nueva. Uno sin iniciar se genera de nuevo.
+     */
+    public function adaptToTemplate(Syllabus $syllabus): Syllabus
+    {
+        if ($syllabus->estado === 'sin_iniciar') {
+            return $this->restartSyllabus($syllabus);
+        }
+        $syllabus->loadMissing('parallel');
+        $stored = FieldValue::query()->where('silabo_id', $syllabus->id)->get();
+        $keys = FieldDefinition::withoutGlobalScopes()->with('blockRecord')
+            ->whereIn('definicion_campo_id', $stored->pluck('definicion_campo_id'))->get()
+            ->mapWithKeys(fn (FieldDefinition $field): array => [(string) $field->id => $field->clave]);
+        $previous = [];
+        foreach ($stored as $value) {
+            $key = $keys[(string) $value->definicion_campo_id] ?? '';
+            if ($key !== '') {
+                $previous[$key] = $value->valor;
+            }
+        }
+        $profile = $this->profiles->values((string) $syllabus->parallel->asignatura_id);
+
+        if (in_array($syllabus->estado, self::SENT_STATES, true)) {
+            $this->clearHistory([(string) $syllabus->id]);
+            $syllabus->estado = 'borrador';
+        }
+        FieldValue::query()->where('silabo_id', $syllabus->id)->delete();
+        foreach (FieldDefinition::query()->get() as $field) {
+            if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
+                continue;
+            }
+            $document = $field->fromProfile()
+                ? ($profile[$field->id] ?? null)
+                : $this->stillFits($field, $previous[$field->clave] ?? null);
+            FieldValue::query()->create([
+                'silabo_id' => $syllabus->id,
+                'definicion_campo_id' => $field->id,
+                'valor' => $document === null || FieldDocument::isEmpty($document) ? $field->contenido : $document,
+            ]);
+        }
+        $syllabus->version_bloqueo++;
+        $syllabus->guardado_en = now()->toImmutable();
+        $syllabus->save();
+
+        return $syllabus;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function stillFits(FieldDefinition $field, mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+        try {
+            return FieldResponse::normalize($field->contenido, $value);
+        } catch (ValidationException) {
+            return null;
+        }
     }
 
     /**

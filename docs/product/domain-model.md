@@ -125,7 +125,7 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 5. Hay un sílabo por paralelo en cada convocatoria de carrera.
 6. Todo envío crea una revisión nueva; nunca modifica la anterior.
 7. Una revisión enviada no se edita. Solo desaparece si se elimina o se rehace el
-   sílabo completo.
+   sílabo completo, o si vuelve a borrador por un cambio de la base institucional.
 8. Revisión de coordinación, envío a biblioteca y aprobación se registran una sola vez
    por revisión.
 9. El PDF se genera desde la copia guardada en la revisión.

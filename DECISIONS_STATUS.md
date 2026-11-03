@@ -229,8 +229,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   «Obligatorio» por campo.
 - Cada revisión enviada congela la definición de la plantilla que usó.
 - Para cambiar la plantilla con sílabos existentes, Administración pausa la convocatoria
-  institucional. Al reanudar confirma, y los sílabos afectados se rehacen desde cero,
-  incluso los aprobados. Las convocatorias cerradas no se tocan (I-118).
+  institucional. Al reanudar confirma, y los sílabos afectados se adaptan a la plantilla:
+  cada campo del docente conserva la respuesta del campo con su misma clave si todavía encaja en él (si no encaja, solo ese campo queda vacío); los de Coordinación vuelven del proyecto de carrera y los campos quitados se descartan. Los enviados o aprobados vuelven a borrador sin historial ni firmas, porque
+  deben cumplir la plantilla vigente. Las convocatorias cerradas no se tocan (I-118).
 
 ## Proyecto de carrera
 

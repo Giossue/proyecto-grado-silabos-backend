@@ -14,8 +14,8 @@ final class WorkflowNotificationMessages
     {
         if ($eventType === self::TEMPLATE_REDONE) {
             return [
-                'Su sílabo volvió a empezar',
-                'El administrador cambió la plantilla. Sus sílabos de este proceso volvieron a empezar desde cero; complételos otra vez.',
+                'Su sílabo volvió a borrador',
+                'El administrador cambió la plantilla. Sus sílabos de este proceso volvieron a borrador y se conservó lo que ya había escrito; revíselos y envíelos otra vez.',
             ];
         }
         if ($syllabus === null) {
