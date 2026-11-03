@@ -240,6 +240,7 @@ class ReviewController extends Controller
                 'requested_at' => $revision->correccion_solicitada_en->toIso8601String(),
             ],
             'decisions_allowed' => $decisionsAllowed,
+            'convocation_closed' => ! SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation->estado),
             'decision_block' => $decisionBlock,
             'reset' => [
                 'allowed' => $decisionBlock === null && $myStage === ReviewStage::COORDINATION && $syllabus->estado === 'aprobado',

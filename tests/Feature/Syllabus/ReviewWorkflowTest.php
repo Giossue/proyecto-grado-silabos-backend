@@ -578,7 +578,7 @@ class ReviewWorkflowTest extends TestCase
         $approve()->assertForbidden()->assertJsonPath('message', 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.');
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), ['justification' => 'Falta alinear los resultados.'])->assertForbidden();
         $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
-            ->assertJsonPath('decisions_allowed', false)->assertJsonPath('decision_block', 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.');
+            ->assertJsonPath('decisions_allowed', false)->assertJsonPath('convocation_closed', false)->assertJsonPath('decision_block', 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.');
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertSuccessful();
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$convocation->process, 'pausar']))->assertSuccessful();
@@ -762,6 +762,7 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
             ->assertOk()
             ->assertJsonPath('decisions_allowed', false)
+            ->assertJsonPath('convocation_closed', true)
             ->assertJsonPath('reset.allowed', false);
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
