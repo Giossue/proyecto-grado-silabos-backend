@@ -12,23 +12,29 @@ final class ScreenHelpCatalog
     public const HELP = [
         '/admin/auditoria' => [
             'title' => 'Auditoría',
-            'content' => 'Registro de las acciones importantes que se hacen en el sistema: quién las hizo, cuándo, con qué rol y con qué resultado.
+            'content' => 'Aquí queda anotado quién hizo cada cambio importante y cuándo.
 
-Es solo de consulta.',
+Solo se puede consultar.',
         ],
         '/admin/configuracion/perfil' => [
             'title' => 'Perfil',
-            'content' => 'Aquí puede actualizar su nombre y su correo electrónico.',
+            'content' => 'Aquí cambia su nombre. El correo solo se puede cambiar antes de activar la cuenta.',
         ],
         '/admin/configuracion/seguridad' => [
             'title' => 'Seguridad',
-            'content' => 'Cambie su contraseña y administre la verificación en dos pasos. Para activarla o desactivarla se le pedirá su contraseña actual.
+            'content' => 'Aquí cambia su contraseña. Si no la recuerda, puede pedir un enlace por correo para crear otra.
 
-Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si pierde el acceso a su aplicación de autenticación.',
+También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.',
+        ],
+        '/admin/configuracion/sistema' => [
+            'title' => 'Sistema',
+            'content' => 'Aquí se configuran los avisos por correo, el asistente y la conexión con la biblioteca.
+
+Abra cada parte para cambiarla. Algunas piden su contraseña antes de guardar.',
         ],
         '/admin/convocatorias' => [
             'title' => 'Convocatorias',
-            'content' => 'Cada fila es un período lectivo y su convocatoria institucional: las fechas de clases y las fechas en que los docentes elaboran y entregan sus sílabos. Solo puede haber una convocatoria abierta o pausada a la vez.
+            'content' => 'Aquí abre y controla el tiempo en que los docentes hacen sus sílabos. Solo puede haber una convocatoria en curso a la vez.
 
 Al pulsar una fila se abren sus opciones: pausar, reanudar, prorrogar el plazo, finalizar o eliminar la convocatoria; un período sin convocatoria se puede abrir o eliminar. Cada coordinación inicia después la convocatoria de su carrera.
 
@@ -44,29 +50,29 @@ Arriba están los indicadores de la convocatoria vigente. El botón rojo de chec
         ],
         '/admin/estructura-academica' => [
             'title' => 'Facultades y carreras',
-            'content' => 'Administre el catálogo académico: facultades (con su logo en PNG), carreras, coordinadores y períodos académicos. Use las pestañas para cambiar de catálogo.
+            'content' => 'Aquí están las facultades y las carreras de la universidad.
 
-Puede crear, editar y activar o desactivar cada registro; un registro con historial no se elimina, solo se desactiva. Las carreras también se pueden importar desde Excel, y desde una carrera puede reemplazar a su coordinador.
+Pulse una fila para cambiar sus datos. Nada se borra: lo que ya no se usa se desactiva y se puede volver a activar. Las carreras también se pueden subir con un Excel.
 
-Mientras haya una convocatoria en curso, algunos cambios quedan bloqueados; el aviso de la pantalla le dice qué hacer.',
+Si hay una convocatoria abierta, un aviso arriba le explica qué pasa con los sílabos si cambia algo.',
         ],
         '/admin/estructura-academica/:section' => [
             'title' => 'Facultades y carreras',
-            'content' => 'Administre el catálogo académico: facultades (con su logo en PNG), carreras, coordinadores y períodos académicos. Use las pestañas para cambiar de catálogo.
+            'content' => 'Aquí están las facultades y las carreras de la universidad.
 
-Puede crear, editar y activar o desactivar cada registro; un registro con historial no se elimina, solo se desactiva. Las carreras también se pueden importar desde Excel, y desde una carrera puede reemplazar a su coordinador.
+Pulse una fila para cambiar sus datos. Nada se borra: lo que ya no se usa se desactiva y se puede volver a activar. Las carreras también se pueden subir con un Excel.
 
-Mientras haya una convocatoria en curso, algunos cambios quedan bloqueados; el aviso de la pantalla le dice qué hacer.',
+Si hay una convocatoria abierta, un aviso arriba le explica qué pasa con los sílabos si cambia algo.',
         ],
         '/admin/notificaciones' => [
             'title' => 'Notificaciones',
-            'content' => 'Aquí aparecen los avisos del período en curso que le corresponden. Cuando el período termina, sus avisos ya no se muestran.
+            'content' => 'Aquí están sus avisos del período actual.
 
-Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leído.',
+Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo de los nuevos.',
         ],
         '/admin/plantilla' => [
             'title' => 'Plantilla del sílabo',
-            'content' => 'Es el formato único del sílabo: sus secciones, sus campos y el orden en que aparecen.
+            'content' => 'Es el formato del sílabo, el mismo para todas las carreras.
 
 «Editar» abre el editor y pide escribir «editar plantilla». Ahí escribe directo en la hoja, elige quién llena cada campo (docente, carrera o texto fijo) y pulsa «Guardar». El logo de la universidad y «Editar JSON» se guardan al instante, sin pasar por «Guardar».
 
@@ -76,11 +82,9 @@ Los sílabos de períodos anteriores no se tocan.',
         ],
         '/admin/usuarios' => [
             'title' => 'Usuarios y roles',
-            'content' => 'Cree las cuentas de coordinación, docencia y biblioteca, una por una o importándolas desde Excel. Cada persona recibe un correo de invitación para verificar su correo y definir su contraseña.
+            'content' => 'Aquí crea las cuentas de coordinación, docentes y biblioteca, una por una o con un Excel. Cada persona recibe un correo para entrar por primera vez.
 
-Coordinación y docencia se asignan a una carrera; biblioteca trabaja con toda la universidad. Una persona puede tener más de un rol: el «+1» junto al rol indica que tiene otros.
-
-Pulse una fila para ver el detalle de la cuenta y use «Editar» para corregir sus datos, quitar un rol o agregar otro. Desde el menú de la fila puede desactivar o reactivar la cuenta, y reenviar la invitación si sigue pendiente. Al desactivar una cuenta, su sesión se cierra.',
+Pulse una persona para ver sus datos, cambiar sus roles o quitarle el acceso. Una persona puede tener más de un rol.',
         ],
         '/biblioteca/configuracion/perfil' => [
             'title' => 'Perfil',

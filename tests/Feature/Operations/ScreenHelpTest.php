@@ -26,7 +26,7 @@ class ScreenHelpTest extends TestCase
 
         $this->assertFalse(Schema::hasTable('ayudas_pantalla'));
         $this->assertGreaterThanOrEqual(30, count($screens));
-        foreach (['/admin/convocatorias', '/coordinacion/malla', '/coordinacion/revisiones', '/docente/mis-silabos', '/biblioteca/revisiones', '/biblioteca/historial'] as $screen) {
+        foreach (['/admin/convocatorias', '/admin/configuracion/sistema', '/coordinacion/malla', '/coordinacion/revisiones', '/docente/mis-silabos', '/biblioteca/revisiones', '/biblioteca/historial'] as $screen) {
             $this->assertContains($screen, $screens);
         }
         foreach (['/admin/ayuda', '/docente/panel', '/biblioteca/panel', '/coordinacion/panel'] as $screen) {
