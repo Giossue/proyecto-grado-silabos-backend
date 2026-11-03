@@ -213,7 +213,9 @@ los mensajes se rechazan o llegan a spam, y el fallo solo se ve en el panel del 
 Además de las invitaciones, llegan por correo pocos avisos del sistema, solo los que piden
 actuar. Docente: convocatoria abierta, convocatoria reanudada tras una pausa, corrección
 solicitada, sílabo devuelto a borrador y sílabo aprobado. Biblioteca: sílabo por revisar
-(aprobado por Coordinación) y sílabo reenviado. Coordinación: el resumen diario. Cada persona
+(aprobado por Coordinación) y sílabo reenviado. Los tres roles tienen además un resumen diario de
+lo pendiente (`avisos:resumen-coordinacion` y `avisos:resumen-diario`), de lunes a viernes a la
+hora configurada y solo si hay algo. Cada persona
 elige cuáles recibe en su Configuración › Notificaciones (sin elegir, llegan todos). Se manda un
 correo por aviso y persona, solo a cuentas activas con correo verificado; los demás avisos quedan
 en la campana. Los correos de la cuenta (invitación, contraseña, verificación) no se pueden apagar.

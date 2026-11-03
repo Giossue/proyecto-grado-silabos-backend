@@ -94,8 +94,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   no Administración: Docente (convocatoria abierta y reanudada, corrección solicitada, devuelto a
   borrador, aprobado), Coordinación (resumen diario) y Biblioteca (sílabo por revisar y reenviado,
   que antes no llegaban por correo). Sin elegir, llegan todos. Administración conserva solo el
-  interruptor general y la hora del resumen. Coordinación ya no recibe «sílabo enviado» ni
-  «reenviado» en la campana: los ve en Revisión y en el resumen.
+  interruptor general (que también apaga los resúmenes) y la hora del resumen. Coordinación ya no
+  recibe «sílabo enviado» ni «reenviado» en la campana: los ve en Revisión y en el resumen.
+  Todos los roles tienen un resumen diario como el de Coordinación, de lunes a viernes y solo si hay
+  pendientes: Docente, sus sílabos por elaborar o corregir y el plazo; Biblioteca, lo que espera
+  su revisión (`avisos:resumen-diario`).
 - Notificaciones, Asistente de IA y Biblioteca se configuran en Administración › Configuración ›
   Sistema (2026-11-02), tabla `ajustes_sistema`. Lo guardado manda sobre la variable de entorno,
   que queda como respaldo mientras el ajuste no se guarde; se aplica al arrancar y antes de cada

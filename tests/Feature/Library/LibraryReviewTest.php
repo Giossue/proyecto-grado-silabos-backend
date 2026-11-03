@@ -15,6 +15,7 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Infrastructure\Mail\CoordinatorSummaryMail;
+use App\Modules\Operations\Infrastructure\Mail\DailySummaryMail;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -342,6 +343,22 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->people['librarian'][0])])->assertForbidden();
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertNull($revision->fresh()->correccion_etapa);
+    }
+
+    public function test_biblioteca_recibe_un_resumen_diario_de_lo_que_espera_su_revision(): void
+    {
+        Mail::fake();
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+        $librarian->forceFill(['correo_verificado_en' => now()])->save();
+        [, $revision] = $this->submittedRevision();
+
+        Artisan::call('avisos:resumen-diario');
+        Mail::assertNotQueued(DailySummaryMail::class, fn (DailySummaryMail $mail): bool => $mail->hasTo('bibliotecario@silabos.test'));
+
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->people['coordinator'][0]), 'idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        Artisan::call('avisos:resumen-diario');
+        Mail::assertQueued(DailySummaryMail::class, fn (DailySummaryMail $mail): bool => $mail->hasTo('bibliotecario@silabos.test')
+            && str_contains($mail->lines[0], '1 sílabo por revisar'));
     }
 
     public function test_el_coordinador_que_apago_el_resumen_diario_no_lo_recibe(): void

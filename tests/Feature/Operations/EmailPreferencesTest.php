@@ -30,10 +30,10 @@ class EmailPreferencesTest extends TestCase
             ->map(fn (array $option): string => $option['type'].':'.($option['enabled'] ? 'si' : 'no'))->all();
 
         $this->assertSame([
-            'convocatoria.abierta:si', 'convocatoria.reanudada:si', 'silabo.correccion_solicitada:si', 'silabo.devuelto_borrador:si', 'silabo.aprobado:si',
+            'docente.resumen_diario:si', 'convocatoria.abierta:si', 'convocatoria.reanudada:si', 'silabo.correccion_solicitada:si', 'silabo.devuelto_borrador:si', 'silabo.aprobado:si',
         ], $types('docente@silabos.test'));
         $this->assertSame(['coordinacion.resumen_diario:si'], $types('coordinador@silabos.test'));
-        $this->assertSame(['coordinacion.aprobado:si', 'silabo.reenviado_biblioteca:si'], $types('bibliotecario@silabos.test'));
+        $this->assertSame(['biblioteca.resumen_diario:si', 'coordinacion.aprobado:si', 'silabo.reenviado_biblioteca:si'], $types('bibliotecario@silabos.test'));
         $this->assertSame([], $types('admin@silabos.test'));
     }
 
@@ -42,7 +42,7 @@ class EmailPreferencesTest extends TestCase
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->as('docente@silabos.test')->putJson(route('api.v1.notifications.email-preferences.update'), [
             'preferences' => ['silabo.aprobado' => false],
-        ])->assertOk()->assertJsonPath('options.4.type', 'silabo.aprobado')->assertJsonPath('options.4.enabled', false);
+        ])->assertOk()->assertJsonPath('options.5.type', 'silabo.aprobado')->assertJsonPath('options.5.enabled', false);
 
         $this->notify('silabo.aprobado', $teacher);
         $this->notify('silabo.correccion_solicitada', $teacher);

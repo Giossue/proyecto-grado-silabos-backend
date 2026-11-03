@@ -14,9 +14,14 @@ final class EmailNoticeCatalog
 {
     public const DAILY_SUMMARY = 'coordinacion.resumen_diario';
 
+    public const TEACHER_SUMMARY = 'docente.resumen_diario';
+
+    public const LIBRARY_SUMMARY = 'biblioteca.resumen_diario';
+
     /** @var array<string, array<string, array{label: string, description: string}>> rol => tipo => textos */
     private const BY_ROLE = [
         'docente' => [
+            self::TEACHER_SUMMARY => ['label' => 'Resumen diario', 'description' => 'Sílabos por elaborar o corregir y el plazo, de lunes a viernes, solo si hay pendientes'],
             'convocatoria.abierta' => ['label' => 'Convocatoria abierta', 'description' => 'Tiene sílabos por elaborar'],
             'convocatoria.reanudada' => ['label' => 'Convocatoria reanudada', 'description' => 'Puede seguir con sus sílabos tras una pausa'],
             'silabo.correccion_solicitada' => ['label' => 'Corrección solicitada', 'description' => 'Coordinación o Biblioteca le pide corregir un sílabo'],
@@ -27,6 +32,7 @@ final class EmailNoticeCatalog
             self::DAILY_SUMMARY => ['label' => 'Resumen diario', 'description' => 'Sílabos por revisar, de lunes a viernes, solo si hay pendientes'],
         ],
         'bibliotecario' => [
+            self::LIBRARY_SUMMARY => ['label' => 'Resumen diario', 'description' => 'Sílabos por revisar, de lunes a viernes, solo si hay pendientes'],
             'coordinacion.aprobado' => ['label' => 'Sílabo por revisar', 'description' => 'Coordinación aprobó un sílabo y espera la revisión de biblioteca'],
             'silabo.reenviado_biblioteca' => ['label' => 'Sílabo reenviado', 'description' => 'El docente corrigió la bibliografía y la reenvió'],
         ],

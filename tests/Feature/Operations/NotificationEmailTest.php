@@ -88,6 +88,7 @@ class NotificationEmailTest extends TestCase
     public function test_the_coordinator_summary_runs_on_weekdays_at_the_institution_hour(): void
     {
         $this->artisan('schedule:list')->expectsOutputToContain('avisos:resumen-coordinacion')->assertSuccessful();
+        $this->artisan('schedule:list')->expectsOutputToContain('avisos:resumen-diario')->assertSuccessful();
         $event = collect(app(Schedule::class)->events())
             ->first(fn ($event): bool => str_contains((string) $event->command, 'avisos:resumen-coordinacion'));
 

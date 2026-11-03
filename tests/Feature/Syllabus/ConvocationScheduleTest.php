@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Operations\Infrastructure\Mail\DailySummaryMail;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
@@ -17,6 +18,8 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\Support\AssertsInternalNotifications;
@@ -319,6 +322,23 @@ class ConvocationScheduleTest extends TestCase
         $transition('pausar');
         $transition('reanudar');
         $this->assertSame(2, InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo', 'convocatoria.reanudada')->count());
+    }
+
+    public function test_teachers_get_a_daily_summary_of_what_they_still_owe_unless_they_turn_it_off(): void
+    {
+        Mail::fake();
+        $this->teacher->forceFill(['correo_verificado_en' => now()])->save();
+        $this->createValidDraft();
+
+        $this->artisan('avisos:resumen-diario')->assertSuccessful();
+        Mail::assertQueued(DailySummaryMail::class, fn (DailySummaryMail $mail): bool => $mail->hasTo($this->teacher->correo_electronico)
+            && str_contains($mail->lines[0], '1 sílabo por elaborar o enviar') && str_contains($mail->lines[0], 'Entrega hasta el'));
+
+        Cache::flush();
+        Mail::fake();
+        $this->teacher->forceFill(['preferencias_correo' => ['docente.resumen_diario' => false]])->save();
+        $this->artisan('avisos:resumen-diario')->assertSuccessful();
+        Mail::assertNotQueued(DailySummaryMail::class);
     }
 
     private function expireDeadline(Syllabus $syllabus): Convocation

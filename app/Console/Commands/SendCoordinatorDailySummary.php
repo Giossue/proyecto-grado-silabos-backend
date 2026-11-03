@@ -18,7 +18,7 @@ class SendCoordinatorDailySummary extends Command
 
     public function handle(CoordinatorDailySummary $summary, EmailNoticeCatalog $catalog): int
     {
-        if (! config('notifications.digest.enabled')) {
+        if (! config('notifications.digest.enabled') || ! config('notifications.email.enabled')) {
             return self::SUCCESS;
         }
         $pending = $summary->pendingByCoordinator();
