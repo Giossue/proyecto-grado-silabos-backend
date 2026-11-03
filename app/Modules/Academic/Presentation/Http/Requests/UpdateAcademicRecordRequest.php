@@ -51,6 +51,7 @@ class UpdateAcademicRecordRequest extends FormRequest
                 'logo' => [
                     $this->facultyRequiresLogo() ? 'required' : 'nullable',
                     ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY),
+
                 ],
             ],
             'carrera' => [

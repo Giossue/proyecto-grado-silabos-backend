@@ -6,11 +6,20 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use OpenSpout\Reader\XLSX\Reader;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use Throwable;
+use ZipArchive;
 
 class SpreadsheetReader
 {
     public const MAX_ROWS = 500;
+
+    /** Filas que se recorren como máximo, vacías incluidas: encabezado, MAX_ROWS y un margen. */
+    public const MAX_SCANNED_ROWS = self::MAX_ROWS + 100;
+
+    public const MAX_COLUMNS = 64;
+
+    private const MAX_UNCOMPRESSED_BYTES = 20 * 1024 * 1024;
 
     /**
      * @param  array<string, string>  $columns
@@ -19,15 +28,20 @@ class SpreadsheetReader
      */
     public function read(UploadedFile $file, array $columns, array $optional = []): array
     {
+        $this->assertArchive((string) $file->getRealPath());
         $reader = new Reader;
         $rows = [];
         $map = null;
+        $scanned = 0;
 
         try {
             $reader->open($file->getRealPath());
             foreach ($reader->getSheetIterator() as $sheet) {
                 foreach ($sheet->getRowIterator() as $index => $row) {
-                    $cells = array_values(array_map(fn (mixed $cell): string => is_scalar($cell) ? trim((string) $cell) : '', $row->toArray()));
+                    if (++$scanned > self::MAX_SCANNED_ROWS) {
+                        throw ValidationException::withMessages(['file' => 'El archivo tiene demasiadas filas, contando las vacías. Use hasta '.self::MAX_ROWS.' filas y borre las filas sobrantes.']);
+                    }
+                    $cells = array_map(fn (mixed $cell): string => is_scalar($cell) ? trim((string) $cell) : '', array_slice($row->toArray(), 0, self::MAX_COLUMNS));
                     if ($map === null) {
                         $map = $this->headerMap($cells, $columns, $optional);
 
@@ -60,6 +74,51 @@ class SpreadsheetReader
         }
 
         return $rows;
+    }
+
+    /**
+     * Revisa el archivo antes de leer filas: tamaño descomprimido y ancho declarado de cada hoja.
+     * Así un .xlsx pequeño no obliga a recorrer miles de columnas o filas vacías.
+     */
+    private function assertArchive(string $path): void
+    {
+        $zip = new ZipArchive;
+        if ($zip->open($path) !== true) {
+            throw ValidationException::withMessages(['file' => 'No se pudo leer el archivo. Use la plantilla .xlsx.']);
+        }
+        try {
+            $bytes = 0;
+            for ($index = 0; $index < $zip->numFiles; $index++) {
+                $stat = $zip->statIndex($index);
+                $bytes += (int) ($stat['size'] ?? 0);
+                $name = (string) ($stat['name'] ?? '');
+                if (preg_match('#^xl/worksheets/[^/]+\.xml$#i', $name) === 1 && $this->declaredColumns($zip, $name) > self::MAX_COLUMNS) {
+                    throw ValidationException::withMessages(['file' => 'El archivo tiene más de '.self::MAX_COLUMNS.' columnas. Use la plantilla .xlsx.']);
+                }
+            }
+            if ($bytes > self::MAX_UNCOMPRESSED_BYTES) {
+                throw ValidationException::withMessages(['file' => 'El archivo es demasiado grande para procesarlo. Use la plantilla .xlsx.']);
+            }
+        } finally {
+            $zip->close();
+        }
+    }
+
+    /** Última columna de la etiqueta `<dimension>` de la hoja; 0 si no la declara. */
+    private function declaredColumns(ZipArchive $zip, string $name): int
+    {
+        $stream = $zip->getStream($name);
+        if ($stream === false) {
+            return 0;
+        }
+        $head = (string) fread($stream, 16384);
+        fclose($stream);
+        if (preg_match('/<(?:\w+:)?dimension\b[^>]*\bref="(?:[A-Z]+\d+:)?([A-Z]+)\d+"/i', $head, $match) !== 1) {
+            return 0;
+        }
+        $column = strtoupper($match[1]);
+
+        return strlen($column) > 3 ? PHP_INT_MAX : Coordinate::columnIndexFromString($column);
     }
 
     /**

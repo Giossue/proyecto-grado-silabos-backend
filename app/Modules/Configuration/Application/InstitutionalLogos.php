@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Academic\Application\FacultyLogoDimensions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use Illuminate\Http\UploadedFile;
@@ -31,6 +32,7 @@ class InstitutionalLogos
             'file',
             'mimetypes:image/png',
             'max:4096',
+            new FacultyLogoDimensions,
             new TransparentPng,
         ];
     }

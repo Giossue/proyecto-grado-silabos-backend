@@ -5,9 +5,12 @@ namespace App\Modules\Academic\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Academic\Application\Actions\ImportCareers;
+use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetTemplate;
 use App\Modules\Identity\Presentation\Http\Requests\ImportSpreadsheetRequest;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -30,10 +33,14 @@ class CareerImportController extends Controller
         ]);
     }
 
-    public function store(ImportSpreadsheetRequest $request, SpreadsheetReader $reader, ImportCareers $action): JsonResponse
+    public function store(ImportSpreadsheetRequest $request, SpreadsheetReader $reader, ImportCareers $action, ActiveRole $roles): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
+        // Se autoriza antes de abrir el archivo: quien no puede importar no hace trabajar al lector.
+        if (! AcademicStructurePermissions::mayCreate($roles->resolve($request), 'carrera')) {
+            throw new AuthorizationException('No puede importar carreras con el rol activo.');
+        }
         $rows = $reader->read($request->file('file'), ImportCareers::COLUMNS);
 
         return response()->json($action->execute($rows, $actor, $request, $request->boolean('confirm')));

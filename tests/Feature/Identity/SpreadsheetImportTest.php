@@ -19,6 +19,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Protection;
 use Tests\TestCase;
+use ZipArchive;
 
 class SpreadsheetImportTest extends TestCase
 {
@@ -349,6 +350,65 @@ class SpreadsheetImportTest extends TestCase
             ->assertJsonPath('rows.1.errors', ['No se puede incorporar como docente una cuenta con el rol Administrador.'])
             ->assertJsonPath('rows.2.errors', []);
         $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'nuevo.docente@silabos.test']);
+    }
+
+    public function test_empty_rows_count_toward_the_scanned_row_limit(): void
+    {
+        $this->actingAsRole('admin@silabos.test');
+        $header = ['Facultad', 'Modalidad', 'Código de carrera', 'Nombre de la carrera', 'Número de ciclos'];
+        $rows = [$header, ...array_fill(0, SpreadsheetReader::MAX_SCANNED_ROWS + 50, [' ', '', '', '', ''])];
+
+        $this->postJson(route('api.v1.admin.academic.careers.import'), ['file' => $this->workbook($rows)])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.file.0', 'El archivo tiene demasiadas filas, contando las vacías. Use hasta 500 filas y borre las filas sobrantes.');
+    }
+
+    public function test_a_sheet_declaring_thousands_of_columns_is_rejected_before_reading_rows(): void
+    {
+        $this->actingAsRole('admin@silabos.test');
+        $faculty = Faculty::query()->where('activo', true)->firstOrFail();
+        $file = $this->workbook([
+            ['Facultad', 'Modalidad', 'Código de carrera', 'Nombre de la carrera', 'Número de ciclos'],
+            [$faculty->nombre, 'Presencial', 'NC-9', 'Carrera Nueve', '10'],
+        ]);
+        $zip = new ZipArchive;
+        $zip->open((string) $file->getRealPath());
+        $xml = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
+        $xml = (string) preg_replace('/<dimension\b[^>]*\/>/', '', $xml);
+        $zip->addFromString('xl/worksheets/sheet1.xml', (string) preg_replace('/(<worksheet\b[^>]*>)/', '$1<dimension ref="A1:XFD3"/>', $xml, 1));
+        $zip->close();
+
+        $this->postJson(route('api.v1.admin.academic.careers.import'), ['file' => $file])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.file.0', 'El archivo tiene más de 64 columnas. Use la plantilla .xlsx.');
+        $this->assertDatabaseMissing('carreras', ['codigo_carrera' => 'NC-9']);
+    }
+
+    public function test_career_and_curriculum_imports_reject_unauthorized_roles_before_reading_the_file(): void
+    {
+        $this->mock(SpreadsheetReader::class)->shouldNotReceive('read');
+        $file = fn () => $this->workbook([['Facultad'], ['X']]);
+
+        $this->actingAsRole('docente@silabos.test');
+        $this->postJson(route('api.v1.admin.academic.careers.import'), ['file' => $file()])->assertForbidden();
+        $this->postJson(route('api.v1.coordination.academic.curriculum-import.store'), ['file' => $file()])->assertForbidden();
+
+        $this->actingAsRole('admin@silabos.test');
+        $this->postJson(route('api.v1.coordination.academic.curriculum-import.store'), ['file' => $file()])->assertForbidden();
+    }
+
+    public function test_the_downloaded_career_template_still_imports_within_the_scanned_row_limit(): void
+    {
+        $this->actingAsRole('admin@silabos.test');
+        $faculty = Faculty::query()->where('activo', true)->firstOrFail();
+        $path = $this->templateFile(route('api.v1.admin.academic.careers.import-template'));
+        $book = IOFactory::load($path);
+        $book->getSheetByName('Datos')?->fromArray([$faculty->nombre, 'Presencial', 'NC-T', 'Carrera Plantilla', '8'], null, 'A2');
+        IOFactory::createWriter($book, 'Xlsx')->save($path);
+
+        $this->postJson(route('api.v1.admin.academic.careers.import'), ['file' => new UploadedFile($path, 'plantilla.xlsx', null, null, true), 'confirm' => true])
+            ->assertOk()->assertJsonPath('created', 1);
+        $this->assertDatabaseHas('carreras', ['codigo_carrera' => 'NC-T']);
     }
 
     private function templateFile(string $url): string

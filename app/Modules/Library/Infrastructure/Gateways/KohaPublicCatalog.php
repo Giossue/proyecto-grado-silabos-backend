@@ -253,17 +253,30 @@ class KohaPublicCatalog implements BibliographicCatalog
         if (! $response->successful()) {
             throw new CatalogUnavailable('El catálogo de la biblioteca respondió con un error.');
         }
+        if (! $this->withinLimit($response)) {
+            throw new CatalogUnavailable('El catálogo de la biblioteca devolvió una respuesta que no se pudo leer.');
+        }
 
         return $response;
     }
 
     private function configure(PendingRequest $request): PendingRequest
     {
+        $limit = $this->responseLimit();
+
         return $request
             ->withUserAgent('Silabos-UEB/1.0')
             ->withoutRedirecting()
             ->connectTimeout((int) config('catalog.koha.connect_timeout_seconds'))
-            ->timeout((int) config('catalog.koha.timeout_seconds'));
+            ->timeout((int) config('catalog.koha.timeout_seconds'))
+            // Corta la descarga mientras llega: si el tamaño anunciado o lo ya recibido pasa el límite,
+            // Guzzle aborta la transferencia en vez de guardar el cuerpo entero.
+            ->withOptions(['progress' => static fn (int $total, int $downloaded): bool => $total > $limit || $downloaded > $limit]);
+    }
+
+    private function responseLimit(): int
+    {
+        return max(1, (int) config('catalog.koha.response_bytes'));
     }
 
     private function url(string $path): string
@@ -288,7 +301,7 @@ class KohaPublicCatalog implements BibliographicCatalog
 
     private function withinLimit(Response $response): bool
     {
-        return strlen($response->body()) <= (int) config('catalog.koha.response_bytes');
+        return strlen($response->body()) <= $this->responseLimit();
     }
 
     private function document(string $xml): ?DOMDocument

@@ -3,6 +3,8 @@
 namespace Tests\Feature\Academic;
 
 use App\Models\User;
+use App\Modules\Academic\Application\SupportDocumentSpreadsheetCells;
+use App\Modules\Academic\Infrastructure\Jobs\PrepareSupportDocumentViewJob;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SupportDocument;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
@@ -14,6 +16,7 @@ use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -243,6 +246,65 @@ class SupportDocumentTest extends TestCase
             'subido_por' => $uploader->id,
             'subido_en' => now(),
         ])->documento_apoyo_id;
+    }
+
+    public function test_spreadsheets_over_five_thousand_filled_cells_are_rejected_before_queueing(): void
+    {
+        Queue::fake();
+        $this->asRole('coordinador@silabos.test');
+        foreach (['xlsx' => 'Xlsx', 'xls' => 'Xls'] as $extension => $format) {
+            $this->post(route('api.v1.coordination.support-documents.store'), [
+                'title' => 'Datos masivos',
+                'file' => UploadedFile::fake()->createWithContent("datos.{$extension}", $this->filledWorkbook(SupportDocumentSpreadsheetCells::MAX_CELLS + 1, $format)),
+            ], ['Accept' => 'application/json'])->assertUnprocessable()
+                ->assertJsonPath('errors.file.0', 'La hoja de cálculo tiene más de 5.000 celdas con datos. Divídala en archivos más pequeños o súbala como PDF.');
+        }
+
+        $this->assertSame(0, SupportDocument::query()->count());
+        Queue::assertNothingPushed();
+    }
+
+    public function test_spreadsheets_up_to_five_thousand_filled_cells_are_accepted_even_with_formatted_empty_cells(): void
+    {
+        Queue::fake();
+        $this->asRole('coordinador@silabos.test');
+        foreach (['xlsx' => 'Xlsx', 'xls' => 'Xls'] as $extension => $format) {
+            $this->post(route('api.v1.coordination.support-documents.store'), [
+                'title' => "Datos {$extension}",
+                'file' => UploadedFile::fake()->createWithContent("datos.{$extension}", $this->filledWorkbook(SupportDocumentSpreadsheetCells::MAX_CELLS, $format, styledEmpty: true)),
+            ], ['Accept' => 'application/json'])->assertCreated();
+        }
+
+        $this->assertSame(2, SupportDocument::query()->count());
+        Queue::assertPushed(PrepareSupportDocumentViewJob::class, 2);
+    }
+
+    public function test_the_cell_check_does_not_open_files_for_other_roles(): void
+    {
+        $this->mock(SupportDocumentSpreadsheetCells::class)->shouldNotReceive('problem');
+        $this->asRole('docente@silabos.test');
+        $this->post(route('api.v1.coordination.support-documents.store'), [
+            'title' => 'Datos',
+            'file' => UploadedFile::fake()->createWithContent('datos.xlsx', $this->workbook()),
+        ], ['Accept' => 'application/json'])->assertForbidden();
+    }
+
+    private function filledWorkbook(int $cells, string $format, bool $styledEmpty = false): string
+    {
+        $book = new Spreadsheet;
+        $sheet = $book->getActiveSheet();
+        $columns = 20;
+        $rows = array_chunk(range(1, $cells), $columns);
+        $sheet->fromArray($rows, null, 'A1');
+        if ($styledEmpty) {
+            $book->createSheet()->setTitle('Formato')->getStyle('A1:Z300')->getFont()->setBold(true);
+        }
+        $path = tempnam(sys_get_temp_dir(), 'apoyo-celdas-');
+        IOFactory::createWriter($book, $format)->save($path);
+        $content = (string) file_get_contents($path);
+        unlink($path);
+
+        return $content;
     }
 
     private function workbook(): string

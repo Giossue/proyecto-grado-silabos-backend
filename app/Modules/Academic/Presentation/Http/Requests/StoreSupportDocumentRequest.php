@@ -3,7 +3,10 @@
 namespace App\Modules\Academic\Presentation\Http\Requests;
 
 use App\Modules\Academic\Application\SupportDocuments;
+use App\Modules\Academic\Application\SupportDocumentSpreadsheetCells;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Validator;
 
 class StoreSupportDocumentRequest extends FormRequest
 {
@@ -27,6 +30,28 @@ class StoreSupportDocumentRequest extends FormRequest
             'title' => ['required', 'string', 'max:180'],
             'file' => ['required', 'file', 'extensions:'.implode(',', SupportDocuments::EXTENSIONS), 'mimes:'.implode(',', SupportDocuments::EXTENSIONS), 'max:'.SupportDocuments::MAX_KILOBYTES],
         ];
+    }
+
+    /**
+     * Una hoja de cálculo con más de 5.000 celdas con datos se rechaza aquí, antes de guardarla y
+     * de poner en cola su conversión.
+     *
+     * @return list<callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            $file = $this->file('file');
+            if ($validator->errors()->has('file') || ! $file instanceof UploadedFile) {
+                return;
+            }
+            // Solo la coordinación de la carrera sube documentos: se comprueba antes de abrir el archivo.
+            app(SupportDocuments::class)->coordinationCareer($this);
+            $problem = app(SupportDocumentSpreadsheetCells::class)->problem((string) $file->getRealPath(), $file->getClientOriginalExtension());
+            if ($problem !== null) {
+                $validator->errors()->add('file', $problem);
+            }
+        }];
     }
 
     /** @return array<string, string> */

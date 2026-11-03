@@ -5,9 +5,13 @@ namespace App\Modules\Academic\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Academic\Application\Actions\ImportCurriculum;
+use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetTemplate;
+use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Identity\Presentation\Http\Requests\ImportSpreadsheetRequest;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -35,10 +39,16 @@ class CurriculumImportController extends Controller
         ]);
     }
 
-    public function store(ImportSpreadsheetRequest $request, SpreadsheetReader $reader, ImportCurriculum $action): JsonResponse
+    public function store(ImportSpreadsheetRequest $request, SpreadsheetReader $reader, ImportCurriculum $action, ActiveRole $roles): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
+        // Se autoriza antes de abrir el archivo: quien no puede importar no hace trabajar al lector.
+        $role = $roles->resolve($request);
+        if (! $role instanceof RoleAssignment || ! AcademicStructurePermissions::isCareerContext($role) || $role->carrera_id === null
+            || ! AcademicStructurePermissions::mayCreate($role, 'asignatura')) {
+            throw new AuthorizationException('Solo la coordinación de la carrera puede importar la malla.');
+        }
         $rows = $reader->read($request->file('file'), ImportCurriculum::COLUMNS, ImportCurriculum::OPTIONAL_COLUMNS);
 
         return response()->json($action->execute($rows, $actor, $request, $request->boolean('confirm')));
