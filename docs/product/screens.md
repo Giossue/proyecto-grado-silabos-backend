@@ -121,15 +121,20 @@ y el botón «Documentos» (DOC-10).
 ### ADM-12 Convocatorias
 
 - Columnas: período, clases, elaboración de sílabos y estado («Sin iniciar», «Abierto»,
-  «Pausado», «Finalizado»).
+  «Pausado», «Cerrado»).
 - «Nueva convocatoria» pide en dos pasos las fechas de clases (con el aviso «Serían N
   semanas de clase entre las fechas», no editable) y las de elaboración y
   entrega, y abre la convocatoria. Está deshabilitado mientras otra siga abierta o
   pausada.
 - Al pulsar una fila se abre un diálogo: sin convocatoria, «Abrir convocatoria» o
   «Eliminar periodo»; con convocatoria, «Pausar», «Reanudar», «Prorrogar plazo»,
-  «Cerrar» y «Eliminar»; el botón «Cancelar» cierra el diálogo. «Cerrar» pide
-  confirmación y deja el estado «Cerrado». Una cerrada ya no ofrece «Cerrar» ni
+  «Finalizar» y «Eliminar»; el botón «Cancelar» cierra el diálogo. «Finalizar» se
+  ofrece con la convocatoria abierta o pausada y explica que los sílabos ya no se editan,
+  envían, revisan ni firman. Antes de confirmar muestra cuántos sílabos quedan sin
+  aprobar, solo los estados que tienen alguno, y su total, con «Lo que no esté aprobado
+  quedará solo para consulta»; si no queda ninguno dice «Todos los sílabos están
+  aprobados». Pide la frase «finalizar convocatoria» y no deja confirmar sin ella ni sin
+  el conteo. Deja el estado «Cerrado». Una cerrada ya no ofrece «Finalizar» ni
   «Eliminar». «Eliminar» se ofrece con la convocatoria abierta o pausada, aunque haya
   sílabos enviados o aprobados: explica que se borra todo de verdad, muestra cuántos
   sílabos se borran por estado y el total, y pide el «Mensaje para docentes, coordinación

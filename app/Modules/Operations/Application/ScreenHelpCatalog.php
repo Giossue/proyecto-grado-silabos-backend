@@ -30,7 +30,9 @@ Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si p
             'title' => 'Convocatorias',
             'content' => 'Cada fila es un período lectivo y su convocatoria institucional: las fechas de clases y las fechas en que los docentes elaboran y entregan sus sílabos. Solo puede haber una convocatoria abierta o pausada a la vez.
 
-Desde el menú de la fila puede abrir, pausar, reanudar, cerrar o eliminar la convocatoria, y extender el plazo de entrega. Cada coordinación inicia después la convocatoria de su carrera.
+Desde el menú de la fila puede abrir, pausar, reanudar, finalizar o eliminar la convocatoria, y extender el plazo de entrega. Cada coordinación inicia después la convocatoria de su carrera.
+
+Finalizar no se deshace: antes le muestra cuántos sílabos quedan sin aprobar, y esos quedan solo para consulta.
 
 Eliminar solo se puede con la convocatoria abierta o pausada. Borra todos sus sílabos, incluso los aprobados; antes le muestra cuántos se pierden y le pide un mensaje que llega por aviso y correo a docentes, coordinación y biblioteca.
 

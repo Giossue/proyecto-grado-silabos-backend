@@ -53,7 +53,7 @@ class CreateSyllabusProcess
                 ->first(['id', 'periodo_academico_id']);
             if ($active !== null) {
                 throw ValidationException::withMessages([
-                    'process' => "La convocatoria «{$active->nombre}» sigue vigente. Ciérrela antes de abrir otra convocatoria institucional.",
+                    'process' => "La convocatoria «{$active->nombre}» sigue vigente. Finalícela o elimínela antes de abrir otra convocatoria institucional.",
                 ]);
             }
             if (SyllabusProcess::query()->where('periodo_academico_id', $data['period_id'])->exists()) {

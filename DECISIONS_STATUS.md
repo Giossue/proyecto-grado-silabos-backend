@@ -116,7 +116,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   Biblioteca pide la contraseña actual y cada cambio queda en la auditoría sin el valor de la clave.
 - Las confirmaciones delicadas piden escribir una frase en vez de esperar una cuenta
   regresiva (2026-11-02): «devolver a borrador» (cambios que devuelven sílabos a
-  borrador), «abrir convocatoria», «editar plantilla», «cerrar convocatoria», «rehacer
+  borrador), «abrir convocatoria», «editar plantilla», «finalizar convocatoria», «rehacer
   sílabos» (reanudar con la plantilla cambiada) y «eliminar convocatoria». Se acepta sin
   importar mayúsculas, tildes ni espacios de más.
 - Al reanudar una convocatoria (2026-11-02) se avisa a los docentes de cada convocatoria
@@ -127,7 +127,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   aprueban, firman, piden corrección ni devuelven, igual que el docente no edita ni envía. La API
   dice el motivo en `decision_block` y los resúmenes diarios no cuentan convocatorias en pausa.
   «Reiniciar sílabo» tampoco se permite en pausa (2026-11-02): es una decisión más.
-  Pausar y cerrar siguen sin aviso. El plazo informa `paused_by` (Administración o
+  Pausar y finalizar siguen sin aviso. El plazo informa `paused_by` (Administración o
   Coordinación), y Administración recibe plazo solo con su convocatoria en pausa.
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener
   coordinación y el período no debe haber terminado.
@@ -141,7 +141,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   los de convocatorias cerradas se conservan (I-231).
 - En el historial, un sílabo de un período terminado pertenece a quien lo envió; si
   nunca se envió, al docente actual del paralelo (I-231).
-- Administración solo prorroga la fecha de entrega (I-114). Cerrar es la acción final:
+- La acción manual de cierre se llama «Finalizar» (2026-11-02); la ruta sigue siendo `cerrar`
+  y el estado `cerrado`. Antes de confirmar muestra cuántos sílabos quedan sin aprobar, por
+  estado, y pide «finalizar convocatoria». Se puede finalizar abierta o pausada.
+- Administración solo prorroga la fecha de entrega (I-114). Finalizar es la acción final:
   una convocatoria cerrada queda solo para consulta y no se elimina nunca. Eliminar
   (2026-11-02, reemplaza «solo mientras ningún docente haya enviado su sílabo») se admite
   con la convocatoria abierta o pausada aunque tenga sílabos enviados, en revisión o

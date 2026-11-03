@@ -115,10 +115,12 @@ el estado: el sílabo sigue «En revisión».
   la frase «eliminar convocatoria» y un mensaje. Ese mensaje llega como aviso y por correo
   a los docentes con sílabo, a Coordinación de sus carreras y a Biblioteca; ese correo no
   se puede apagar en las preferencias. Una convocatoria cerrada no se elimina nunca.
-- Administración cierra la convocatoria cuando termina el período. Se cierran también
-  las de cada carrera. Sus sílabos quedan solo para consulta (no se editan, envían,
-  revisan ni firman). Cerrar no se deshace. Mientras
-  siga abierta o pausada no se puede crear otra.
+- Administración finaliza la convocatoria (acción «Finalizar»; el estado queda
+  `cerrado`) cuando termina el período, abierta o pausada. Se cierran también las de cada
+  carrera. Sus sílabos quedan solo para consulta (no se editan, envían, revisan ni
+  firman). Antes de confirmar se ve cuántos sílabos quedan sin aprobar, por estado, y se
+  pide la frase «finalizar convocatoria». Finalizar no se deshace. Mientras siga abierta o
+  pausada no se puede crear otra.
 
 Al cerrar, los sílabos sin revisión enviada o aprobada guardan una fotografía del
 documento y su definición en el contexto existente. La consulta posterior usa esa

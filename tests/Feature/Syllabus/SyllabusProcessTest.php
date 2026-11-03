@@ -521,7 +521,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             ...$this->processPayload($template),
             'period_id' => $otherPeriod->id,
-        ])->assertJsonValidationErrors('process');
+        ])->assertJsonValidationErrors(['process' => 'Finalícela o elimínela antes de abrir otra convocatoria institucional.']);
 
         $this->transition($first, 'pausar', 'Corrección de la sección de evaluación.')->assertSuccessful();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
