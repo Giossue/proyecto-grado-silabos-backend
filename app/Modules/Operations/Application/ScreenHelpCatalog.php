@@ -66,13 +66,13 @@ Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leíd
         ],
         '/admin/plantilla' => [
             'title' => 'Plantilla del sílabo',
-            'content' => 'Es el formato único del sílabo: sus secciones, sus campos y el orden en que aparecen. Aquí también se configura el logo institucional.
+            'content' => 'Es el formato único del sílabo: sus secciones, sus campos y el orden en que aparecen.
 
-En «Editar → Listas» se fija cuántas unidades y cuántas semanas por unidad puede tener el docente: mínimo, máximo y con cuántas empieza.
+«Editar» abre el editor y pide escribir «editar plantilla». Ahí escribe directo en la hoja, elige quién llena cada campo (docente, carrera o texto fijo) y pulsa «Guardar». El logo de la universidad y «Editar JSON» se guardan al instante, sin pasar por «Guardar».
 
 Con una convocatoria abierta la plantilla está bloqueada. Para cambiarla, pause la convocatoria. Al reanudar se le pedirá confirmación: todos los sílabos de este período se borran y empiezan desde cero, incluso los aprobados, porque el formato es único para toda la universidad.
 
-Los sílabos de períodos anteriores no se tocan. Si la plantilla está vacía, puede cargar el formato oficial de la UEB.',
+Los sílabos de períodos anteriores no se tocan.',
         ],
         '/admin/usuarios' => [
             'title' => 'Usuarios y roles',

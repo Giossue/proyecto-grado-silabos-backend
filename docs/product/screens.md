@@ -271,9 +271,10 @@ envían. Cada persona firma una sola vez por sílabo.
   con el texto de la pantalla y después un paso por cada elemento clave, resaltado sobre la
   pantalla real, con «Anterior», «Siguiente», «Listo» y el avance «2 de 5». Los pasos están en
   `screenTours.ts` (frontend); si un elemento no está en pantalla en ese momento, se omite. En
-  las pantallas de entrada de cada rol la guía termina con el menú, las notificaciones, la
-  cuenta y la accesibilidad. Sin pasos, muestra solo el texto. Los textos no se editan desde
-  el sistema.
+  las pantallas de entrada de cada rol la guía termina con el menú, las notificaciones, el
+  tema, la accesibilidad y la cuenta. Sin pasos, muestra solo el texto. En el editor de la
+  plantilla el botón va abajo a la izquierda, para no tapar «Asistente», y la guía recorre
+  el editor. Los textos no se editan desde el sistema.
 - **Edición bloqueada.** Una franja a todo el ancho, bajo la barra superior, dice
   «Edición bloqueada · Convocatoria {período}» y qué pausar, con «¿Por qué?» e «Ir a
   Convocatorias» («Ir a Revisión» para Coordinación). Convocatorias usa la misma franja
