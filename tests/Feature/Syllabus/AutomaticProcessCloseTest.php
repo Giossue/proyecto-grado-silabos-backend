@@ -120,6 +120,34 @@ class AutomaticProcessCloseTest extends TestCase
         $this->assertSame($this->administrator->id, $audit->actor_usuario_id);
     }
 
+    public function test_the_automatic_close_runs_once_the_day_after_classes_and_leaves_the_syllabus_read_only(): void
+    {
+        [$process, $convocation] = $this->openedProcess();
+        [$draft] = $this->draftAndSentSyllabi($convocation);
+
+        $this->at($this->lastClassDay, '00:10');
+        $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 0.')->assertSuccessful();
+        $this->assertSame(SyllabusProcess::STATE_OPEN, $process->fresh()?->estado);
+
+        $this->at($this->dayAfterClasses(), '00:01');
+        $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 1.')->assertSuccessful();
+        $closedDocument = $draft->fresh()?->contexto_academico['closed_document'] ?? null;
+        $this->assertNotNull($closedDocument);
+
+        $this->at($this->dayAfterClasses(), '09:00');
+        $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 0.')->assertSuccessful();
+        $this->assertEquals($closedDocument, $draft->fresh()?->contexto_academico['closed_document'] ?? null);
+        $this->assertSame(1, AuditEvent::query()->where('accion', 'proceso_silabos.cerrado')->count());
+
+        $this->actingAs($this->teacher)
+            ->withSession(['active_role_assignment_id' => $this->teacher->roleAssignments()->firstOrFail()->id])
+            ->getJson(route('api.v1.teacher.syllabi.show', $draft))
+            ->assertOk()
+            ->assertJsonPath('syllabus.editable', false)
+            ->assertJsonPath('syllabus.edit_block_reason', 'La convocatoria está cerrada: el sílabo queda solo para consulta.');
+        $this->transition($process, 'cerrar')->assertForbidden();
+    }
+
     public function test_finalizing_by_hand_still_freezes_unsent_syllabi_and_records_who_did_it(): void
     {
         [$process, $convocation] = $this->openedProcess();
@@ -185,6 +213,36 @@ class AutomaticProcessCloseTest extends TestCase
         $this->artisan('convocatorias:avisar-cierre')->assertSuccessful();
         $this->assertSame(1, InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo', 'proceso.cierre_proximo')->count());
         $this->assertSame(1, InternalNotification::query()->where('usuario_id', $this->coordinator->id)->where('tipo', 'proceso.cierre_proximo')->count());
+    }
+
+    public function test_the_warning_email_follows_the_preference_and_a_coordinator_who_also_teaches_is_warned_once(): void
+    {
+        $career = $this->coordinator->roleAssignments()->firstOrFail()->carrera_id;
+        RoleAssignment::query()->create(['usuario_id' => $this->coordinator->id, 'carrera_id' => $career, 'rol' => 'docente', 'activo' => true]);
+        $base = Parallel::query()->firstOrFail();
+        $parallel = Parallel::query()->create(['asignatura_id' => $base->asignatura_id, 'codigo' => 'C', 'jornada' => 'matutina']);
+        TeacherAssignment::query()->create(['usuario_id' => $this->coordinator->id, 'paralelo_id' => $parallel->id, 'activo' => true]);
+        [$process] = $this->openedProcess();
+        $this->actingAs($this->teacher)
+            ->withSession(['active_role_assignment_id' => $this->teacher->roleAssignments()->firstOrFail()->id])
+            ->putJson(route('api.v1.notifications.email-preferences.update'), ['preferences' => ['proceso.cierre_proximo' => false]])
+            ->assertOk();
+        Mail::fake();
+
+        $this->at($this->classesEndIn(4), '23:30');
+        $this->artisan('convocatorias:avisar-cierre')->expectsOutputToContain('Convocatorias avisadas: 0.')->assertSuccessful();
+        $this->assertSame(0, $this->closingNotices());
+
+        $this->at($this->classesEndIn(3), '23:30');
+        $this->artisan('convocatorias:avisar-cierre')->expectsOutputToContain('Convocatorias avisadas: 1.')->assertSuccessful();
+        $this->artisan('convocatorias:avisar-cierre')->assertSuccessful();
+
+        foreach ([$this->teacher, $this->coordinator] as $person) {
+            $this->assertSame(1, InternalNotification::query()->where('usuario_id', $person->id)->where('tipo', 'proceso.cierre_proximo')->count());
+        }
+        $this->assertCount(0, Mail::queued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo($this->teacher->correo_electronico)));
+        $this->assertCount(1, Mail::queued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo($this->coordinator->correo_electronico)));
+        $this->assertSame(SyllabusProcess::STATE_OPEN, $process->fresh()?->estado);
     }
 
     public function test_nobody_is_warned_when_every_syllabus_is_approved_or_the_process_is_already_finalized(): void

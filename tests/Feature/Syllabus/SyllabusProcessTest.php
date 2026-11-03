@@ -14,6 +14,7 @@ use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Operations\Application\Actions\StoreInternalNotifications;
 use App\Modules\Operations\Infrastructure\Mail\WorkflowNotificationMail;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
@@ -294,6 +295,164 @@ class SyllabusProcessTest extends TestCase
             ->assertForbidden();
 
         $this->assertDatabaseHas('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
+    }
+
+    public function test_a_paused_process_is_deleted_with_its_signatures_answers_and_syllabus_notices(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+        $syllabus = Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail();
+        $this->submitSyllabus($syllabus);
+        app(StoreInternalNotifications::class)->execute(
+            'silabo.correccion_solicitada', 'silabo.correccion_solicitada:'.$syllabus->id, [$this->teacher->id], 'Corrija', 'Corrija el sílabo.', 'silabo', $syllabus->id,
+        );
+        $this->transition($process, 'pausar')->assertSuccessful();
+        $this->assertSame(SyllabusProcess::STATE_PAUSED, $process->fresh()?->estado);
+        $ids = Syllabus::query()->where('convocatoria_id', $convocation->id)->pluck('id')->all();
+        foreach (['firmas_silabo', 'valores_campo'] as $table) {
+            $this->assertGreaterThan(0, DB::table($table)->whereIn('silabo_id', $ids)->count(), $table);
+        }
+        $this->assertGreaterThan(0, DB::table('notificaciones')->whereIn('recurso_id', $ids)->count());
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => 'Pausada, se borra.'])
+            ->assertOk();
+
+        $this->assertDatabaseMissing('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
+        $this->assertSame(0, DB::table('convocatorias_carreras')->where('convocatoria_universidad_id', $process->id)->count());
+        foreach (['silabos', 'revisiones_silabo', 'firmas_silabo', 'valores_campo'] as $table) {
+            $this->assertSame(0, DB::table($table)->whereIn('silabo_id', $ids)->count(), $table);
+        }
+        $this->assertSame(0, DB::table('notificaciones')->whereIn('recurso_id', $ids)->count());
+    }
+
+    public function test_a_closed_process_with_sent_work_is_left_untouched_by_any_delete_attempt(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+        $this->submitSyllabus(Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail());
+        $this->transition($process, 'cerrar')->assertSuccessful();
+        $stored = $this->storedProcessWork();
+
+        foreach ([['mensaje' => 'Se borra por error.'], []] as $payload) {
+            $this->actingAsAdministrator()
+                ->deleteJson(route('api.v1.admin.processes.destroy', $process), $payload)
+                ->assertForbidden();
+        }
+
+        $this->assertSame($stored, $this->storedProcessWork());
+        $this->assertFalse(InternalNotification::query()->where('tipo', 'proceso.eliminado')->exists());
+    }
+
+    public function test_a_teacher_can_neither_delete_a_process_nor_see_its_impact(): void
+    {
+        $process = $this->openedConvocation()->process()->firstOrFail();
+        $stored = $this->storedProcessWork();
+
+        $this->actingAsTeacher()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => 'Se borra.'])
+            ->assertForbidden();
+        $this->actingAsTeacher()
+            ->getJson(route('api.v1.admin.processes.impact', $process))
+            ->assertForbidden();
+
+        $this->assertSame($stored, $this->storedProcessWork());
+    }
+
+    public function test_the_deletion_impact_counts_syllabi_in_every_state(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+        $base = Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail();
+        $notStarted = Syllabus::query()->where('convocatoria_id', $convocation->id)->count();
+        foreach (['en_revision', 'correccion_solicitada', 'aprobado', 'aprobado', 'borrador', 'borrador', 'borrador'] as $index => $state) {
+            $parallel = $base->parallel->replicate();
+            $parallel->codigo = 'P'.$index;
+            $parallel->save();
+            Syllabus::query()->create([
+                'convocatoria_id' => $convocation->id,
+                'paralelo_id' => $parallel->id,
+                'contexto_academico' => $base->contexto_academico,
+                'estado' => $state,
+            ]);
+        }
+
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.impact', $process))
+            ->assertOk()
+            ->assertExactJson([
+                'syllabi' => ['sin_iniciar' => $notStarted, 'borrador' => 3, 'en_revision' => 1, 'correccion_solicitada' => 1, 'aprobado' => 2],
+                'total' => $notStarted + 7,
+            ]);
+    }
+
+    public function test_the_deletion_notice_reaches_each_active_person_once(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+        $this->submitSyllabus(Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail());
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+        RoleAssignment::query()->create(['usuario_id' => $this->coordinator->id, 'carrera_id' => null, 'rol' => 'bibliotecario', 'activo' => true]);
+        $inactive = User::factory()->create();
+        RoleAssignment::query()->create(['usuario_id' => $inactive->id, 'carrera_id' => null, 'rol' => 'bibliotecario', 'activo' => true]);
+        $inactive->forceFill(['activo' => false])->save();
+        Mail::fake();
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => 'Aviso.'])
+            ->assertOk();
+
+        $this->assertSame(
+            collect([$this->teacher->id, $this->coordinator->id, $librarian->id])->sort()->values()->all(),
+            InternalNotification::query()->where('tipo', 'proceso.eliminado')->pluck('usuario_id')->sort()->values()->all(),
+        );
+        Mail::assertQueued(WorkflowNotificationMail::class, 3);
+        $this->assertCount(1, Mail::queued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo($this->coordinator->correo_electronico)));
+        $this->assertCount(0, Mail::queued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo($inactive->correo_electronico)));
+    }
+
+    public function test_every_role_opens_the_deletion_notice_and_earlier_process_notices_still_open(): void
+    {
+        $process = $this->openedConvocation()->process()->firstOrFail();
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.deadline.extend', $process), ['due_at' => now()->addMonths(2)->toDateString()])
+            ->assertOk();
+        $earlier = InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo_recurso', 'proceso_silabos')->sole();
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => 'Lista.'])
+            ->assertOk();
+
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+        foreach ([[$this->coordinator, $this->coordinatorContext->id], [$librarian, $librarian->roleAssignments()->firstOrFail()->id]] as [$person, $context]) {
+            $listed = collect($this->actingAs($person)->withSession(['active_role_assignment_id' => $context])
+                ->getJson(route('api.v1.notifications.index'))->assertOk()->json('notifications.data'))
+                ->firstWhere('tipo', 'proceso.eliminado');
+            $this->assertIsArray($listed, $person->correo_electronico);
+            $this->actingAs($person)->withSession(['active_role_assignment_id' => $context])
+                ->postJson(route('api.v1.notifications.open', $listed['id']))
+                ->assertOk()->assertJsonPath('path', null);
+        }
+        $this->actingAsTeacher()->postJson(route('api.v1.notifications.open', $earlier->id))->assertOk();
+    }
+
+    public function test_the_deletion_message_must_be_text_and_takes_a_thousand_characters_of_any_kind(): void
+    {
+        $process = $this->openedConvocation()->process()->firstOrFail();
+
+        foreach ([['mensaje' => ['a']], ['mensaje' => 123], ['mensaje' => null], ['mensaje' => "\n\t "]] as $payload) {
+            $this->actingAsAdministrator()
+                ->deleteJson(route('api.v1.admin.processes.destroy', $process), $payload)
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors(['mensaje']);
+        }
+        $this->assertDatabaseHas('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
+
+        $text = str_repeat('á', 1000);
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => $text])
+            ->assertOk();
+        $notice = InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo', 'proceso.eliminado')->sole();
+        $this->assertStringEndsWith('Mensaje: '.$text, $notice->mensaje);
     }
 
     public function test_administration_must_choose_process_dates_explicitly(): void
@@ -1218,6 +1377,15 @@ class SyllabusProcessTest extends TestCase
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
+    }
+
+    private function storedProcessWork(): string
+    {
+        $tables = ['convocatorias_universidad', 'convocatorias_carreras', 'silabos', 'revisiones_silabo', 'firmas_silabo', 'valores_campo', 'notificaciones', 'aprobaciones', 'exportaciones_silabo', 'envios_biblioteca'];
+
+        return md5((string) json_encode(collect($tables)->mapWithKeys(fn (string $table): array => [
+            $table => DB::table($table)->get()->map(fn (object $row): string => (string) json_encode((array) $row))->sort()->values()->all(),
+        ])->all()));
     }
 
     private function closeProcess(SyllabusProcess $process): void

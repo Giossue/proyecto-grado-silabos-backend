@@ -69,6 +69,56 @@ class DeadlineExtensionLimitsTest extends TestCase
         $this->assertSame(1, $process->cantidad_prorrogas);
     }
 
+    public function test_a_date_with_time_and_offset_is_read_as_its_institution_day_at_the_limit(): void
+    {
+        $process = $this->process(dueIn: 10, classesEndIn: 60);
+        $lastClassDay = $this->institutionDay(60);
+
+        $this->extend($process, "{$this->institutionDay(61)}T00:30:00-05:00")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['due_at']);
+        $process->refresh();
+        $this->assertSame($this->institutionDay(10), InstitutionDate::dateOf($process->entrega_en));
+        $this->assertSame(0, $process->cantidad_prorrogas);
+
+        $this->extend($process, "{$lastClassDay}T23:30:00-05:00")->assertOk();
+        $process->refresh();
+        $this->assertSame($lastClassDay, InstitutionDate::dateOf($process->entrega_en));
+        $this->assertSame(1, $process->cantidad_prorrogas);
+    }
+
+    public function test_a_paused_process_follows_the_same_extension_limits(): void
+    {
+        $process = $this->process(dueIn: 10, classesEndIn: 60);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'pausar']))->assertSuccessful();
+
+        $this->extend($process, $this->institutionDay(61))->assertUnprocessable()->assertJsonValidationErrors(['due_at']);
+        $this->extend($process, $this->institutionDay(20))->assertOk();
+        $this->extend($process, $this->institutionDay(30))->assertOk();
+        $this->extend($process, $this->institutionDay(40))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['process' => 'Ya se usaron las 2 prórrogas de esta convocatoria.']);
+
+        $process->refresh();
+        $this->assertSame(SyllabusProcess::STATE_PAUSED, $process->estado);
+        $this->assertSame($this->institutionDay(30), InstitutionDate::dateOf($process->entrega_en));
+        $this->assertSame(2, $process->cantidad_prorrogas);
+        $this->processList()->assertJsonPath('processes.0.extension_block_reason', 'Ya se usaron las 2 prórrogas de esta convocatoria.');
+    }
+
+    public function test_a_rejected_date_does_not_use_up_an_extension(): void
+    {
+        $process = $this->process(dueIn: 10, classesEndIn: 60);
+
+        foreach ([5, -1, 10] as $day) {
+            $this->extend($process, $this->institutionDay($day))->assertUnprocessable()->assertJsonValidationErrors(['due_at']);
+        }
+
+        $process->refresh();
+        $this->assertSame($this->institutionDay(10), InstitutionDate::dateOf($process->entrega_en));
+        $this->assertSame(0, $process->cantidad_prorrogas);
+    }
+
     public function test_a_deadline_already_on_the_last_class_day_cannot_be_extended(): void
     {
         $process = $this->process(dueIn: 60, classesEndIn: 60);
