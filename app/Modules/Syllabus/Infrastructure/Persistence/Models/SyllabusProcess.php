@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable $entrega_en
  * @property CarbonImmutable|null $pausado_en
  * @property string $estado
+ * @property int $cantidad_prorrogas
  * @property-read string $nombre
  */
 class SyllabusProcess extends Model
@@ -40,6 +41,8 @@ class SyllabusProcess extends Model
 
     public const STATE_CLOSED = 'cerrado';
 
+    public const MAX_EXTENSIONS = 2;
+
     /** @var list<string> */
     public const STATES = [
         self::STATE_OPEN,
@@ -53,7 +56,7 @@ class SyllabusProcess extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado', 'pausado_en',
+        'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado', 'pausado_en', 'cantidad_prorrogas',
     ];
 
     /** @return array<string, string> */
@@ -63,6 +66,7 @@ class SyllabusProcess extends Model
             'inicia_en' => 'immutable_datetime',
             'entrega_en' => 'immutable_datetime',
             'pausado_en' => 'immutable_datetime',
+            'cantidad_prorrogas' => 'integer',
         ];
     }
 

@@ -102,8 +102,10 @@ el estado: el sílabo sigue «En revisión».
 - Coordinación abre la de su carrera cuando la convocatoria está abierta, el plazo no
   venció, la malla tiene materias, cada materia tiene paralelos, cada paralelo tiene un
   docente activo, los proyectos de carrera están completos y la facultad tiene logo.
-- Solo Administración prorroga la entrega. La fecha nueva debe ser posterior a la
-  actual. Se avisa a los docentes con sílabos sin aprobar.
+- Solo Administración prorroga la entrega, como máximo 2 veces por convocatoria. La fecha
+  nueva debe ser posterior a la actual y no puede pasar del último día de clases del
+  período. Si ya no quedan prórrogas o el plazo ya llega a ese día, no se puede prorrogar.
+  Se avisa a los docentes con sílabos sin aprobar.
 - Con la fecha de entrega vencida, el docente queda en solo lectura: no puede iniciar,
   editar ni enviar (el servidor lo rechaza) y se le dice que pida una prórroga a
   Administración. Coordinación y Biblioteca siguen revisando lo ya enviado. Al prorrogar,

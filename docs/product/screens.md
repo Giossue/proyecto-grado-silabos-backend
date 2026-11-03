@@ -145,6 +145,10 @@ y el botón «Documentos» (DOC-10).
   muestra el motivo y no deja eliminarlo.
 - Si la plantilla cambió durante la pausa, «Reanudar» muestra el conteo por estado y
   pide «Reanudar y rehacer sílabos».
+- «Prorrogar plazo» dice «Prórroga 1 de 2» (o «2 de 2») y «Hasta el último día de clases»
+  con la fecha; el selector no deja elegir después. Con las 2 prórrogas usadas, el plazo
+  ya en el último día de clases o las clases terminadas, la opción queda desactivada y
+  muestra el motivo.
 
 ### COR-13 Malla
 

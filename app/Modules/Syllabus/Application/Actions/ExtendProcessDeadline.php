@@ -9,6 +9,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
+use App\Modules\Syllabus\Application\DeadlineExtensions;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Support\InstitutionDate;
@@ -36,28 +37,37 @@ class ExtendProcessDeadline
         if ($activeRole?->role->codigo_rol !== RoleCode::Administrator->value) {
             abort(403);
         }
-        if ($process->estado === SyllabusProcess::STATE_CLOSED) {
-            throw ValidationException::withMessages(['process' => 'Un proceso cerrado ya no admite prórrogas.']);
-        }
         $stage = ConvocationSchedule::STAGE_DRAFT;
         $requested = CarbonImmutable::parse($newDueAt);
-        $previous = $process->entrega_en;
         $requestedOn = InstitutionDate::dateOf($requested);
-        $previousOn = InstitutionDate::dateOf($previous);
 
-        if ($requestedOn < InstitutionDate::todayOn()) {
-            throw ValidationException::withMessages(['due_at' => 'La nueva fecha ya pasó.']);
-        }
-        if ($requestedOn <= $previousOn) {
-            throw ValidationException::withMessages([
-                'due_at' => 'La nueva fecha debe ser posterior a la vigente, que es el '
-                    .CarbonImmutable::parse($previousOn, 'UTC')->translatedFormat('d/m/Y').'.',
-            ]);
-        }
-
-        return DB::transaction(function () use ($activeRole, $actor, $previous, $process, $request, $requested, $stage): SyllabusProcess {
+        return DB::transaction(function () use ($activeRole, $actor, $process, $request, $requested, $requestedOn, $stage): SyllabusProcess {
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
-            $locked->update(['entrega_en' => $requested]);
+            if ($locked->estado === SyllabusProcess::STATE_CLOSED) {
+                throw ValidationException::withMessages(['process' => 'Un proceso cerrado ya no admite prórrogas.']);
+            }
+            $previous = $locked->entrega_en;
+            $previousOn = InstitutionDate::dateOf($previous);
+
+            $blocked = DeadlineExtensions::blockReason($locked);
+            if ($blocked !== null) {
+                throw ValidationException::withMessages(['process' => $blocked]);
+            }
+            if ($requestedOn < InstitutionDate::todayOn()) {
+                throw ValidationException::withMessages(['due_at' => 'La nueva fecha ya pasó.']);
+            }
+            if ($requestedOn <= $previousOn) {
+                throw ValidationException::withMessages([
+                    'due_at' => 'La nueva fecha debe ser posterior a la vigente, que es el '
+                        .CarbonImmutable::parse($previousOn, 'UTC')->translatedFormat('d/m/Y').'.',
+                ]);
+            }
+            if ($requestedOn > DeadlineExtensions::limitOn($locked)) {
+                throw ValidationException::withMessages(['due_at' => DeadlineExtensions::pastLimitMessage($locked)]);
+            }
+
+            $number = $locked->cantidad_prorrogas + 1;
+            $locked->update(['entrega_en' => $requested, 'cantidad_prorrogas' => $number]);
 
             $reached = Convocation::query()->where('proceso_id', $locked->id)->count();
 
@@ -73,6 +83,7 @@ class ExtendProcessDeadline
                     'previous_due_at' => $previous->toIso8601String(),
                     'new_due_at' => $requested->toIso8601String(),
                     'convocations_reached' => $reached,
+                    'extension_number' => $number,
                 ],
             );
             $this->notify($locked, $requested, $request);

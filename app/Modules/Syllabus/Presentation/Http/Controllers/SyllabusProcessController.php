@@ -10,6 +10,7 @@ use App\Modules\Syllabus\Application\Actions\CreateSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\ExtendProcessDeadline;
 use App\Modules\Syllabus\Application\Actions\TransitionSyllabusProcess;
+use App\Modules\Syllabus\Application\DeadlineExtensions;
 use App\Modules\Syllabus\Application\Queries\ProcessSyllabusCounts;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Presentation\Http\Requests\DeleteSyllabusProcessRequest;
@@ -31,7 +32,7 @@ class SyllabusProcessController extends Controller
 
         $payload = [
             'processes' => SyllabusProcess::query()
-                ->with('academicPeriod:id,codigo')
+                ->with('academicPeriod:id,codigo,fecha_fin')
                 ->withCount('convocations')
                 ->orderByDesc('inicia_en')
                 ->get()
@@ -47,6 +48,10 @@ class SyllabusProcessController extends Controller
                     'convocations_count' => $process->convocations_count,
                     'configurable' => $process->isConfigurable(),
                     'deletable' => $process->isDeletable(),
+                    'extensions_used' => $process->cantidad_prorrogas,
+                    'extensions_max' => SyllabusProcess::MAX_EXTENSIONS,
+                    'extension_limit_on' => DeadlineExtensions::limitOn($process),
+                    'extension_block_reason' => DeadlineExtensions::blockReason($process),
                 ]),
             'template' => $template?->hasStructure()
                 ? SyllabusTemplate::INSTITUTIONAL_NAME

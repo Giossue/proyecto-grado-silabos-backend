@@ -32,6 +32,8 @@ Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si p
 
 Desde el menú de la fila puede abrir, pausar, reanudar, finalizar o eliminar la convocatoria, y extender el plazo de entrega. Cada coordinación inicia después la convocatoria de su carrera.
 
+El plazo se puede prorrogar 2 veces como máximo, y nunca después del último día de clases del período.
+
 Finalizar no se deshace: antes le muestra cuántos sílabos quedan sin aprobar, y esos quedan solo para consulta.
 
 Eliminar solo se puede con la convocatoria abierta o pausada. Borra todos sus sílabos, incluso los aprobados; antes le muestra cuántos se pierden y le pide un mensaje que llega por aviso y correo a docentes, coordinación y biblioteca.

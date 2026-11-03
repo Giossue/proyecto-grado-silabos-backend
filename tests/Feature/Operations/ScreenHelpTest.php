@@ -36,6 +36,7 @@ class ScreenHelpTest extends TestCase
         $this->assertStringStartsWith('Arriba ve el aviso con el plazo de la convocatoria', ScreenHelpCatalog::HELP['/docente/mis-silabos']['content']);
         $this->assertStringStartsWith('Aquí aparecen los avisos del período en curso', ScreenHelpCatalog::HELP['/docente/notificaciones']['content']);
         $this->assertStringContainsString('reanudar, finalizar o eliminar', ScreenHelpCatalog::HELP['/admin/convocatorias']['content']);
+        $this->assertStringContainsString('2 veces como máximo, y nunca después del último día de clases', ScreenHelpCatalog::HELP['/admin/convocatorias']['content']);
         foreach (ScreenHelpCatalog::HELP as $screen => $help) {
             $this->assertMatchesRegularExpression('/^\/[a-z0-9\/:_-]*$/', $screen);
             $this->assertNotSame('', trim($help['title']));

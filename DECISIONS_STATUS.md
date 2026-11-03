@@ -144,7 +144,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - La acción manual de cierre se llama «Finalizar» (2026-11-02); la ruta sigue siendo `cerrar`
   y el estado `cerrado`. Antes de confirmar muestra cuántos sílabos quedan sin aprobar, por
   estado, y pide «finalizar convocatoria». Se puede finalizar abierta o pausada.
-- Administración solo prorroga la fecha de entrega (I-114). Finalizar es la acción final:
+- Administración solo prorroga la fecha de entrega (I-114), como máximo 2 veces por
+  convocatoria (2026-11-02, constante en código `SyllabusProcess::MAX_EXTENSIONS`, no un ajuste
+  del sistema) y sin pasar del último día de clases del período (`fecha_fin`). El contador
+  `cantidad_prorrogas` se llenó desde la auditoría; el servidor rechaza la tercera prórroga y
+  la fecha posterior al último día, y la pantalla muestra «Prórroga N de 2» y desactiva
+  «Prorrogar plazo» con el motivo. Finalizar es la acción final:
   una convocatoria cerrada queda solo para consulta y no se elimina nunca. Eliminar
   (2026-11-02, reemplaza «solo mientras ningún docente haya enviado su sílabo») se admite
   con la convocatoria abierta o pausada aunque tenga sílabos enviados, en revisión o
