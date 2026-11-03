@@ -90,10 +90,81 @@ class SignatureTrustTest extends TestCase
         $matcher = new SignerHolderMatcher;
 
         $this->assertTrue($matcher->matches('JUAN CARLOS PEREZ GOMEZ', 'Pérez Gómez Juan Carlos'));
-        $this->assertTrue($matcher->matches('JUAN PEREZ GOMEZ', 'Juan Carlos Pérez Gómez'));
+        $this->assertTrue($matcher->matches('JOSÉ  ÑÚÑEZ   PEÑA', 'jose nuñez peña'));
+        $this->assertFalse($matcher->matches('JUAN PEREZ GOMEZ', 'Juan Carlos Pérez Gómez'));
+        $this->assertFalse($matcher->matches('JUAN CARLOS PEREZ GOMEZ', 'Juan Pérez'));
+        $this->assertFalse($matcher->matches('JUAN CARLOS PEREZ GOMEZ', 'Juan Carlos Pérez'));
+        $this->assertFalse($matcher->matches('JUANA CARLOTA PEREZ GOMEZ', 'Juan Carlos Pérez Gómez'));
         $this->assertFalse($matcher->matches('MARIA LUISA GOMEZ TORRES', 'Juan Carlos Pérez Gómez'));
         $this->assertFalse($matcher->matches('JUAN', 'Juan Carlos Pérez Gómez'));
         $this->assertFalse($matcher->matches('', 'Juan Carlos Pérez Gómez'));
+    }
+
+    public function test_la_entidad_listada_no_valida_certificados_que_no_son_de_firma(): void
+    {
+        $root = $this->makeCertificateAuthority('RAIZ AUSENTE');
+        $intermediate = $this->makeCertificateAuthority('ENTIDAD INTERMEDIA', $root);
+        file_put_contents($this->bundle, $intermediate['pem']);
+        config(['signatures.trusted_ca_bundle' => $this->bundle]);
+        $verifier = app(CmsSignatureVerifier::class);
+
+        foreach ([
+            "keyUsage=keyEncipherment\n",
+            "keyUsage=digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\n",
+            "keyUsage=digitalSignature,nonRepudiation\nextendedKeyUsage=anyExtendedKeyUsage\n",
+        ] as $extensions) {
+            $signed = $this->signStatement(self::STATEMENT, $this->makeLeafIssuedBy($intermediate, 'JUAN CARLOS PEREZ GOMEZ', $extensions));
+            try {
+                $verifier->verify(self::STATEMENT, $signed);
+                $this->fail("Debió rechazar el certificado con {$extensions}.");
+            } catch (ValidationException $exception) {
+                $this->assertSame(['El certificado no es de una entidad reconocida.'], $exception->errors()['signature']);
+            }
+        }
+    }
+
+    public function test_en_produccion_sin_entidades_configuradas_rechaza_la_firma(): void
+    {
+        $signed = $this->signStatement(self::STATEMENT, $this->makeSigningCertificate('PERSONA DE PRUEBA'));
+        $verifier = app(CmsSignatureVerifier::class);
+        $this->app['env'] = 'production';
+
+        try {
+            foreach ([null, '', sys_get_temp_dir().'/silabos-no-existe-'.bin2hex(random_bytes(4)).'.pem'] as $bundle) {
+                config(['signatures.trusted_ca_bundle' => $bundle]);
+                try {
+                    $verifier->verify(self::STATEMENT, $signed);
+                    $this->fail('Debió rechazar la firma en producción.');
+                } catch (ValidationException $exception) {
+                    $this->assertSame(
+                        ['No se puede verificar la firma: falta configurar las entidades certificadoras de confianza. Avise a Administración.'],
+                        $exception->errors()['signature'],
+                    );
+                }
+            }
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+
+        config(['signatures.trusted_ca_bundle' => null]);
+        $this->assertSame('PERSONA DE PRUEBA', $verifier->verify(self::STATEMENT, $signed)->holder);
+    }
+
+    /**
+     * @param  array{certificate: \OpenSSLCertificate, key: \OpenSSLAsymmetricKey, pem: string}  $authority
+     * @return array{certificate: \OpenSSLCertificate, key: \OpenSSLAsymmetricKey}
+     */
+    private function makeLeafIssuedBy(array $authority, string $holder, string $extensions): array
+    {
+        $config = $this->opensslConfig("[req]\ndistinguished_name=dn\n[dn]\n[v3_leaf]\nbasicConstraints=CA:FALSE\n{$extensions}");
+        $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA, 'config' => $config]);
+        $this->assertInstanceOf(\OpenSSLAsymmetricKey::class, $key);
+        $request = openssl_csr_new(['countryName' => 'EC', 'commonName' => $holder], $key, ['digest_alg' => 'sha256', 'config' => $config]);
+        $this->assertInstanceOf(\OpenSSLCertificateSigningRequest::class, $request);
+        $certificate = openssl_csr_sign($request, $authority['certificate'], $authority['key'], 30, ['digest_alg' => 'sha256', 'config' => $config, 'x509_extensions' => 'v3_leaf'], random_int(1000, 999999));
+        $this->assertInstanceOf(\OpenSSLCertificate::class, $certificate);
+
+        return ['certificate' => $certificate, 'key' => $key];
     }
 
     public function test_el_comando_arma_el_archivo_solo_con_entidades_certificadoras_vigentes(): void

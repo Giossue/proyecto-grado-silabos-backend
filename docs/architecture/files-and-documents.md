@@ -153,11 +153,13 @@ envío, la aprobación de Coordinación o la aprobación de Biblioteca.
 3. la declaración recibida debe ser idéntica a la esperada;
 4. `CmsSignatureVerifier`: la firma CMS es válida sobre esos bytes, trae el certificado,
    está vigente y, si `SIGNATURE_TRUSTED_CA_BUNDLE` apunta a un PEM, su cadena llega a
-   una de esas entidades (o la firmó directamente una entidad de la lista); vacío, solo
-   verifica integridad;
+   una de esas entidades (o la firmó directamente una entidad de la lista, que debe ser CA y
+   estar vigente); el certificado debe ser de firma (`keyUsage` con firma digital o no
+   repudio y, si trae `extendedKeyUsage`, protección de correo). Sin la lista: en producción
+   se rechaza la firma; en local y pruebas solo verifica integridad;
 5. si `SIGNATURE_REQUIRE_HOLDER_MATCH` es `true`, el titular del certificado debe
-   coincidir con el nombre de la cuenta (`SignerHolderMatcher`: mismas palabras, sin
-   importar orden, tildes ni mayúsculas);
+   coincidir con el nombre de la cuenta (`SignerHolderMatcher`: exactamente las mismas
+   palabras, al menos dos, sin importar orden, tildes, mayúsculas ni puntuación);
 6. guarda una fila en `firmas_silabo` (sílabo, revisión, rol, usuario, declaración,
    firma CMS, titular, número, emisor, vigencia y fecha) y audita `silabo.firmado` con
    el rol.

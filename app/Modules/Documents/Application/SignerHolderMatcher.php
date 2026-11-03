@@ -6,8 +6,12 @@ use Illuminate\Support\Str;
 
 class SignerHolderMatcher
 {
-    private const MINIMUM_SHARED_WORDS = 2;
+    private const MINIMUM_WORDS = 2;
 
+    /**
+     * The certificate holder and the account name must carry exactly the same words,
+     * in any order, ignoring accents, case, punctuation and spacing.
+     */
     public function matches(string $certificateHolder, string $accountName): bool
     {
         $holder = $this->words($certificateHolder);
@@ -15,9 +19,10 @@ class SignerHolderMatcher
         if ($holder === [] || $account === []) {
             return false;
         }
-        $shared = count(array_intersect($holder, $account));
+        sort($holder);
+        sort($account);
 
-        return $shared >= self::MINIMUM_SHARED_WORDS && $shared >= min(count($holder), count($account));
+        return count($holder) >= self::MINIMUM_WORDS && $holder === $account;
     }
 
     /** @return list<string> */

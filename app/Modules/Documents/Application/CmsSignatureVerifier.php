@@ -9,6 +9,11 @@ use RuntimeException;
 
 class CmsSignatureVerifier
 {
+    private const SIGNING_KEY_USAGES = ['Digital Signature', 'Non Repudiation'];
+
+    // Igual que la comprobación S/MIME de OpenSSL: «Any Extended Key Usage» no basta para firmar.
+    private const SIGNING_EXTENDED_KEY_USAGES = ['E-mail Protection'];
+
     public function verify(string $content, string $signature): SignerCertificate
     {
         $encoded = preg_replace('/-----(BEGIN|END) [A-Z0-9 ]+-----|\s+/', '', $signature) ?? '';
@@ -88,7 +93,11 @@ class CmsSignatureVerifier
     private function assertTrustedChain(string $contentFile, string $signatureFile, string $signerFile, string $signerPem): void
     {
         $bundle = config('signatures.trusted_ca_bundle');
-        if (! is_string($bundle) || $bundle === '') {
+        $configured = is_string($bundle) && $bundle !== '';
+        if (app()->environment('production') && (! $configured || ! is_file($bundle))) {
+            $this->fail('No se puede verificar la firma: falta configurar las entidades certificadoras de confianza. Avise a Administración.');
+        }
+        if (! $configured) {
             return;
         }
         if (! is_file($bundle)) {
@@ -115,7 +124,7 @@ class CmsSignatureVerifier
     private function issuedByListedAuthority(string $signerPem, string $bundle): bool
     {
         $signer = openssl_x509_parse($signerPem);
-        if (! is_array($signer)) {
+        if (! is_array($signer) || ! $this->isSigningCertificate($signer)) {
             return false;
         }
         preg_match_all('/-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----/s', (string) file_get_contents($bundle), $matches);
@@ -126,6 +135,8 @@ class CmsSignatureVerifier
                 continue;
             }
             if (($authority['subject'] ?? null) === ($signer['issuer'] ?? false)
+                && $this->isAuthority($authority)
+                && (int) ($authority['validFrom_time_t'] ?? PHP_INT_MAX) <= time()
                 && (int) ($authority['validTo_time_t'] ?? 0) > time()
                 && openssl_x509_verify($signerPem, $key) === 1) {
                 return true;
@@ -133,6 +144,42 @@ class CmsSignatureVerifier
         }
 
         return false;
+    }
+
+    /**
+     * Mirrors OpenSSL's S/MIME signing purpose, which the strict check applies, so the
+     * listed-authority fallback never accepts a certificate the strict check rejected by purpose.
+     *
+     * @param  array<string, mixed>  $certificate
+     */
+    private function isSigningCertificate(array $certificate): bool
+    {
+        $extensions = is_array($certificate['extensions'] ?? null) ? $certificate['extensions'] : [];
+        $keyUsage = $this->extensionValues($extensions['keyUsage'] ?? null);
+        if ($keyUsage !== null && array_intersect($keyUsage, self::SIGNING_KEY_USAGES) === []) {
+            return false;
+        }
+        $extendedKeyUsage = $this->extensionValues($extensions['extendedKeyUsage'] ?? null);
+
+        return $extendedKeyUsage === null || array_intersect($extendedKeyUsage, self::SIGNING_EXTENDED_KEY_USAGES) !== [];
+    }
+
+    /** @param array<string, mixed> $certificate */
+    private function isAuthority(array $certificate): bool
+    {
+        $extensions = is_array($certificate['extensions'] ?? null) ? $certificate['extensions'] : [];
+
+        return in_array('CA:TRUE', $this->extensionValues($extensions['basicConstraints'] ?? null) ?? [], true);
+    }
+
+    /** @return list<string>|null */
+    private function extensionValues(mixed $value): ?array
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return array_values(array_filter(array_map('trim', explode(',', $value)), fn (string $item): bool => $item !== ''));
     }
 
     private function certificate(string $pem): SignerCertificate
