@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
+use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -321,10 +322,12 @@ final class InProgressWork
             return null;
         }
         try {
-            return FieldResponse::normalize($field->contenido, $value);
+            $document = FieldResponse::normalize($field->contenido, $value);
         } catch (ValidationException) {
             return null;
         }
+
+        return DocumentBlock::sameStructure(FieldDocument::normalize($field->contenido), $document) ? $document : null;
     }
 
     /**

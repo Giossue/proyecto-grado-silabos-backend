@@ -191,6 +191,6 @@ al desplegar, para pasar de la primera versión (tabla de unidades aparte) al bl
 motivo en el registro de la migración.
 
 Si ya existen sílabos, este comando se detiene. Use el flujo administrativo habitual:
-pausa, edición y confirmación al reanudar con el conteo del trabajo que se rehace.
+pausa, edición y confirmación al reanudar con el conteo de los sílabos que se adaptan.
 No use una importación completa del JSON para simular esta actualización inicial:
 la importación conserva historia mediante campos archivados y puede crear otros IDs.

@@ -78,7 +78,7 @@ Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo d
 
 «Editar» abre el editor y pide escribir «editar plantilla». Ahí escribe directo en la hoja, elige quién llena cada campo (docente, carrera o texto fijo) y pulsa «Guardar». El logo de la universidad y «Editar JSON» se guardan al instante, sin pasar por «Guardar».
 
-Con una convocatoria abierta la plantilla está bloqueada. Para cambiarla, pause la convocatoria. Al reanudar se le pedirá confirmación: todos los sílabos de este período se borran y empiezan desde cero, incluso los aprobados, porque el formato es único para toda la universidad.
+Con una convocatoria abierta la plantilla está bloqueada. Para cambiarla, pause la convocatoria. Al reanudar se le pedirá confirmación: los sílabos de este período se adaptan a la plantilla nueva, porque el formato es único para toda la universidad. Se conserva lo escrito en los campos que siguen encajando; los enviados o aprobados vuelven a borrador para enviarse y firmarse de nuevo.
 
 Los sílabos de períodos anteriores no se tocan.',
         ],
