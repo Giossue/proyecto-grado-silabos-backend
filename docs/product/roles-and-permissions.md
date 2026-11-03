@@ -27,7 +27,7 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 
 | Capacidad | Administrador | Coordinador | Docente | Bibliotecario |
 |---|---|---|---|---|
-| Usuarios y roles (también por Excel) | Sí; solo Administración reinvita o elimina cuentas pendientes | Solo agrega docentes a su carrera (también desde Excel) y los quita de ella; no edita, activa, reinvita ni elimina cuentas | No | No |
+| Usuarios y roles (también por Excel) | Sí; solo Administración elimina cuentas pendientes; reenvía la invitación solo si venció | Solo agrega docentes a su carrera (también desde Excel) y los quita de ella; reenvía la invitación vencida de sus docentes; no edita, activa ni elimina cuentas | No | No |
 | Facultades, carreras (también por Excel), logos y coordinador de carrera | Sí | No | No | No |
 | Malla: asignaturas, requisitos y ciclos (también por Excel) | No | Sí, en su carrera, con la convocatoria de la carrera pausada o sin abrir | No | No |
 | Paralelos y docente de cada paralelo | No | Sí, en su carrera, también con la convocatoria abierta | No | No |
@@ -73,8 +73,9 @@ Fuente: `app/Modules/Identity/Application/ActiveRole.php`.
   estado, conserva la cuenta tal cual y solo le agrega el rol docente de esa carrera; si
   está pendiente y su enlace venció, se le envía uno nuevo a su propio correo. Si no existe,
   se crea y recibe el enlace de registro como en el alta de Administración. Coordinación
-  no corrige nombre ni correo, no activa, no reinvita ni elimina cuentas: eso es de
-  Administración. Un docente puede serlo de varias carreras y facultades.
+  no corrige nombre ni correo, no activa ni elimina cuentas: eso es de Administración.
+  Si la invitación de un docente de su carrera venció sin aceptarse, Coordinación puede
+  reenviarla (igual que Administración); mientras está vigente, nadie la reenvía. Un docente puede serlo de varias carreras y facultades.
 - Administración y Biblioteca no pueden ser docentes ni coordinadores, en ningún orden
   (`RoleCombination`). Se valida en la aplicación al asignar un rol, no en la base.
 - El correo solo se corrige, en Administración, mientras la cuenta está pendiente de

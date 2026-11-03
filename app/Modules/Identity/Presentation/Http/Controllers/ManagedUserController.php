@@ -9,6 +9,7 @@ use App\Modules\Identity\Application\Actions\AssignRole;
 use App\Modules\Identity\Application\Actions\CreateManagedUser;
 use App\Modules\Identity\Application\Actions\DeleteManagedUser;
 use App\Modules\Identity\Application\Actions\ImportManagedUsers;
+use App\Modules\Identity\Application\Actions\IssueActivationInvitation;
 use App\Modules\Identity\Application\Actions\RemoveUserRole;
 use App\Modules\Identity\Application\Actions\ResendManagedUserActivation;
 use App\Modules\Identity\Application\Actions\SetUserStatus;
@@ -94,6 +95,7 @@ class ManagedUserController extends Controller
                     'correo_electronico' => $user->correo_electronico,
                     'active' => $user->activo,
                     'pending_activation' => $user->correo_verificado_en === null,
+                    'invitation_expired' => $user->correo_verificado_en === null && ! app(IssueActivationInvitation::class)->hasActive($user),
                     'two_factor_enabled' => $user->dos_factores_confirmado_en !== null,
                     'roles' => $effective->map(fn (RoleAssignment $assignment): array => [
                         'id' => $assignment->id,

@@ -29,9 +29,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Coordinación solo agrega docentes a su carrera y puede quitarlos de ella sin tocar la
   cuenta (I-54, I-170, I-175). Si la cuenta ya existe, en cualquier estado, solo le agrega
   el rol docente de esa carrera; si no existe, se crea con el enlace de registro como en el
-  alta de Administración. No edita nombre ni correo, no activa, no reinvita ni elimina
-  cuentas; reinvitar o eliminar una cuenta pendiente es solo de Administración (auditoría
-  de seguridad, 2026-11-03).
+  alta de Administración. No edita nombre ni correo, no activa ni elimina cuentas;
+  eliminar una cuenta pendiente es solo de Administración (auditoría de seguridad,
+  2026-11-03). Reenviar la invitación solo se puede cuando venció sin aceptarse, y lo
+  pueden hacer Administración y la Coordinación de una carrera donde la persona es
+  docente; el enlace siempre llega al correo del titular. Las listas muestran «Invitación
+  vencida».
 - Administración y Biblioteca no pueden ser docentes ni coordinadores, en ningún orden; se
   valida en la aplicación al asignar roles, sin restricción en la base (2026-11-03).
 - El coordinador puede ser docente de un paralelo de su carrera y aprobar ese sílabo.

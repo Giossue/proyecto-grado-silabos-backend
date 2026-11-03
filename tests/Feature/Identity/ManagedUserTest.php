@@ -456,10 +456,15 @@ class ManagedUserTest extends TestCase
         Mail::fake();
         $pending = $this->pendingTeacher();
         $previous = ActivationInvitation::query()->where('usuario_id', $pending->id)->firstOrFail();
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.users.activation.resend', $pending))
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.user.0', 'La invitación sigue vigente; podrá reenviarla cuando venza.');
+        $previous->update(['expira_en' => now()->subMinute()]);
+        $this->assertTrue(collect($this->actingAsAdministrator()->getJson(route('api.v1.admin.users.index'))->json('users.data'))->firstWhere('id', $pending->id)['invitation_expired']);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.activation.resend', $pending))
-            ->assertSuccessful()
             ->assertSuccessful();
 
         $invitations = ActivationInvitation::query()->where('usuario_id', $pending->id)->orderBy('creada_en')->orderBy('id')->get();
@@ -486,6 +491,7 @@ class ManagedUserTest extends TestCase
             'password_confirmation' => 'Nueva-clave-2026!',
         ])->assertOk();
         $this->assertNotNotified($this->administrator->id, 'usuario.activado');
+        $this->travel(2)->minutes();
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.activation.resend', $pending))
             ->assertForbidden();

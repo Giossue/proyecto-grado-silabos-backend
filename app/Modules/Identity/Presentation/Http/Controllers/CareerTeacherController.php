@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Identity\Application\Actions\CreateCareerTeacher;
 use App\Modules\Identity\Application\Actions\ImportCareerTeachers;
 use App\Modules\Identity\Application\Actions\RemoveCareerTeacher;
+use App\Modules\Identity\Application\Actions\ResendManagedUserActivation;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetTemplate;
 use App\Modules\Identity\Domain\PersonNameColumns;
@@ -52,6 +53,16 @@ class CareerTeacherController extends Controller
         $rows = $reader->read($request->file('file'), ImportCareerTeachers::COLUMNS);
 
         return response()->json($action->execute($rows, $actor, $request, $request->boolean('confirm')));
+    }
+
+    public function resendActivation(User $user, Request $request, ResendManagedUserActivation $action): JsonResponse
+    {
+        Gate::authorize('resendInvitation', $user);
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($user, $actor, $request);
+
+        return response()->json(['message' => "Invitación de activación enviada a {$user->correo_electronico}."]);
     }
 
     public function destroy(User $user, Request $request, RemoveCareerTeacher $action): JsonResponse

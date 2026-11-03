@@ -487,7 +487,8 @@ class CareerTeacherTest extends TestCase
             'nombre' => 'Otra Persona Con Nombre',
             'correo_electronico' => 'atacante@silabos.test',
         ])->assertMethodNotAllowed();
-        $this->postJson("/api/v1/coordination/academic/teachers/{$pending->id}/resend-activation")->assertNotFound();
+        $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $pending))
+            ->assertUnprocessable()->assertJsonValidationErrors('user');
         $this->postJson(route('api.v1.admin.users.activation.resend', $pending))->assertForbidden();
         $this->deleteJson(route('api.v1.admin.users.destroy', $pending))->assertForbidden();
 
@@ -496,6 +497,40 @@ class CareerTeacherTest extends TestCase
         $this->assertNull($pending->fresh()->correo_verificado_en);
         $this->assertTrue($pending->roleAssignments()->effective()->where('rol', RoleCode::Coordinator->value)->exists());
         $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'atacante@silabos.test']);
+    }
+
+    public function test_the_coordinator_resends_the_invitation_only_once_it_expired_without_being_accepted(): void
+    {
+        Mail::fake();
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
+        $user = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
+        $listed = fn (): array => collect($this->getJson(route('api.v1.coordination.academic.teacher-assignments.index'))->assertOk()->json('careerTeachers'))->firstWhere('id', $user->id);
+
+        $this->assertFalse($listed()['invitation_expired']);
+        $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $user))
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.user.0', 'La invitación sigue vigente; podrá reenviarla cuando venza.');
+        $this->assertDatabaseCount('invitaciones_activacion', 1);
+
+        ActivationInvitation::query()->where('usuario_id', $user->id)->update(['expira_en' => now()->subMinute()]);
+        $this->assertTrue($listed()['invitation_expired']);
+        $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $user))
+            ->assertOk()
+            ->assertJsonPath('message', 'Invitación de activación enviada a nuevo@silabos.test.');
+
+        $this->assertDatabaseCount('invitaciones_activacion', 2);
+        Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo('nuevo@silabos.test'));
+        $this->assertFalse($listed()['invitation_expired']);
+    }
+
+    public function test_the_coordinator_cannot_resend_to_someone_outside_its_career_or_already_active(): void
+    {
+        $outsider = User::query()->create(['nombre' => 'Docente De Otra Carrera', 'correo_electronico' => 'otra.carrera@silabos.test', 'contrasena' => Hash::make('Original-2026!'), 'activo' => true]);
+        $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $outsider))->assertForbidden();
+
+        $active = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $active))->assertForbidden();
+        $this->assertDatabaseMissing('invitaciones_activacion', ['usuario_id' => $outsider->id]);
     }
 
     public function test_coordinator_cannot_delete_a_pending_teacher_it_created(): void

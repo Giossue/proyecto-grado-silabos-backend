@@ -18,6 +18,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
+use App\Modules\Identity\Application\Actions\IssueActivationInvitation;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\ProcessLocks;
@@ -371,6 +372,9 @@ class AcademicStructureViewData
                     'name' => $assignment->user->nombre,
                     'email' => $assignment->user->correo_electronico,
                     'pending_activation' => $assignment->user->correo_verificado_en === null,
+                    // Pendiente y sin invitación vigente: Coordinación puede reenviarla.
+                    'invitation_expired' => $assignment->user->correo_verificado_en === null
+                        && ! app(IssueActivationInvitation::class)->hasActive($assignment->user),
                 ])
                 ->unique('id')
                 ->sortBy('name')

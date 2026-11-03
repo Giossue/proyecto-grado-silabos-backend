@@ -255,6 +255,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.import-template');
             Route::post('coordination/academic/teachers/import', [CareerTeacherController::class, 'import'])
                 ->middleware(['active-role', 'throttle:10,1'])->name('api.v1.coordination.academic.teachers.import');
+            Route::post('coordination/academic/teachers/{user}/resend-activation', [CareerTeacherController::class, 'resendActivation'])
+                ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.coordination.academic.teachers.activation.resend');
             Route::delete('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'destroy'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.destroy');
             Route::get('coordination/support-documents', [SupportDocumentController::class, 'coordinationIndex'])

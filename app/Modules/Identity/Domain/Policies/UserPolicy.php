@@ -72,6 +72,29 @@ class UserPolicy
         return $this->roles->resolve(request())?->role->codigo_rol === RoleCode::Administrator->value;
     }
 
+    /**
+     * Reenviar la invitación de una cuenta que aún no la aceptó: Administración, o la
+     * Coordinación si la persona es docente de su carrera. Que haya vencido lo comprueba la
+     * acción con la fila bloqueada; el enlace siempre va al correo del titular.
+     */
+    public function resendInvitation(User $actor, User $target): bool
+    {
+        if (! $actor->activo || $actor->id === $target->id || ! $target->activo || $target->hasVerifiedEmail()) {
+            return false;
+        }
+        $active = $this->roles->resolve(request());
+        if ($active?->role->codigo_rol === RoleCode::Administrator->value) {
+            return true;
+        }
+
+        return $active?->role->codigo_rol === RoleCode::Coordinator->value
+            && $active->carrera_id !== null
+            && $target->roleAssignments()->effective()
+                ->where('rol', RoleCode::Teacher->value)
+                ->where('carrera_id', $active->carrera_id)
+                ->exists();
+    }
+
     public function updateProfileData(User $actor, User $target): bool
     {
         if (! $actor->activo) {
