@@ -26,7 +26,7 @@ class ScreenHelpTest extends TestCase
 
         $this->assertFalse(Schema::hasTable('ayudas_pantalla'));
         $this->assertGreaterThanOrEqual(30, count($screens));
-        foreach (['/admin/convocatorias', '/admin/configuracion/sistema', '/coordinacion/malla', '/coordinacion/revisiones', '/docente/mis-silabos', '/biblioteca/revisiones', '/biblioteca/historial'] as $screen) {
+        foreach (['/admin/convocatorias', '/admin/configuracion/sistema', '/docente/mis-silabos/:syllabus', '/coordinacion/revisiones/:revision/historial', '/docente/configuracion/notificaciones', '/coordinacion/malla', '/coordinacion/revisiones', '/docente/mis-silabos', '/biblioteca/revisiones', '/biblioteca/historial'] as $screen) {
             $this->assertContains($screen, $screens);
         }
         foreach (['/admin/ayuda', '/docente/panel', '/biblioteca/panel', '/coordinacion/panel'] as $screen) {
@@ -34,7 +34,7 @@ class ScreenHelpTest extends TestCase
         }
         $this->assertStringStartsWith('Arriba ve el aviso con el plazo de entrega', ScreenHelpCatalog::HELP['/coordinacion/revisiones']['content']);
         $this->assertStringStartsWith('Arriba ve el aviso con el plazo de la convocatoria', ScreenHelpCatalog::HELP['/docente/mis-silabos']['content']);
-        $this->assertStringStartsWith('Aquí aparecen los avisos del período en curso', ScreenHelpCatalog::HELP['/docente/notificaciones']['content']);
+        $this->assertStringStartsWith('Aquí están sus avisos del período actual', ScreenHelpCatalog::HELP['/docente/notificaciones']['content']);
         $this->assertStringContainsString('Al pulsar una fila se abren sus opciones: pausar, reanudar, prorrogar el plazo, finalizar o eliminar', ScreenHelpCatalog::HELP['/admin/convocatorias']['content']);
         $this->assertStringContainsString('2 veces como máximo, y nunca después del último día de clases', ScreenHelpCatalog::HELP['/admin/convocatorias']['content']);
         $this->assertStringContainsString('Si no la finaliza, el sistema lo hace solo al terminar el último día de clases', ScreenHelpCatalog::HELP['/admin/convocatorias']['content']);

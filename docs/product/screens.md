@@ -273,8 +273,10 @@ envían. Cada persona firma una sola vez por sílabo.
   `screenTours.ts` (frontend); si un elemento no está en pantalla en ese momento, se omite. En
   las pantallas de entrada de cada rol la guía termina con el menú, las notificaciones, el
   tema, la accesibilidad y la cuenta. Sin pasos, muestra solo el texto. En el editor de la
-  plantilla el botón va abajo a la izquierda, para no tapar «Asistente», y la guía recorre
-  el editor. Los textos no se editan desde el sistema.
+  plantilla, el del sílabo y la revisión de Coordinación el botón va abajo a la izquierda,
+  para no tapar «Asistente», y la guía recorre esa pantalla. Perfil, Seguridad y los avisos
+  tienen la misma guía en todos los roles. Los textos son cortos y sin términos técnicos, y
+  no se editan desde el sistema.
 - **Edición bloqueada.** Una franja a todo el ancho, bajo la barra superior, dice
   «Edición bloqueada · Convocatoria {período}» y qué pausar, con «¿Por qué?» e «Ir a
   Convocatorias» («Ir a Revisión» para Coordinación). Convocatorias usa la misma franja

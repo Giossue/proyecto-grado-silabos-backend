@@ -86,147 +86,179 @@ Los sílabos de períodos anteriores no se tocan.',
 
 Pulse una persona para ver sus datos, cambiar sus roles o quitarle el acceso. Una persona puede tener más de un rol.',
         ],
+        '/biblioteca/configuracion/notificaciones' => [
+            'title' => 'Avisos por correo',
+            'content' => 'Elija qué avisos le llegan también a su correo. En el sistema los verá siempre.',
+        ],
         '/biblioteca/configuracion/perfil' => [
             'title' => 'Perfil',
-            'content' => 'Aquí consulta los datos de su cuenta. Su nombre y su correo institucional los administra Administración; si hay un error, pídale que lo corrija.',
+            'content' => 'Aquí ve los datos de su cuenta. Si su nombre o correo están mal, pida el cambio a Administración.',
         ],
         '/biblioteca/configuracion/seguridad' => [
             'title' => 'Seguridad',
-            'content' => 'Cambie su contraseña y administre la verificación en dos pasos. Para activarla o desactivarla se le pedirá su contraseña actual.
+            'content' => 'Aquí cambia su contraseña. Si no la recuerda, puede pedir un enlace por correo para crear otra.
 
-Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si pierde el acceso a su aplicación de autenticación.',
+También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.',
         ],
         '/biblioteca/historial' => [
             'title' => 'Historial de biblioteca',
-            'content' => 'Los sílabos de períodos terminados, en solo lectura. Aquí llegan solos cuando termina el período académico.
+            'content' => 'Aquí están los sílabos de períodos que ya terminaron. Solo se pueden ver.
 
-Filtre por período, facultad o estado. «Solo los míos» muestra los que usted firmó o devolvió.',
+Filtre por período o facultad. «Solo los míos» muestra los que usted atendió.',
         ],
         '/biblioteca/notificaciones' => [
             'title' => 'Notificaciones',
-            'content' => 'Aquí aparecen los avisos del período en curso que le corresponden. Cuando el período termina, sus avisos ya no se muestran.
+            'content' => 'Aquí están sus avisos del período actual.
 
-Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leído.',
+Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo de los nuevos.',
         ],
         '/biblioteca/revisiones' => [
             'title' => 'Revisiones de biblioteca',
-            'content' => 'Arriba ve cuántos sílabos están en revisión y cuántos ya atendió: aprobados, con corrección solicitada al docente o reemplazados por una revisión nueva (anteriores).
+            'content' => 'Aquí llegan, de todas las carreras, los sílabos que Coordinación ya firmó, para que revise sus libros.
 
-Debajo llegan, de todas las carreras, los sílabos del período en curso que Coordinación ya firmó, para que revise su bibliografía. Cuando usted firma y aprueba, el sílabo queda aprobado.
+Pulse uno para revisarlo. Si los libros están bien, lo firma y queda aprobado. Si algo falla, lo devuelve al docente.
 
-Filtre por facultad si se reparten el trabajo: el sistema recuerda la que eligió. Los períodos terminados están en «Historial».',
+Puede filtrar por facultad si se reparten el trabajo; el sistema recuerda su elección. Los períodos terminados están en «Historial».',
         ],
         '/biblioteca/revisiones/:revision' => [
             'title' => 'Revisión de bibliografía',
-            'content' => 'Revise los libros que propuso el docente: que estén en biblioteca, completos y bien citados.
+            'content' => 'Revise que los libros del sílabo estén en la biblioteca y que sus datos estén completos y bien escritos.
 
-Si todo está bien, pulse «Firmar y aprobar» y firme con su archivo .p12: el sílabo queda aprobado y se genera el PDF. Si hay un problema, devuélvalo al docente marcando los motivos; cuando lo corrija y reenvíe, vuelve a esta bandeja sin pasar de nuevo por Coordinación.',
+Si todo está bien, pulse «Firmar y aprobar» y use su archivo de firma electrónica. Si hay un problema, pulse «Devolver al docente» y marque qué debe corregir. Cuando el docente lo corrija, vuelve directo a usted.',
+        ],
+        '/coordinacion/configuracion/notificaciones' => [
+            'title' => 'Avisos por correo',
+            'content' => 'Elija qué avisos le llegan también a su correo. En el sistema los verá siempre.',
         ],
         '/coordinacion/configuracion/perfil' => [
             'title' => 'Perfil',
-            'content' => 'Aquí consulta los datos de su cuenta. Su nombre y su correo institucional los administra Administración; si hay un error, pídale que lo corrija.',
+            'content' => 'Aquí ve los datos de su cuenta. Si su nombre o correo están mal, pida el cambio a Administración.',
         ],
         '/coordinacion/configuracion/seguridad' => [
             'title' => 'Seguridad',
-            'content' => 'Cambie su contraseña y administre la verificación en dos pasos. Para activarla o desactivarla se le pedirá su contraseña actual.
+            'content' => 'Aquí cambia su contraseña. Si no la recuerda, puede pedir un enlace por correo para crear otra.
 
-Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si pierde el acceso a su aplicación de autenticación.',
+También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.',
         ],
         '/coordinacion/docentes' => [
             'title' => 'Docentes de la carrera',
-            'content' => 'Cuentas docentes de su carrera y los paralelos que dictan en el período en curso.
+            'content' => 'Aquí están los docentes de su carrera.
 
-Puede crear un docente, importar varios desde Excel, corregir su nombre (y su correo, mientras la cuenta no esté activada) y retirarlo de la carrera. Cada docente recibe una invitación por correo para activar su cuenta.',
+Cree uno o suba varios con un Excel; cada uno recibe un correo para entrar. Pulse un docente para ver sus datos, reenviarle la invitación o quitarlo de la carrera. Mientras haya una convocatoria en curso no se puede quitar a nadie.',
         ],
         '/coordinacion/malla' => [
             'title' => 'Malla curricular',
-            'content' => 'Vista de la malla de su carrera: ciclos, materias y relaciones de prerrequisito y correquisito.
+            'content' => 'Aquí ve la malla de su carrera: sus ciclos, sus materias y qué materia es requisito de otra.
 
-Pulse «Editar malla» para modificarla. Cada materia tiene un menú para editarla, moverla, eliminarla o agregarle relaciones; el botón «Relaciones» lista todas en formato de tabla.
+Pulse «Editar malla» para cambiarla. «Relaciones» muestra los requisitos en una lista.
 
-Si hay una convocatoria abierta en su carrera, la malla está bloqueada; pause la convocatoria para corregirla.',
+Si hay una convocatoria abierta, la malla no se puede cambiar; primero páusela.',
         ],
         '/coordinacion/materias-asignaciones' => [
             'title' => 'Materias y asignaciones',
-            'content' => 'Aquí programa las materias del período en curso, crea sus paralelos y elige el docente de cada uno.
+            'content' => 'Aquí prepara las materias del período: sus paralelos, su jornada y el docente de cada uno.
 
-Seleccione una o varias materias para agregarles paralelos. Un paralelo sin docente queda pendiente de asignación.
+Marque una o varias materias para hacer cambios a la vez, o pulse una para cambiar sus paralelos.
 
-Si asigna un docente nuevo a un paralelo, su sílabo empieza desde cero. Cambiar el código o la jornada de un paralelo con el sílabo enviado o aprobado también lo elimina; el sistema le pide confirmación antes.',
+Si cambia el docente de un paralelo, su sílabo empieza de cero. El sistema le pregunta antes.',
         ],
         '/coordinacion/notificaciones' => [
             'title' => 'Notificaciones',
-            'content' => 'Aquí aparecen los avisos del período en curso que le corresponden. Cuando el período termina, sus avisos ya no se muestran.
+            'content' => 'Aquí están sus avisos del período actual.
 
-Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leído.',
+Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo de los nuevos.',
         ],
         '/coordinacion/proyecto-carrera' => [
             'title' => 'Proyecto de carrera',
-            'content' => 'El proyecto de carrera contiene los campos que Administración asignó a Coordinación en la plantilla del sílabo. Pulse una materia para editar sus datos y elegir qué campos puede modificar el docente.
+            'content' => 'Aquí llena lo que le toca a la carrera en el sílabo de cada materia. El docente lo recibe ya escrito.
 
-Con «Importar desde Excel», descargue la plantilla de su carrera. Complete las celdas de contenido sin cambiar hojas, encabezados ni materias. Cargue el Excel, revise la vista previa y seleccione qué materias y campos aplicar. Las celdas vacías conservan los valores actuales. Esta carga no necesita IA ni OCR.
+Pulse una materia para llenarla, o llene varias a la vez con «Importar desde Excel».
 
-En la pestaña «Documentos de apoyo» suba PDF, Word o Excel de hasta 20 MB para sus docentes: proyecto de carrera, TIC y TAC, habilidades blandas u otros. Ellos los ven en una ventana aparte. Al eliminar uno, se borra del servidor.
+En «Documentos de apoyo» suba archivos para que sus docentes conozcan mejor sus materias.
 
-Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en curso, cambiar un dato exige pausar y confirmar su regeneración; los procesos cerrados no se modifican.',
+Si hay una convocatoria abierta, no se puede cambiar; primero páusela.',
         ],
         '/coordinacion/revisiones' => [
             'title' => 'Revisión de sílabos',
             'content' => 'Arriba ve el aviso con el plazo de entrega. Desde aquí abre, pausa o reanuda la convocatoria de su carrera.
 
-El botón rojo de check, abajo a la derecha, abre «Antes de empezar»: los pasos previos (malla, materias del período, paralelos y docentes); al pulsar uno le muestra en el menú dónde se hace. «Abrir convocatoria» se habilita cuando todo está listo; si no, al pasar el cursor dice qué falta.
+El botón rojo de check abre «Antes de empezar»: lo que falta preparar antes de abrir la convocatoria.
 
-«Cola de revisión» lista los sílabos que los docentes ya enviaron. Coordinación revisa primero el contenido; cuando lo aprueba, el sílabo pasa a Biblioteca para revisar la bibliografía. Abra uno para aprobarlo o pedir correcciones.
-
-«Seguimiento» muestra todos los sílabos de la convocatoria con su estado.',
+«Cola de revisión» tiene los sílabos que le enviaron. Pulse uno para revisarlo: puede pedir correcciones o firmarlo y enviarlo a biblioteca. «Seguimiento» muestra cómo va cada sílabo.',
         ],
         '/coordinacion/revisiones/:revision' => [
             'title' => 'Detalle de la revisión',
-            'content' => 'Aquí revisa el contenido enviado por el docente, sección por sección.
+            'content' => 'Aquí lee el sílabo que envió el docente.
 
-Puede solicitar una corrección con un comentario para el docente o pulsar «Firmar y enviar a biblioteca» y firmar con su archivo .p12. Una revisión enviada no se modifica: si el docente corrige, se crea una nueva revisión y el historial permite ver y comparar las versiones.
+Si falta algo, pulse «Solicitar corrección» y escriba qué cambiar. Si está bien, pulse «Firmar y enviar a biblioteca» y use su archivo de firma electrónica.
 
-Un sílabo aprobado no se modifica. Si tiene un error, puede reiniciarlo con un motivo y el docente empieza de cero.',
+Con «Historial» y «Comparar» ve qué cambió entre versiones.',
         ],
         '/coordinacion/revisiones/:revision/documentos' => [
             'title' => 'Documentos aprobados',
-            'content' => 'El PDF del sílabo aprobado, con las firmas del docente, Coordinación y Biblioteca. Véalo o descárguelo.',
+            'content' => 'Aquí ve o descarga el PDF del sílabo aprobado, con las tres firmas.
+
+Si el PDF todavía se está preparando, espere un momento. Si falla, pulse «Reintentar».',
+        ],
+        '/coordinacion/revisiones/:revision/historial' => [
+            'title' => 'Historial de versiones',
+            'content' => 'Aquí ve cada versión que envió el docente y los comentarios de cada una.
+
+Pulse una versión para verla. «Resaltar cambios» marca lo que cambió.',
+        ],
+        '/docente/configuracion/notificaciones' => [
+            'title' => 'Avisos por correo',
+            'content' => 'Elija qué avisos le llegan también a su correo. En el sistema los verá siempre.',
         ],
         '/docente/configuracion/perfil' => [
             'title' => 'Perfil',
-            'content' => 'Aquí consulta los datos de su cuenta. Su nombre y su correo institucional los administra Administración; si hay un error, pídale que lo corrija.
+            'content' => 'Aquí ve los datos de su cuenta. Si su nombre o correo están mal, pida el cambio a Administración.
 
-Su formación y experiencia académica-investigativa se escribe una sola vez: todos sus sílabos la copian, y se actualizan los que aún no ha enviado.',
+Su formación y experiencia se escribe una sola vez y pasa a todos sus sílabos.',
         ],
         '/docente/configuracion/seguridad' => [
             'title' => 'Seguridad',
-            'content' => 'Cambie su contraseña y administre la verificación en dos pasos. Para activarla o desactivarla se le pedirá su contraseña actual.
+            'content' => 'Aquí cambia su contraseña. Si no la recuerda, puede pedir un enlace por correo para crear otra.
 
-Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si pierde el acceso a su aplicación de autenticación.',
+También puede activar la doble verificación: al entrar le pedirá un código del celular. Guarde los códigos de respaldo en un lugar seguro; sirven si pierde el celular.',
         ],
         '/docente/documentos-apoyo' => [
             'title' => 'Documentos de apoyo',
-            'content' => 'Material que Coordinación subió para conocer mejor sus asignaturas. Pulse uno para verlo en una ventana aparte.',
+            'content' => 'Archivos que su coordinación le dejó para conocer mejor sus materias. Pulse uno para verlo.',
+        ],
+        '/docente/historial' => [
+            'title' => 'Historial',
+            'content' => 'Aquí están sus sílabos de períodos anteriores. Pulse una carrera para verlos.',
+        ],
+        '/docente/historial/:career' => [
+            'title' => 'Historial',
+            'content' => 'Sus sílabos de períodos anteriores en esta carrera. Pulse uno para verlo.',
         ],
         '/docente/mis-silabos' => [
             'title' => 'Mis sílabos',
             'content' => 'Arriba ve el aviso con el plazo de la convocatoria.
 
-Debajo, un sílabo por cada paralelo que usted dicta en el período. Pulse uno para empezar o continuar su elaboración.
+Debajo tiene un sílabo por cada materia que dicta. Pulse uno para empezar o seguir.
 
-Estados: sin iniciar, borrador, en revisión, corrección solicitada y aprobado. Al primer envío lo firma con su archivo .p12; los reenvíos no se vuelven a firmar. Mientras está en revisión no se puede editar; si Coordinación o Biblioteca piden correcciones, vuelve a quedar editable.
+Cuando lo envía, no se puede cambiar mientras lo revisan. Si le piden correcciones, puede volver a editarlo. Sus sílabos de períodos anteriores están en «Historial».',
+        ],
+        '/docente/mis-silabos/:syllabus' => [
+            'title' => 'Su sílabo',
+            'content' => 'Aquí llena su sílabo. Los campos con asterisco son suyos; lo demás ya viene escrito. Todo se guarda solo mientras escribe.
 
-Los sílabos de períodos anteriores están en «Historial».',
+Cuando termine, pulse «Enviar». La primera vez lo firma con su archivo de firma electrónica.',
         ],
         '/docente/notificaciones' => [
             'title' => 'Notificaciones',
-            'content' => 'Aquí aparecen los avisos del período en curso que le corresponden. Cuando el período termina, sus avisos ya no se muestran.
+            'content' => 'Aquí están sus avisos del período actual.
 
-Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leído.',
+Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo de los nuevos.',
         ],
         '/docente/revisiones/:revision/documentos' => [
             'title' => 'Documentos aprobados',
-            'content' => 'Cuando su sílabo está aprobado puede ver y descargar el PDF con las tres firmas.',
+            'content' => 'Aquí ve o descarga el PDF del sílabo aprobado, con las tres firmas.
+
+Si el PDF todavía se está preparando, espere un momento. Si falla, pulse «Reintentar».',
         ],
     ];
 
