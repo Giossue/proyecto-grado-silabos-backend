@@ -33,8 +33,7 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 ## Producción
 
 - **Variables de entorno:**
-  - `TRUSTED_PROXIES` vale `*` por defecto (`config/app.php`, `.env.example`); el servidor de pruebas confía solo en
-    las redes privadas (2026-10-26);
+  - `TRUSTED_PROXIES` por defecto confía solo en localhost y redes privadas (2026-11-03, antes `*`);
   - `AI_TIMEOUT` debe ser menor que los 60 s del trabajo `AnswerSyllabusChatJob` (el servidor de pruebas usa 50);
   - `DISPLAY_TIMEZONE` fija la fecha de hoy de la institución (por defecto `America/Guayaquil`). Cambiarla
     cambia los plazos de la convocatoria y las fechas ya guardadas.

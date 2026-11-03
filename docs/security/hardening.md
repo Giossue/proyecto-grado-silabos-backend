@@ -12,14 +12,22 @@
   de Excel (10), importación de proyectos de carrera (20), firmas (20) y chat de IA (6 por persona y
   sílabo).
 - Una cuenta desactivada pierde la sesión en su siguiente petición (`EnsureActiveUser`).
-  Cada persona puede cerrar sus otras sesiones.
+  Cada persona puede cerrar sus otras sesiones; eso también rota el token de «Mantener la
+  sesión iniciada», así que esos dispositivos dejan de entrar (el actual sigue).
+- Desactivar el segundo factor pide la contraseña y un código del autenticador o uno de
+  recuperación (que se consume); cinco intentos fallidos bloquean cinco minutos.
 - En ambientes expuestos, `SESSION_ENCRYPT=true`. Los hosts aceptados son el de `APP_URL`
   y sus subdominios, más `127.0.0.1` y `localhost` para el health check interno de
   Dokploy; así los enlaces de recuperación no aceptan un `Host` manipulado.
 - El scheduler ejecuta `auth:clear-resets` cada quince minutos y el resumen diario de Coordinación; debe estar activo en el
   despliegue (el contenedor lo levanta con `supervisord`).
 - Nadie elimina su propia cuenta. El Administrador solo elimina cuentas sin activar y sin
-  actividad; las demás se desactivan y conservan su historial.
+  actividad; las demás se desactivan y conservan su historial. La Coordinación no elimina,
+  activa ni edita cuentas: solo agrega docentes a su carrera (a una cuenta existente le suma
+  el rol; si no existe, la crea con enlace de registro) y los quita de ella.
+- Administración y Biblioteca nunca tienen además el rol Docente ni Coordinador
+  (`RoleCombination`, aplicado en `AssignRole` y en el alta de docentes).
+- `TRUSTED_PROXIES` por defecto solo confía en `127.0.0.1` y redes privadas; nunca `*`.
 - Los mensajes de recuperación no confirman si la cuenta existe.
 
 ## Autorización
@@ -116,7 +124,13 @@ un `POST` a la API con un cuerpo de 16 KB no debe devolver 500.
 - El titular del certificado debe coincidir con la cuenta que firma
   (`SIGNATURE_REQUIRE_HOLDER_MATCH`).
 - Con `SIGNATURE_TRUSTED_CA_BUNDLE` cargado, la cadena debe llegar a una entidad
-  certificadora de la lista. Sin ese archivo no se verifica la cadena (DT-16).
+  certificadora de la lista y el certificado debe ser de firma (no uno de servidor). Sin
+  ese archivo, en producción se rechaza la firma; en local y pruebas no se verifica la
+  cadena (DT-16).
+- Límites antes de procesar archivos: Excel de importación con 600 filas recorridas como
+  máximo (contando vacías) y permiso comprobado antes de leerlo; hojas de cálculo de
+  documentos de apoyo hasta 5.000 celdas con datos; logos hasta 4000 × 4000 px; las
+  respuestas de Koha se cortan al pasar su límite de bytes mientras llegan.
 - Ver `docs/runbooks/firma-electronica-entidades.md`.
 
 ## IA

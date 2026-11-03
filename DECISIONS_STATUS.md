@@ -26,9 +26,14 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   una invitación por correo.
 - Administración puede quitar un rol a una cuenta, salvo el único que le queda (I-197).
 - En «Usuarios y roles», la columna «Roles» muestra los roles vigentes de cada cuenta.
-- Coordinación crea o incorpora docentes en su carrera, corrige su nombre y su correo
-  (el correo solo antes de activar la cuenta) y puede quitarlos de la carrera sin tocar
-  la cuenta (I-54, I-170, I-175).
+- Coordinación solo agrega docentes a su carrera y puede quitarlos de ella sin tocar la
+  cuenta (I-54, I-170, I-175). Si la cuenta ya existe, en cualquier estado, solo le agrega
+  el rol docente de esa carrera; si no existe, se crea con el enlace de registro como en el
+  alta de Administración. No edita nombre ni correo, no activa, no reinvita ni elimina
+  cuentas; reinvitar o eliminar una cuenta pendiente es solo de Administración (auditoría
+  de seguridad, 2026-11-03).
+- Administración y Biblioteca no pueden ser docentes ni coordinadores, en ningún orden; se
+  valida en la aplicación al asignar roles, sin restricción en la base (2026-11-03).
 - El coordinador puede ser docente de un paralelo de su carrera y aprobar ese sílabo.
 - Una cuenta puede borrarse aunque tenga auditoría (I-194).
 - Cada persona guarda en su cuenta sus preferencias de accesibilidad.

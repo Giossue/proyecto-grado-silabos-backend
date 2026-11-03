@@ -76,13 +76,13 @@ AI_MODEL=
 AI_API_KEY=
 
 
-SIGNATURE_TRUSTED_CA_BUNDLE=
+SIGNATURE_TRUSTED_CA_BUNDLE=/var/www/html/resources/trust/ca-ecuador.pem
 SIGNATURE_REQUIRE_HOLDER_MATCH=true
 
 MAIL_MAILER=log
 ```
 
-- `TRUSTED_PROXIES` vale `*` si no se define; fije la IP real del proxy.
+- `TRUSTED_PROXIES`, si no se define, confía solo en `127.0.0.1` y en las redes privadas (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), donde está el proxy de Dokploy; fije la IP real del proxy si la conoce. Nunca use `*`.
 - Con `APP_URL` en `https://`, la API arma todas sus direcciones (logos, enlaces) con HTTPS, aunque
   el proxy le entregue la petición por HTTP.
 - `SESSION_SECURE_COOKIE=true` exige HTTPS. Sin certificado nadie puede iniciar sesión.
@@ -163,10 +163,20 @@ del servicio `gotenberg`.
 
 ### Firma electrónica
 
-`SIGNATURE_REQUIRE_HOLDER_MATCH=true` exige que el titular del certificado coincida con
-el nombre de la cuenta. `SIGNATURE_TRUSTED_CA_BUNDLE` vacío acepta cualquier emisor; para
-aceptar solo entidades acreditadas en Ecuador siga
-`docs/runbooks/firma-electronica-entidades.md`.
+`SIGNATURE_REQUIRE_HOLDER_MATCH=true` exige que el titular del certificado tenga
+exactamente las mismas palabras que el nombre de la cuenta, en cualquier orden y sin
+importar tildes, mayúsculas ni espacios. Un nombre de cuenta con menos o más nombres o
+apellidos que el certificado no firma: corrija el nombre de la cuenta.
+
+`SIGNATURE_TRUSTED_CA_BUNDLE` es la ruta del PEM con las entidades certificadoras de
+confianza; la imagen incluye `/var/www/html/resources/trust/ca-ecuador.pem`. Con
+`APP_ENV=production`, si la variable está vacía o el archivo no existe, toda firma se
+rechaza con «No se puede verificar la firma: falta configurar las entidades
+certificadoras de confianza. Avise a Administración.». Solo en local y pruebas la
+variable vacía acepta cualquier emisor, incluso certificados autofirmados. Un
+certificado emitido por una entidad de la lista solo vale si es de firma (uso de clave
+con firma digital o no repudio y, si declara uso extendido, protección de correo). Para
+actualizar la lista siga `docs/runbooks/firma-electronica-entidades.md`.
 
 ### Correo
 

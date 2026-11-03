@@ -81,8 +81,10 @@ el estado: el sílabo sigue «En revisión».
   docente no se firma.
 - Se firma una declaración corta que entrega el servidor con la huella del contenido que
   se decide. El servidor comprueba la firma, que la declaración sea la esperada, que el
-  certificado esté vigente, que su titular coincida con la cuenta y, si está configurada,
-  la cadena de confianza (`docs/runbooks/firma-electronica-entidades.md`). Cualquier
+  certificado esté vigente y sea de firma, que su titular tenga las mismas palabras que el
+  nombre de la cuenta (en cualquier orden, sin importar tildes ni mayúsculas) y la cadena
+  de confianza (`docs/runbooks/firma-electronica-entidades.md`). En producción, sin lista
+  de entidades de confianza no se acepta ninguna firma. Cualquier
   error se muestra en `signature` y la decisión no se registra.
 - Al aprobar Biblioteca se genera un solo PDF desde la copia guardada en la revisión, con
   un sello visible por persona en el cuadro de firmas. No hay descarga de Word. El PDF

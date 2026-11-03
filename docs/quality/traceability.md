@@ -106,6 +106,22 @@ fidelidad del documento) se revisa con `manual-review-script.md`.
 
 No cambies primero la prueba para acomodar el código y luego reescribas el requisito.
 
+## Auditoría de seguridad (2026-11-03)
+
+Hallazgos de la auditoría `security-audit` run-1 y su prueba de regresión:
+
+| Hallazgo | Evidencia |
+|---|---|
+| Coordinación toma o borra cuentas pendientes ajenas | `CareerTeacherTest` (cuenta existente solo suma el rol; sin editar, reenviar ni borrar), `ManagedUserTest` (roles prohibidos en ambos órdenes) |
+| «Cerrar otras sesiones» no cerraba «recordarme» | `OtherSessionsRememberTest` |
+| Desactivar 2FA solo con contraseña | `DisableTwoFactorTest` |
+| Importación de Excel sin límite de filas vacías | `SpreadsheetImportTest` |
+| Hojas de cálculo de apoyo sin límite | `SupportDocumentTest` |
+| Logo sin límite de dimensiones / Koha sin límite al recibir | `FacultyLogoDimensionsTest`, `KohaResponseLimitTest` |
+| Firma con certificado que no es de firma / sin entidades en producción / nombre laxo | `SignatureTrustTest` |
+| Corrección sin rol de coordinador / pausa entre autorizar y bloquear | `ReviewWorkflowTest`, `LibraryReviewTest` |
+| Contexto Docker y proxies por defecto | `DockerContextTest`, `TrustedProxiesDefaultTest` |
+
 ## Evidencia
 
 Puede ser un reporte de pruebas, una captura, un documento generado, un log anonimizado,
