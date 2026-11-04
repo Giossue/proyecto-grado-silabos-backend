@@ -139,7 +139,7 @@ class DashboardController extends Controller
         $total = (clone $syllabi)->count();
         $approved = (clone $syllabi)->where('estado', 'aprobado')->count();
         $careersWithoutConvocation = $process === null
-            ? Career::query()->where('activo', true)->count()
+            ? 0
             : Career::query()->where('activo', true)
                 ->whereNotIn('id', Convocation::query()->where('proceso_id', $process->id)->select('carrera_id'))
                 ->count();
@@ -152,7 +152,7 @@ class DashboardController extends Controller
                 'label' => 'Carreras sin convocar',
                 'value' => $careersWithoutConvocation,
                 'suffix' => null,
-                'hint' => 'Coordinaciones que aún no abren su convocatoria',
+                'hint' => $process === null ? 'Sin proceso en curso' : 'Coordinaciones que aún no abren su convocatoria',
             ],
             [
                 'key' => 'not_started',

@@ -174,6 +174,20 @@ class ApiDashboardTest extends TestCase
         }
     }
 
+    public function test_without_a_convocation_in_progress_no_career_counts_as_pending_to_convene(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $administrator = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
+        $role = $administrator->roleAssignments()->firstOrFail();
+
+        $metrics = $this->actingAs($administrator)->withSession(['active_role_assignment_id' => $role->id])
+            ->getJson(route('api.v1.dashboard.show'))->assertOk()->json('metrics');
+        $careers = collect($metrics)->firstWhere('key', 'careers_without_convocation');
+
+        $this->assertSame(0, $careers['value']);
+        $this->assertSame('Sin proceso en curso', $careers['hint']);
+    }
+
     public function test_a_sole_role_enters_without_choosing(): void
     {
         $this->seed(DatabaseSeeder::class);
