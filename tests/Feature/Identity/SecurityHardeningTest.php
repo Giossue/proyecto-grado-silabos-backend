@@ -5,7 +5,6 @@ namespace Tests\Feature\Identity;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class SecurityHardeningTest extends TestCase
@@ -50,15 +49,6 @@ class SecurityHardeningTest extends TestCase
 
         $this->assertDatabaseMissing('sesiones', ['id' => 'otra-sesion']);
         $this->assertNotSame($before, $user->fresh()->getRememberToken());
-    }
-
-    public function test_email_verification_link_is_refused_for_inactive_accounts(): void
-    {
-        $user = User::factory()->unverified()->create(['activo' => false]);
-        $link = URL::temporarySignedRoute('api.v1.authentication.email-verification.verify', now()->addMinutes(10), ['user' => $user->id, 'hash' => sha1($user->getEmailForVerification())], absolute: false);
-
-        $this->postJson($link)->assertForbidden();
-        $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
 
     public function test_login_is_limited_per_account_across_addresses(): void

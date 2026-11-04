@@ -14,8 +14,8 @@ use App\Modules\AiAssistance\Presentation\Http\Controllers\TemplateAssistantCont
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateStructureController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
+use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\AccountActivationResendController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\ActivationController;
-use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionManagementController;
@@ -49,9 +49,6 @@ Route::prefix('v1')->group(function (): void {
     Route::post('authentication/account-activation', [ActivationController::class, 'activate'])
         ->middleware('throttle:password-recovery')
         ->name('api.v1.authentication.account-activation');
-    Route::post('authentication/email-verification/{user}/{hash}', [EmailVerificationController::class, 'verify'])
-        ->middleware('throttle:10,1')
-        ->name('api.v1.authentication.email-verification.verify');
     Route::post('authentication/two-factor/challenge', [TwoFactorController::class, 'challenge'])
         ->middleware('throttle:two-factor')
         ->name('api.v1.authentication.two-factor.challenge');
@@ -61,9 +58,9 @@ Route::prefix('v1')->group(function (): void {
         Route::post('authentication/logout', [SessionController::class, 'logout'])->name('api.v1.authentication.logout');
         Route::put('authentication/password', [SessionController::class, 'updatePassword'])
             ->name('api.v1.authentication.password.update');
-        Route::post('authentication/email-verification/resend', [EmailVerificationController::class, 'resend'])
+        Route::post('authentication/account-activation/resend', AccountActivationResendController::class)
             ->middleware('throttle:password-recovery')
-            ->name('api.v1.authentication.email-verification.resend');
+            ->name('api.v1.authentication.account-activation.resend');
         Route::get('authentication/two-factor', [TwoFactorController::class, 'status'])
             ->name('api.v1.authentication.two-factor.status');
         Route::post('authentication/two-factor', [TwoFactorController::class, 'enable'])

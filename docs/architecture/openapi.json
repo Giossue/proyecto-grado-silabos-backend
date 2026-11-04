@@ -2851,13 +2851,13 @@
                 }
             }
         },
-        "/api/v1/authentication/email-verification/resend": {
+        "/api/v1/authentication/account-activation/resend": {
             "post": {
                 "tags": [
                     "Identidad"
                 ],
-                "operationId": "api_v1_authentication_email-verification_resend",
-                "summary": "api.v1.authentication.email-verification.resend",
+                "operationId": "api_v1_authentication_account-activation_resend",
+                "summary": "api.v1.authentication.account-activation.resend",
                 "responses": {
                     "200": {
                         "description": "Operación completada.",
@@ -2895,65 +2895,6 @@
                         "sanctumCookie": []
                     }
                 ]
-            }
-        },
-        "/api/v1/authentication/email-verification/{user}/{hash}": {
-            "post": {
-                "tags": [
-                    "Identidad"
-                ],
-                "operationId": "api_v1_authentication_email-verification_verify",
-                "summary": "api.v1.authentication.email-verification.verify",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "hash",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                }
             }
         },
         "/api/v1/authentication/formation": {

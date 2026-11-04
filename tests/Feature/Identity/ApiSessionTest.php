@@ -8,13 +8,11 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Route;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
@@ -197,8 +195,9 @@ class ApiSessionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_unverified_email_can_manage_verification_but_cannot_enter_product_api(): void
+    public function test_unverified_email_can_request_activation_but_cannot_enter_product_api(): void
     {
+        Mail::fake();
         $this->seed(DatabaseSeeder::class);
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $teacher->markEmailAsUnverified();
@@ -214,44 +213,27 @@ class ApiSessionTest extends TestCase
             ->assertForbidden();
 
         $this->withHeader('Origin', 'http://localhost:5173')
-            ->postJson(route('api.v1.authentication.email-verification.resend'))
+            ->postJson(route('api.v1.authentication.account-activation.resend'))
             ->assertAccepted();
+
+        Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo($teacher->correo_electronico));
     }
 
-    public function test_signed_api_link_verifies_an_email_without_an_existing_session(): void
+    public function test_resending_activation_sends_nothing_to_an_activated_account(): void
     {
+        Mail::fake();
         $user = User::factory()->create();
-        $user->markEmailAsUnverified();
-        $url = URL::temporarySignedRoute(
-            'api.v1.authentication.email-verification.verify',
-            now()->addMinute(),
-            ['user' => $user->id, 'hash' => sha1($user->getEmailForVerification())],
-            absolute: false,
-        );
-
-        $this->postJson($url)
-            ->assertOk()
-            ->assertJsonPath('message', 'Correo electrónico verificado. Ya puede ingresar.');
-
-        $this->assertTrue($user->fresh()->hasVerifiedEmail());
-    }
-
-    public function test_resending_verification_dispatches_only_for_an_unverified_account(): void
-    {
-        Notification::fake();
-        $user = User::factory()->create();
-        $user->markEmailAsUnverified();
 
         $this->actingAs($user)
-            ->postJson(route('api.v1.authentication.email-verification.resend'))
+            ->postJson(route('api.v1.authentication.account-activation.resend'))
             ->assertAccepted();
 
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Mail::assertNothingQueued();
+        Mail::assertNothingSent();
     }
 
-    public function test_resending_for_a_pending_activation_reissues_the_invitation(): void
+    public function test_resending_activation_reissues_the_invitation_and_invalidates_the_previous_one(): void
     {
-        Notification::fake();
         Mail::fake();
         $user = User::factory()->create();
         $user->markEmailAsUnverified();
@@ -262,12 +244,17 @@ class ApiSessionTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson(route('api.v1.authentication.email-verification.resend'))
+            ->postJson(route('api.v1.authentication.account-activation.resend'))
             ->assertAccepted();
 
-        Notification::assertNothingSent();
         Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo($user->correo_electronico));
         $this->assertNotNull($old->fresh()->invalidada_en);
+    }
+
+    public function test_email_verification_routes_no_longer_exist(): void
+    {
+        $this->assertFalse(Route::has('api.v1.authentication.email-verification.verify'));
+        $this->assertFalse(Route::has('api.v1.authentication.email-verification.resend'));
     }
 
     public function test_login_requires_a_second_factor_before_creating_the_authenticated_session(): void

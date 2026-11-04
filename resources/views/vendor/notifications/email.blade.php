@@ -4,7 +4,6 @@
     $heading = ! empty($greeting) ? $greeting : match (true) {
         $level === 'error' => __('Whoops!'),
         ($actionText ?? null) === __('Reset Password') => __('Choose a new password'),
-        ($actionText ?? null) === __('Verify Email Address') => __('Confirm your email address'),
         default => null,
     };
 ?>

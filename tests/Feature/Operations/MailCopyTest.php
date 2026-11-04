@@ -12,7 +12,6 @@ use App\Modules\Operations\Infrastructure\Mail\DailySummaryMail;
 use App\Modules\Operations\Infrastructure\Mail\WorkflowNotificationMail;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -141,14 +140,13 @@ class MailCopyTest extends TestCase
         $this->assertStringContainsString('avise a la administración del sistema', $global);
     }
 
-    public function test_password_reset_and_email_verification_have_a_real_heading_and_a_short_fallback_link(): void
+    public function test_password_reset_has_a_real_heading_and_a_short_fallback_link(): void
     {
         config(['app.url' => 'https://api.test', 'app.frontend_url' => 'https://frontend.test']);
         $user = User::factory()->create();
         $reset = (new ResetPassword('abc'))->toMail($user);
-        $verify = (new VerifyEmail)->toMail($user);
 
-        foreach ([[$reset, 'Solicitud de cambio de contraseña', 'Restablezca su contraseña', 'Restablecer contraseña'], [$verify, 'Confirmación de su correo electrónico', 'Verifique su correo', 'Verificar correo']] as [$message, $subject, $heading, $button]) {
+        foreach ([[$reset, 'Solicitud de cambio de contraseña', 'Restablezca su contraseña', 'Restablecer contraseña']] as [$message, $subject, $heading, $button]) {
             $html = (string) $message->render();
             $text = $this->text($html);
             $this->assertSame($subject, $message->subject);
