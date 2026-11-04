@@ -24,8 +24,8 @@ Rama: main, con commits por unidad y sin push. Pruebas: Pest (`php artisan test 
 
 | ID | Specs | Ruta | Estado | Commit |
 |---|---|---|---|---|
-| T1 | S1 | delegada: escritor de backend y frontend (en paralelo con T2) | pendiente | |
-| T2 | S3 | delegada: escritor de backend (correos; en paralelo con T1) | pendiente | |
+| T1 | S1 | delegada: escritor de backend y frontend | hecha | backend ee357ccf, frontend 4a70c05 |
+| T2 | S3 | delegada: escritor de backend (correos) | hecha: 733 pruebas | 140de6be |
 
 ## Log
 
@@ -39,3 +39,4 @@ Rama: main, con commits por unidad y sin push. Pruebas: Pest (`php artisan test 
   - El PDF se obtiene con `GET revisions/{revision}/documents` y `GET exports/{artifact}/pdf`.
   - Correos: en `WorkflowNotificationMail` el asunto es igual al H1 (`resources/views/mail/workflow-notification.blade.php`) y los textos están en `WorkflowNotificationMessages.php` y en las acciones que notifican (`OpenConvocation`, `NotifyConvocationResumed`, `NotifyProcessClosingSoon`, `DeleteSyllabusProcess`, `InProgressWork::notifyRestarted`). `DailySummaryMail` y `CoordinatorSummaryMail` son casi copias. La activación está en `ManagedUserActivationMail`; el restablecimiento y la verificación en `resources/views/vendor/notifications/email.blade.php` y `lang/es.json`.
 - L4 (2026-11-03): «espera, creo que solo los periodos anteriores mejor en coordinador, como docente y biblioteca». S1 se reescribe: solo períodos anteriores. El primer escritor de T1 se detuvo sin dejar cambios y se relanza.
+- L5 (2026-11-03): tesis actualizada (cuarta y quinta pasadas): correos, Figuras 15 y 19, cifras (733/754, 232 migraciones) y eliminación de convocatorias.
