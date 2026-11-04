@@ -249,6 +249,8 @@ class ApiSessionTest extends TestCase
 
         Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo($user->correo_electronico));
         $this->assertNotNull($old->fresh()->invalidada_en);
+        $issued = ActivationInvitation::query()->where('usuario_id', $user->id)->whereNull('invalidada_en')->firstOrFail();
+        $this->assertEqualsWithDelta(now()->addDays(7)->timestamp, $issued->expira_en->timestamp, 60);
     }
 
     public function test_email_verification_routes_no_longer_exist(): void

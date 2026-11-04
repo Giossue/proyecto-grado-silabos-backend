@@ -15,7 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 class IssueActivationInvitation
 {
-    private const EXPIRATION_HOURS = 24;
+    private const EXPIRATION_DAYS = 7;
 
     public function __construct(
         private readonly ActiveRole $roles,
@@ -56,7 +56,7 @@ class IssueActivationInvitation
             $invitation = ActivationInvitation::query()->create([
                 'usuario_id' => $user->id,
                 'hash_activacion' => hash('sha256', $token),
-                'expira_en' => $now->copy()->addHours(self::EXPIRATION_HOURS),
+                'expira_en' => $now->copy()->addDays(self::EXPIRATION_DAYS),
                 'emitida_por_usuario_id' => $actor->id,
             ]);
 

@@ -24,7 +24,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Un rol vale mientras esté activo; no tiene fechas de vigencia (I-29, I-51).
 - No hay registro público. Administración crea las cuentas y la persona la activa con
   una invitación por correo.
-- El único correo que confirma una cuenta es el de activación (vence en 24 horas, un solo uso, y
+- El único correo que confirma una cuenta es el de activación (vence en 7 días, un solo uso, y
   se invalida al emitir otro). No existe enlace de verificación de correo. Quien entra sin
   activar (por ejemplo, tras «olvidé mi contraseña») ve «Cuenta sin activar» en
   `/verificar-correo` y puede pedir un nuevo enlace de activación (2026-11-04).

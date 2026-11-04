@@ -13,5 +13,5 @@ Tiene una cuenta como **{{ $roleName }}**. Para ingresar, elija su contraseña.
 Activar mi cuenta
 </x-mail::button>
 
-El enlace es personal, de un solo uso y caduca en 24 horas. Si no esperaba este correo, avise a {{ $careerName ? 'la coordinación de su carrera' : 'la administración del sistema' }}.
+El enlace es personal, de un solo uso y caduca en 7 días. Si no esperaba este correo, avise a {{ $careerName ? 'la coordinación de su carrera' : 'la administración del sistema' }}.
 </x-mail::message>

@@ -182,7 +182,7 @@ actualizar la lista siga `docs/runbooks/firma-electronica-entidades.md`.
 
 Hasta instalar el sistema en la UEB (diciembre de 2026) el servidor de pruebas envía con **Resend**
 y se conserva. En la universidad el correo saldrá por **su servidor SMTP**, no por Resend. El enlace de las invitaciones usa
-`FRONTEND_URL` y caduca en 24 horas. Mientras `PV-15` siga abierta se deja `MAIL_MAILER=log`:
+`FRONTEND_URL` y caduca en 7 días. Mientras `PV-15` siga abierta se deja `MAIL_MAILER=log`:
 los mensajes se escriben en los logs de Dokploy sin salir del sistema.
 
 **Producción: SMTP institucional.** TIC debe entregar el servidor, el puerto, la cuenta y la
