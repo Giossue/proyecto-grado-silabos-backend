@@ -201,6 +201,18 @@ class FinalizedProcessStaysCurrentTest extends TestCase
         $this->assertNull($notice());
     }
 
+    public function test_the_coordinator_checklist_keeps_the_real_progress_after_finalizing(): void
+    {
+        $this->finalizedProcess();
+
+        $steps = collect($this->actingAsCoordinator()->getJson(route('api.v1.dashboard.show'))->assertOk()->json('setup.steps'))->keyBy('key');
+
+        $this->assertTrue($steps['curriculum']['done']);
+        $this->assertTrue($steps['scheduled_subjects']['done']);
+        $this->assertTrue($steps['parallels']['done']);
+        $this->assertTrue($steps['teachers']['done']);
+    }
+
     public function test_a_career_project_change_reaches_a_current_finalized_process(): void
     {
         [, $draft] = $this->finalizedProcess();

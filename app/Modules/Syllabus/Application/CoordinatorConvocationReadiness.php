@@ -50,15 +50,14 @@ final class CoordinatorConvocationReadiness
         $subjects = Subject::query()
             ->where('activo', true)
             ->where('genera_silabo', true)
-            ->where('carrera_id', $careerId)
-            ->when($process === null, fn (Builder $query) => $query->whereRaw('1 = 0'));
+            ->where('carrera_id', $careerId);
         $scheduledTotal = (clone $subjects)->count();
-        $scheduledWithParallels = $process === null ? 0 : (clone $subjects)
+        $scheduledWithParallels = (clone $subjects)
             ->whereHas('parallels')
             ->count();
 
+        // Materias y paralelos no dependen de la convocatoria: el avance real se mantiene aunque no haya una en curso.
         $parallels = Parallel::query()
-            ->when($process === null, fn (Builder $query) => $query->whereRaw('1 = 0'))
             ->whereHas('subject', fn (Builder $subject) => $subject->where('activo', true)->where('genera_silabo', true)->where('carrera_id', $careerId));
         $parallelTotal = (clone $parallels)->count();
         $parallelsWithTeacher = (clone $parallels)->whereHas('teacherAssignments', fn (Builder $assignment) => $assignment
