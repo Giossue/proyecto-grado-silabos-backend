@@ -19,9 +19,9 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 
 | ID | Specs | Ruta | Estado | Commit |
 |---|---|---|---|---|
-| T1 | S1, S2, S5–S8, S9 (backend y docs) | delegada: escritor de backend (en paralelo con T2; superficies disjuntas; respaldo de contexto) | pendiente | |
-| T2 | S3, S4, S7, S9 (frontend) | delegada: escritor de frontend (en paralelo con T1) | pendiente | |
-| T3 | todas | delegada: verificador independiente (ítems de alto riesgo 1 y 4) | pendiente | |
+| T1 | S1, S2, S5–S8, S9 (backend y docs) | delegada: escritor de backend (en paralelo con T2; superficies disjuntas; respaldo de contexto) | hecha: 707 pruebas, Pint y PHPStan | 7ace4c98, ba088228 |
+| T2 | S3, S4, S7, S9 (frontend) | delegada: escritor de frontend (en paralelo con T1) | hecha: 749 pruebas, typecheck, lint y contrato | frontend eed4757 |
+| T3 | todas | delegada: verificador independiente (ítems de alto riesgo 1 y 4) | en curso | |
 
 ## Log
 
@@ -33,3 +33,9 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
   - El índice único `convocatorias_universidad_en_curso_unico` impide tener dos convocatorias en curso.
   - El cierre automático (`CloseEndedProcesses`) y el aviso (`NotifyProcessClosingSoon`) se basan en `fecha_fin_periodo`.
   - La prórroga hoy se rechaza si la convocatoria está cerrada (política y acción).
+- L5 (2026-11-03): decisiones del escritor de backend:
+  - La comparación de la plantilla usa `pausado_en ?? finalizada_en`.
+  - La migración rellena los datos desde la auditoría.
+  - Hay CHECKs en las columnas nuevas.
+  - Migración aplicada en la base local.
+  - Límites documentados: los cambios de malla o del proyecto de carrera hechos mientras está finalizada no se aplican al reabrir; la carrera simultánea con una creación devuelve 500 por el índice único.
