@@ -37,7 +37,7 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 | T4 | S10 | delegada: escritor de backend (vigencia hasta el fin de clases; en paralelo con T5) | hecha: 721 pruebas; verificador PASS | 028b0533 |
 | T5 | S11 | delegada: escritor de backend y frontend (plantilla usable en el motivo y en «Antes de empezar»; en paralelo con T4) | hecha: verificador PASS | 586b59ae |
 | T6 | S12 | delegada: escritor de backend y frontend (respaldo de contexto) | hecha: ver L10 | |
-| T7 | S12 | delegada: verificador independiente (ítems 1 y 4) | pendiente | |
+| T7 | S12 | delegada: verificador independiente (ítems 1 y 4) | hecha: 2 bloqueos corregidos; la revisión final pasó | — |
 | T3 | todas | delegada: verificador independiente (ítems de alto riesgo 1 y 4) | hecha: PASS en S1–S9, sin bloqueos | — |
 
 ## Log
@@ -84,3 +84,4 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 - L11 (2026-11-04): correcciones tras el verificador:
   - Cancelar el aviso borraba al docente: el reemplazo pasa a ser una sola operación, `PUT coordination/academic/parallels/{parallel}/teacher`, en una transacción con las mismas auditorías. Efecto lateral: si el docente nuevo se rechaza, el anterior ya no se pierde.
   - Reabrir borraba borradores sin preguntar: `restarted` cuenta todo sílabo con contenido del docente que se rehace o se quita (período, materia que deja de generar sílabo, docente nuevo), y pide `confirmar_cambios`.
+- L12 (2026-11-04): verificador: los dos bloqueos (Cancelar en el cambio de docente; reabrir borraba borradores sin preguntar) pasaron la nueva revisión. Comparación contra la versión anterior: 60 casos en abierta y en pausa sin diferencias, y 16 de reemplazo de docente con una sola diferencia aceptada (un docente rechazado conserva al actual).
