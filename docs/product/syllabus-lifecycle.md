@@ -105,13 +105,15 @@ el estado: el sílabo sigue «En revisión».
   venció, la malla tiene materias, cada materia tiene paralelos, cada paralelo tiene un
   docente activo, los proyectos de carrera están completos y la facultad tiene logo.
 - Solo Administración prorroga la entrega, como máximo 2 veces por convocatoria. La fecha
-  nueva debe ser posterior a la actual y no puede pasar del último día de clases del
-  período. Si ya no quedan prórrogas o el plazo ya llega a ese día, no se puede prorrogar.
-  Se avisa a los docentes con sílabos sin aprobar.
+  nueva debe ser posterior a la actual, no puede estar en el pasado ni pasar del último día
+  de clases del período. Si ya no quedan prórrogas o el plazo ya llega a ese día, no se
+  puede prorrogar. Se avisa a los docentes con sílabos sin aprobar. La prórroga también se
+  usa sobre una convocatoria finalizada, la haya finalizado el sistema o Administración, y
+  la vuelve a abrir (ver «Reabrir con una prórroga»).
 - Con la fecha de entrega vencida, el docente queda en solo lectura: no puede iniciar,
   editar ni enviar (el servidor lo rechaza) y se le dice que pida una prórroga a
   Administración. Coordinación y Biblioteca siguen revisando lo ya enviado. Al prorrogar,
-  todo se reabre. El cierre de la convocatoria no cambia.
+  todo se reabre y la finalización automática pasa al día después de la nueva entrega.
 - Administración puede eliminar una convocatoria abierta o pausada aunque tenga sílabos
   enviados, en revisión o aprobados. Se borra de verdad, con las de cada carrera y todos
   sus sílabos (borradores, revisiones, aprobaciones, firmas y PDF), y el período queda
@@ -119,26 +121,53 @@ el estado: el sílabo sigue «En revisión».
   la frase «eliminar convocatoria» y un mensaje. Ese mensaje llega como aviso y por correo
   a los docentes con sílabo, a Coordinación de sus carreras y a Biblioteca; ese correo no
   se puede apagar en las preferencias. Una convocatoria cerrada no se elimina nunca.
-- Administración finaliza la convocatoria (acción «Finalizar»; el estado queda
-  `cerrado`) cuando termina el período, abierta o pausada. Se cierran también las de cada
-  carrera. Sus sílabos quedan solo para consulta (no se editan, envían, revisan ni
+- Administración finaliza la convocatoria (acción «Finalizar»; el estado guardado es
+  `cerrado` y la interfaz lo llama «Finalizado»), abierta o pausada. Se cierran también las
+  de cada carrera. Sus sílabos quedan solo para consulta (no se editan, envían, revisan ni
   firman). Antes de confirmar se ve cuántos sílabos quedan sin aprobar, por estado, y se
-  pide la frase «finalizar convocatoria». Finalizar no se deshace. Mientras siga abierta o
-  pausada no se puede crear otra.
-- Si Administración no la finaliza, el sistema lo hace solo el día después del último día
-  de clases (`fecha_fin`), a las 00:10 de la hora de la institución, abierta o pausada y con
-  el mismo efecto que Finalizar (`convocatorias:cerrar-vencidas`). En la auditoría queda como
-  acción del «Sistema» (`automatic: true`). No manda aviso al cerrar.
-- 3 días antes del último día de clases, a la hora del resumen diario, el sistema avisa
+  pide la frase «finalizar convocatoria». Mientras siga abierta o pausada no se puede crear
+  otra.
+- Si Administración no la finaliza, el sistema lo hace solo el día después de su fecha de
+  entrega (`fecha_entrega`, día de la institución), a las 00:10 de la hora de la
+  institución, abierta o pausada y con el mismo efecto que Finalizar
+  (`convocatorias:cerrar-vencidas`). Se finaliza aunque haya sílabos «En revisión» o
+  «Corrección solicitada»; esos quedan como estén. En la auditoría queda como acción del
+  «Sistema» (`automatic: true`). No manda aviso al cerrar.
+- 3 días antes de la fecha de entrega, a la hora del resumen diario, el sistema avisa
   «La convocatoria se cierra pronto» (`proceso.cierre_proximo`, campana y correo) a los
   docentes con sílabos sin aprobar y a Coordinación de las carreras con sílabos sin aprobar,
-  también con la convocatoria pausada (`convocatorias:avisar-cierre`). Un solo aviso por
-  convocatoria y persona. El correo se puede apagar en las preferencias.
+  también con la convocatoria pausada (`convocatorias:avisar-cierre`). El texto dice que se
+  finaliza al terminar ese día, el último de entrega. Un solo aviso por convocatoria,
+  persona y fecha de entrega: tras una prórroga llega otro aviso 3 días antes de la nueva
+  fecha. El correo se puede apagar en las preferencias.
 
 Al cerrar, los sílabos sin revisión enviada o aprobada guardan una fotografía del
-documento y su definición en el contexto existente. La consulta posterior usa esa
-fotografía, aunque se modifique la plantilla. Las revisiones enviadas y aprobadas
-conservan sus propias fotografías. Aplica a cierres realizados desde ADR-0012.
+documento y su definición en el contexto existente (`closed_document`). La consulta
+posterior usa esa fotografía, aunque se modifique la plantilla. Las revisiones enviadas y
+aprobadas conservan sus propias fotografías. Aplica a cierres realizados desde ADR-0012.
+También se guardan la fecha de finalización (`convocatorias_universidad.finalizada_en`) y
+el estado que tenía cada convocatoria de carrera, abierta o pausada
+(`convocatorias_carreras.estado_previo_cierre_convocatoria_carrera`).
+
+### Reabrir con una prórroga
+
+«Prorrogar plazo» sobre una convocatoria finalizada la vuelve a abrir, con los mismos
+límites de cualquier prórroga (como máximo 2, una fecha posterior a la entrega vigente, no
+en el pasado y sin pasar del último día de clases). No se puede si hay otra convocatoria
+abierta o pausada: «Hay otra convocatoria en curso; finalícela o elimínela antes de reabrir
+esta» (también en `extension_block_reason`). Al reabrir:
+
+- la convocatoria vuelve a «abierto» y cada convocatoria de carrera vuelve al estado que
+  tenía al finalizar (abierta o pausada);
+- los sílabos dejan la fotografía `closed_document` y vuelven a verse en vivo;
+- cuenta como una prórroga, avisa a los docentes con sílabos sin aprobar y queda en la
+  auditoría `proceso_silabos.plazo_extendido` y `proceso_silabos.reabierto`.
+
+Si la plantilla cambió después de finalizar (o durante la pausa en la que se finalizó),
+la respuesta es la misma confirmación que al reanudar: 422 con `code: plantilla_cambiada` y
+el conteo por estado. Con `confirmar_rehacer` se reabre y se adaptan los sílabos: se
+conserva lo escrito y los enviados o aprobados vuelven a Borrador. Los cambios de malla o
+de proyecto de carrera hechos con la convocatoria finalizada no se aplican al reabrir.
 
 ## Pausas y cambios con sílabos en curso
 

@@ -820,7 +820,18 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "additionalProperties": true
+                                "required": [
+                                    "due_at"
+                                ],
+                                "properties": {
+                                    "due_at": {
+                                        "type": "string"
+                                    },
+                                    "confirmar_rehacer": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "additionalProperties": false
                             }
                         }
                     }

@@ -135,12 +135,13 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   aprueban, firman, piden corrección ni devuelven, igual que el docente no edita ni envía. La API
   dice el motivo en `decision_block` y los resúmenes diarios no cuentan convocatorias en pausa.
   «Reiniciar sílabo» tampoco se permite en pausa (2026-11-02): es una decisión más.
-  Pausar y finalizar siguen sin aviso al momento; el cierre se anuncia antes (ver cierre
-  automático). El plazo informa `paused_by` (Administración o
+  Pausar y finalizar siguen sin aviso al momento; el cierre se anuncia antes (ver finalización
+  automática). El plazo informa `paused_by` (Administración o
   Coordinación), y Administración recibe plazo solo con su convocatoria en pausa.
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener
   coordinación y el período no debe haber terminado.
-- Estados: abierto ⇄ pausado → cerrado. Administración cierra la convocatoria y con ella
+- Estados: abierto ⇄ pausado → cerrado (en la interfaz, «Finalizado»), y una prórroga
+  vuelve a abrir una cerrada (2026-11-03). Administración cierra la convocatoria y con ella
   las de cada carrera (I-231). Al cerrar se congela también el documento de los
   borradores y sílabos sin iniciar; las revisiones enviadas conservan su fotografía
   existente (ADR-0012). Una convocatoria cerrada queda solo para consulta: sus
@@ -153,23 +154,41 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - La acción manual de cierre se llama «Finalizar» (2026-11-02); la ruta sigue siendo `cerrar`
   y el estado `cerrado`. Antes de confirmar muestra cuántos sílabos quedan sin aprobar, por
   estado, y pide «finalizar convocatoria». Se puede finalizar abierta o pausada.
-- Cierre automático (2026-11-02): si Administración no la finaliza, el sistema finaliza la
-  convocatoria abierta o pausada el día después del último día de clases (`fecha_fin`), a las
-  00:10 de la hora de la institución (`convocatorias:cerrar-vencidas`), con el mismo efecto que
-  Finalizar; queda en la auditoría como acción del «Sistema» (`automatic: true`) y no avisa al
-  cerrar. 3 días antes del último día de clases, a la hora del resumen diario, avisa «La
-  convocatoria se cierra pronto» (`proceso.cierre_proximo`, campana y correo, que cada uno puede
-  apagar como los demás avisos) a los docentes con sílabos sin aprobar y a Coordinación de las
-  carreras con sílabos sin aprobar, también en pausa; un solo aviso por convocatoria y persona
-  (`convocatorias:avisar-cierre`). El aviso sale solo ese día: si el programador no corre, no
-  se repite después.
+- Finalización automática (2026-11-03, reemplaza el cierre automático del 2026-11-02, que
+  finalizaba el día después del último día de clases): si Administración no la finaliza, el
+  sistema finaliza la convocatoria abierta o pausada el día después de su fecha de entrega
+  (`fecha_entrega`, día de la institución), a las 00:10 de la hora de la institución
+  (`convocatorias:cerrar-vencidas`), con el mismo efecto que Finalizar. Se finaliza aunque haya
+  sílabos «En revisión» o «Corrección solicitada», que quedan como estén. Queda en la auditoría
+  como acción del «Sistema» (`automatic: true`) y no avisa al cerrar. 3 días antes de la fecha
+  de entrega, a la hora del resumen diario, avisa «La convocatoria se cierra pronto»
+  (`proceso.cierre_proximo`, campana y correo, que cada uno puede apagar como los demás avisos;
+  el texto dice «se finaliza al terminar el …, último día de entrega») a los docentes con sílabos
+  sin aprobar y a Coordinación de las carreras con sílabos sin aprobar, también en pausa; un
+  solo aviso por convocatoria, persona y fecha de entrega, así que una prórroga trae un aviso
+  nuevo (`convocatorias:avisar-cierre`). El aviso sale solo ese día: si el programador no corre,
+  no se repite después.
+- Reabrir con una prórroga (2026-11-03): «Prorrogar plazo» también se usa sobre una
+  convocatoria finalizada, la haya finalizado el sistema o Administración, y la vuelve a abrir
+  con los mismos límites (como máximo 2 prórrogas, una fecha posterior a la entrega vigente, no
+  en el pasado y sin pasar del último día de clases). No se reabre si hay otra convocatoria
+  abierta o pausada: «Hay otra convocatoria en curso; finalícela o elimínela antes de reabrir
+  esta», también en `extension_block_reason`. Al finalizar se guardan la fecha
+  (`finalizada_en`) y el estado de cada convocatoria de carrera, abierta o pausada
+  (`estado_previo_cierre_convocatoria_carrera`); la migración los tomó de la auditoría para las
+  ya finalizadas. Al reabrir, la convocatoria vuelve a «abierto», cada convocatoria de carrera
+  vuelve a su estado previo y los sílabos dejan la fotografía `closed_document` y vuelven a
+  verse en vivo; queda en la auditoría `proceso_silabos.reabierto`. Si la plantilla cambió
+  después de finalizar (o durante la pausa en la que se finalizó), pide la misma confirmación
+  que la reanudación (422 `plantilla_cambiada` con el conteo y `confirmar_rehacer`) y adapta
+  los sílabos como al reanudar.
 - Administración solo prorroga la fecha de entrega (I-114), como máximo 2 veces por
   convocatoria (2026-11-02, constante en código `SyllabusProcess::MAX_EXTENSIONS`, no un ajuste
   del sistema) y sin pasar del último día de clases del período (`fecha_fin`). El contador
   `cantidad_prorrogas` se llenó desde la auditoría; el servidor rechaza la tercera prórroga y
   la fecha posterior al último día, y la pantalla muestra «Prórroga N de 2» y desactiva
-  «Prorrogar plazo» con el motivo. Finalizar es la acción final:
-  una convocatoria cerrada queda solo para consulta y no se elimina nunca. Eliminar
+  «Prorrogar plazo» con el motivo. Una convocatoria finalizada
+  queda solo para consulta y no se elimina mientras siga así; solo una prórroga la reabre. Eliminar
   (2026-11-02, reemplaza «solo mientras ningún docente haya enviado su sílabo») se admite
   con la convocatoria abierta o pausada aunque tenga sílabos enviados, en revisión o
   aprobados, y borra de verdad la convocatoria, las de cada carrera y todos sus sílabos con

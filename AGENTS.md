@@ -151,8 +151,9 @@ pida.
   tocan.
 - Cambiar el docente o los paralelos no exige pausa. Un docente nuevo empieza desde cero
   el sílabo de la convocatoria en curso; nada de una convocatoria cerrada se borra.
-- La convocatoria se cierra sola el día después del último día de clases (Administración
-  también puede finalizarla antes); lo cerrado queda solo para consulta y nunca se elimina. Eliminar una convocatoria abierta o pausada la borra de
+- La convocatoria se finaliza sola el día después de su fecha de entrega (Administración
+  también puede finalizarla antes); lo finalizado queda solo para consulta y no se elimina.
+  «Prorrogar plazo» la vuelve a abrir, con los mismos límites, si no hay otra en curso. Eliminar una convocatoria abierta o pausada la borra de
   verdad, con todos sus sílabos aunque estén enviados o aprobados, y avisa a los
   involucrados con el mensaje de Administración.
 - Las validaciones al enviar y las sugerencias de IA son cosas separadas. La IA propone;

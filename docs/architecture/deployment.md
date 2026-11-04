@@ -99,8 +99,9 @@ viernes a las 08:00 de la hora de la institución (`DISPLAY_TIMEZONE`). Esta úl
 correo por coordinador, solo si tiene algo pendiente, y no repite el mismo día.
 
 Cada día, en la hora de la institución, `convocatorias:cerrar-vencidas` (00:10) finaliza la
-convocatoria abierta o pausada cuyo último día de clases ya pasó, y `convocatorias:avisar-cierre`
-(a la hora del resumen) avisa 3 días antes a docentes y coordinación con sílabos sin aprobar. Si
+convocatoria abierta o pausada cuya fecha de entrega ya pasó, y `convocatorias:avisar-cierre`
+(a la hora del resumen) avisa 3 días antes de esa fecha a docentes y coordinación con sílabos
+sin aprobar. Si
 el programador no corre ese día, el cierre se hace al día siguiente; el aviso de ese día se pierde.
 
 ## Variables de entorno

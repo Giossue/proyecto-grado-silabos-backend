@@ -226,7 +226,7 @@ solicitada, sílabo devuelto a borrador y sílabo aprobado. Biblioteca: sílabo 
 (aprobado por Coordinación) y sílabo reenviado. Los tres roles tienen además un resumen diario de
 lo pendiente (`avisos:resumen-coordinacion` y `avisos:resumen-diario`), de lunes a viernes a la
 hora configurada y solo si hay algo. Docentes y Coordinación reciben además, 3 días antes del
-último día de clases y a esa misma hora, el aviso de cierre de la convocatoria
+último día de entrega y a esa misma hora, el aviso de cierre de la convocatoria
 (`convocatorias:avisar-cierre`) si tienen sílabos sin aprobar. Cada persona
 elige cuáles recibe en su Configuración › Notificaciones (sin elegir, llegan todos). Se manda un
 correo por aviso y persona, solo a cuentas activas con correo verificado; los demás avisos quedan

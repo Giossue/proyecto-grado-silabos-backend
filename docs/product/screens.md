@@ -134,9 +134,10 @@ y el botón «Documentos» (DOC-10).
   aprobar, solo los estados que tienen alguno, y su total, con «Lo que no esté aprobado
   quedará solo para consulta»; si no queda ninguno dice «Todos los sílabos están
   aprobados». Pide la frase «finalizar convocatoria» y no deja confirmar sin ella ni sin
-  el conteo. Deja el estado «Cerrado». Si nadie la finaliza, el sistema la deja
-  «Cerrado» el día después del último día de clases. Una cerrada ya no ofrece «Finalizar» ni
-  «Eliminar». «Eliminar» se ofrece con la convocatoria abierta o pausada, aunque haya
+  el conteo. Deja el estado «Finalizado» (estado guardado `cerrado`; el filtro dice
+  «Finalizados»). Si nadie la finaliza, el sistema la deja «Finalizado» el día después de su
+  fecha de entrega. Una finalizada ya no ofrece «Finalizar» ni «Eliminar»; sí ofrece
+  «Prorrogar plazo», que la vuelve a abrir. «Eliminar» se ofrece con la convocatoria abierta o pausada, aunque haya
   sílabos enviados o aprobados: explica que se borra todo de verdad, muestra cuántos
   sílabos se borran por estado y el total, y pide el «Mensaje para docentes, coordinación
   y biblioteca» y la frase «eliminar convocatoria»; sin las dos no deja confirmar.
@@ -148,8 +149,12 @@ y el botón «Documentos» (DOC-10).
   pide «Reanudar y adaptar sílabos».
 - «Prorrogar plazo» dice «Prórroga 1 de 2» (o «2 de 2») y «Hasta el último día de clases»
   con la fecha; el selector no deja elegir después. Con las 2 prórrogas usadas, el plazo
-  ya en el último día de clases o las clases terminadas, la opción queda desactivada y
-  muestra el motivo.
+  ya en el último día de clases, las clases terminadas o, en una finalizada, otra
+  convocatoria abierta o pausada, la opción queda desactivada y muestra el motivo
+  (`extension_block_reason`). Sobre una finalizada, la prórroga la vuelve a abrir («Plazo
+  prorrogado. La convocatoria se volvió a abrir.»); si la plantilla cambió después de
+  finalizar, muestra el conteo por estado y pide confirmar para adaptar los sílabos
+  (`confirmar_rehacer`).
 
 ### COR-13 Malla
 

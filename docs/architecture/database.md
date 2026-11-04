@@ -62,6 +62,10 @@ base; este documento explica las reglas que hay detrás.
 - Una convocatoria institucional no puede cambiar de período si ya tiene convocatorias
   de carrera (`impedir_cambio_periodo_proceso_con_convocatorias`).
 - Solo puede haber una convocatoria institucional `abierto` o `pausado` a la vez.
+- `convocatorias_universidad.finalizada_en` solo tiene valor en una convocatoria `cerrado`, y
+  `convocatorias_carreras.estado_previo_cierre_convocatoria_carrera` (`abierta` o `pausada`)
+  solo en una convocatoria de carrera `cerrada`. Se llenan al finalizar y se vacían al
+  reabrir con una prórroga.
 
 ### Plantilla
 
@@ -69,8 +73,8 @@ base; este documento explica las reglas que hay detrás.
 - `definicion_plantilla` debe ser un objeto JSON. Su contenido se valida en la
   aplicación (`TemplateDefinition`); ver [template-json.md](template-json.md).
 - Cada cambio en secciones, campos o definición actualiza
-  `plantilla_modificada_en` por trigger. Con esa marca, reanudar un proceso pausado
-  detecta que la plantilla cambió.
+  `plantilla_modificada_en` por trigger. Con esa marca, reanudar un proceso pausado o
+  reabrir uno finalizado detecta que la plantilla cambió.
 - Las FK compuestas `(…_id, plantilla_id)` impiden que un campo apunte a una sección
   de otra plantilla.
 - Las propuestas del asistente (`propuestas_ia_plantilla`) guardan la estructura propuesta,
