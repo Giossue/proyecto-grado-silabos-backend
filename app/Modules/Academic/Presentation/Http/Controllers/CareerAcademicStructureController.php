@@ -9,10 +9,12 @@ use App\Modules\Academic\Application\Actions\CreateParallels;
 use App\Modules\Academic\Application\Actions\DeleteAcademicRecord;
 use App\Modules\Academic\Application\Actions\DeleteParallel;
 use App\Modules\Academic\Application\Actions\MutateCurriculumBuilder;
+use App\Modules\Academic\Application\Actions\ReplaceParallelTeacher;
 use App\Modules\Academic\Application\Actions\UpdateCareerAcademicRecord;
 use App\Modules\Academic\Application\Actions\UpdateParallel;
 use App\Modules\Academic\Application\Queries\AcademicStructureViewData;
 use App\Modules\Academic\Presentation\Http\Requests\ManageCareerAcademicStructureRequest;
+use App\Modules\Academic\Presentation\Http\Requests\ReplaceParallelTeacherRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreAcademicRecordRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreParallelsRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreSubjectRequirementRequest;
@@ -97,6 +99,18 @@ class CareerAcademicStructureController extends Controller
         $action->execute($parallel, $data, $actor, $request);
 
         return $this->success($request, 'Paralelo actualizado.');
+    }
+
+    public function replaceTeacher(
+        string $parallel,
+        ReplaceParallelTeacherRequest $request,
+        ReplaceParallelTeacher $action,
+    ): JsonResponse {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($parallel, $request->string('user_id')->toString(), $actor, $request);
+
+        return $this->success($request, 'Registro académico creado dentro de su carrera.');
     }
 
     public function destroyParallel(

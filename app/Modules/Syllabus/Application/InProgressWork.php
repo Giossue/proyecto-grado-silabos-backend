@@ -519,7 +519,7 @@ final class InProgressWork
      */
     public function returningToDraft(iterable $syllabi): array
     {
-        $pending = $this->pendingChanges($syllabi, $this->heldDocuments(...), onlyStoredPaths: true);
+        $pending = $this->pendingChanges($syllabi, $this->heldDocuments(), onlyStoredPaths: true);
 
         return array_values(array_map(
             fn (array $item): string => (string) $item['syllabus']->id,
@@ -531,7 +531,7 @@ final class InProgressWork
     public function catchUp(array $careerIds): void
     {
         $syllabi = $this->inProgress($careerIds)->with('convocation.process.academicPeriod')->orderBy('id')->lockForUpdate()->get();
-        $this->applyChanges($this->pendingChanges($syllabi, $this->heldDocuments(...), onlyStoredPaths: true));
+        $this->applyChanges($this->pendingChanges($syllabi, $this->heldDocuments(), onlyStoredPaths: true));
     }
 
     /**
@@ -577,25 +577,30 @@ final class InProgressWork
         return $pending;
     }
 
-    /** @return array<string, array<string, mixed>> */
-    private function heldDocuments(Parallel $parallel, Syllabus $syllabus): array
+    /** @return Closure(Parallel, Syllabus): array<string, array<string, mixed>> */
+    private function heldDocuments(): Closure
     {
-        $held = FieldValue::query()->where('silabo_id', $syllabus->id)->get()->keyBy('definicion_campo_id');
-        $profile = $this->profiles->values((string) $parallel->asignatura_id);
-        $documents = [];
-        foreach ($this->profiles->fields() as $field) {
-            $value = $held->get($field->id);
-            if (! $value instanceof FieldValue) {
-                continue;
-            }
-            $current = $profile[$field->id] ?? null;
-            $expected = $current === null || FieldDocument::isEmpty($current) ? $field->contenido : $current;
-            if (FieldDocument::normalize($value->valor) != FieldDocument::normalize($expected)) {
-                $documents[$field->id] = $expected;
-            }
-        }
+        $fields = $this->profiles->fields();
+        $profiles = [];
 
-        return $documents;
+        return function (Parallel $parallel, Syllabus $syllabus) use ($fields, &$profiles): array {
+            $profile = $profiles[$parallel->asignatura_id] ??= $this->profiles->values((string) $parallel->asignatura_id);
+            $held = FieldValue::query()->where('silabo_id', $syllabus->id)->get()->keyBy('definicion_campo_id');
+            $documents = [];
+            foreach ($fields as $field) {
+                $value = $held->get($field->id);
+                if (! $value instanceof FieldValue) {
+                    continue;
+                }
+                $current = $profile[$field->id] ?? null;
+                $expected = $current === null || FieldDocument::isEmpty($current) ? $field->contenido : $current;
+                if (FieldDocument::normalize($value->valor) != FieldDocument::normalize($expected)) {
+                    $documents[$field->id] = $expected;
+                }
+            }
+
+            return $documents;
+        };
     }
 
     /** @param  list<array{syllabus: Syllabus, context: array<string, mixed>, documents: array<string, array<string, mixed>>, back_to_draft: bool}>  $pending */

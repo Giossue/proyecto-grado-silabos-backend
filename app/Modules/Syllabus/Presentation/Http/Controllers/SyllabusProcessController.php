@@ -115,7 +115,7 @@ class SyllabusProcessController extends Controller
 
         if ($result['confirmation_code'] === 'cambios_pendientes') {
             return response()->json([
-                'message' => 'Hubo cambios mientras la convocatoria estuvo finalizada. Confirme para aplicarlos: hay sílabos enviados o aprobados que volverán a borrador, volverán a empezar o volverán a Coordinación.',
+                'message' => 'Hubo cambios mientras la convocatoria estuvo finalizada. Confirme para aplicarlos: hay sílabos que volverán a borrador, volverán a Coordinación o perderán su contenido.',
                 'code' => 'cambios_pendientes',
                 'counts' => $result['counts'],
             ], 422);

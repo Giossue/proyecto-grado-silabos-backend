@@ -161,12 +161,16 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   se detecta por su asignación posterior a `finalizada_en` y un autor distinto (la última revisión o,
   en un borrador, el correo de `closed_document`). El traspaso de coordinación se detecta por la
   auditoría `academico.coordinacion.reemplazada` posterior a `finalizada_en`, porque comparar firmas
-  confundiría un cambio de rol sin traspaso. Si un sílabo enviado o aprobado volvería a Borrador, se
-  rehace o vuelve a Coordinación, nada cambia hasta confirmar: 422 con `code: cambios_pendientes` y
-  `counts` (`to_draft`, `restarted`, `to_coordination`); se reenvía con `confirmar_cambios`. Si
-  además cambió la plantilla, `plantilla_cambiada` trae `pending_counts` y se confirman juntas. Un
-  borrador que se rehace por un docente nuevo no pide confirmación, igual que en una abierta. Código
-  en `ReopenCatchUp`.
+  confundiría un cambio de rol sin traspaso. Si un sílabo enviado o aprobado volvería a Borrador o a
+  Coordinación, o un sílabo con contenido del docente (también un borrador) se rehace o se quita,
+  nada cambia hasta confirmar: 422 con `code: cambios_pendientes` y `counts` (`to_draft`, `restarted`,
+  `to_coordination`); se reenvía con `confirmar_cambios`. Si además cambió la plantilla,
+  `plantilla_cambiada` trae `pending_counts` y se confirman juntas. Un sílabo sin iniciar se rehace
+  sin preguntar. Código en `ReopenCatchUp`.
+- Reemplazar al docente de un paralelo es una sola operación (2026-11-04): `PUT
+  coordination/academic/parallels/{parallel}/teacher` quita la asignación y crea la nueva en una
+  transacción, con las mismas auditorías. Si el aviso de convocatoria finalizada se cancela, o el
+  docente nuevo se rechaza, la asignación actual queda igual.
 - Aviso al guardar (2026-11-04): con una convocatoria finalizada que aún podría reabrirse (no
   terminaron las clases, no hay otra más nueva y quedan prórrogas y plazo), un cambio que habría
   llegado a sus sílabos responde 422 con `purge_required` (texto: «La convocatoria {período} ya finalizó. Este cambio no afecta sus sílabos: conservan los datos que tenían. Se aplicará en la próxima convocatoria, o en esta si la reabre con una prórroga. Evite estos cambios hasta abrir la próxima convocatoria, salvo que sea necesario.»), `purge_count` 0 y

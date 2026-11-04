@@ -206,12 +206,13 @@ Al reabrir con «Prorrogar plazo», todo se pone al día con el efecto que tiene
 | Coordinador | Auditoría `academico.coordinacion.reemplazada` posterior a la finalización | Lo aprobado por el anterior vuelve a «En coordinación». |
 | Paralelo nuevo | No tiene sílabo | Recibe su sílabo sin iniciar. |
 
-Si un sílabo enviado o aprobado volvería a Borrador, se rehace o vuelve a Coordinación, reabrir
-pide confirmación antes de cambiar nada: 422 con `code: cambios_pendientes` y `counts` (`to_draft`,
+Si un sílabo enviado o aprobado volvería a Borrador o a Coordinación, o un sílabo con contenido del
+docente (también un borrador) se rehace o se quita, reabrir pide confirmación antes de cambiar nada:
+422 con `code: cambios_pendientes` y `counts` (`to_draft`,
 `restarted`, `to_coordination`). Con `confirmar_cambios` se reabre. Si además cambió la plantilla,
 `plantilla_cambiada` trae también `pending_counts` y se confirman juntas. Sin confirmar, la
-convocatoria sigue finalizada y la base no cambia. Un borrador que se rehace por un docente nuevo
-no pide confirmación, igual que en una abierta.
+convocatoria sigue finalizada y la base no cambia. Un sílabo sin iniciar se rehace sin preguntar,
+porque no tiene nada que perder.
 
 ## Pausas y cambios con sílabos en curso
 

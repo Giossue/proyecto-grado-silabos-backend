@@ -81,9 +81,11 @@ final class ReopenCatchUp
             ->orderBy('id')
             ->lockForUpdate()
             ->get();
+        $assignments = TeacherAssignment::query()->whereIn('paralelo_id', $syllabi->pluck('paralelo_id'))->where('activo', true)
+            ->with('roleAssignment.user')->get()->keyBy('paralelo_id');
         $period = $syllabi->contains(fn (Syllabus $syllabus): bool => $this->periodChanged($syllabus));
         $subjects = $syllabi->filter(fn (Syllabus $syllabus): bool => ! $this->generates($syllabus));
-        $teachers = $syllabi->filter(fn (Syllabus $syllabus): bool => $this->teacherChanged($syllabus, $finalizedAt));
+        $teachers = $syllabi->filter(fn (Syllabus $syllabus): bool => $this->teacherChanged($syllabus, $assignments->get($syllabus->paralelo_id), $finalizedAt));
         $parallels = $syllabi->filter(fn (Syllabus $syllabus): bool => $this->parallelChanged($syllabus));
         $restarted = $period
             ? $syllabi
@@ -104,7 +106,7 @@ final class ReopenCatchUp
             'handovers' => $handovers,
             'counts' => [
                 'to_draft' => count($toDraft),
-                'restarted' => $restarted->filter(fn (Syllabus $syllabus): bool => in_array($syllabus->estado, InProgressWork::SENT_STATES, true))->count(),
+                'restarted' => $restarted->filter(fn (Syllabus $syllabus): bool => $syllabus->estado !== 'sin_iniciar' || $syllabus->iniciado_en !== null)->count(),
                 'to_coordination' => count($this->handover->decided($toCoordination)),
             ],
         ];
@@ -149,9 +151,8 @@ final class ReopenCatchUp
         return data_get($stored, $path, $current) != $current;
     }
 
-    private function teacherChanged(Syllabus $syllabus, ?CarbonInterface $finalizedAt): bool
+    private function teacherChanged(Syllabus $syllabus, ?TeacherAssignment $assignment, ?CarbonInterface $finalizedAt): bool
     {
-        $assignment = TeacherAssignment::query()->where('paralelo_id', $syllabus->paralelo_id)->where('activo', true)->with('roleAssignment.user')->first();
         if ($assignment === null || $finalizedAt === null || $assignment->asignado_en->lessThan($finalizedAt->startOfSecond())) {
             return false;
         }

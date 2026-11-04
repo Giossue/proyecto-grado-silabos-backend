@@ -128,6 +128,23 @@ class ParallelTeacherChangeTest extends TestCase
             ->assertOk()->assertJsonPath('syllabi.data.0.id', $fresh->id);
     }
 
+    public function test_replacing_the_teacher_in_one_step_does_the_same_as_removing_and_assigning_with_the_convocation_open(): void
+    {
+        $syllabus = $this->submittedSyllabus();
+        $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->where('paralelo_id', $syllabus->paralelo_id)->firstOrFail();
+
+        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.academic.parallels.teacher.update', $assignment->paralelo_id), ['user_id' => $this->replacement->id])
+            ->assertSuccessful()->assertJsonPath('message', 'Registro académico creado dentro de su carrera.');
+
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
+        $this->assertDatabaseMissing('asignaciones_paralelo', ['asignacion_paralelo_id' => $assignment->id]);
+        $fresh = Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->sole();
+        $this->assertSame('sin_iniciar', $fresh->estado);
+        $this->assertSame([$this->replacement->id], $fresh->teachers()->pluck('usuarios.id')->all());
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.asignacion_docente.eliminacion', 'recurso_id' => $assignment->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.asignacion_docente.creacion']);
+    }
+
     public function test_reopening_with_no_change_keeps_a_really_submitted_syllabus_as_it_was(): void
     {
         $syllabus = $this->submittedSyllabus();

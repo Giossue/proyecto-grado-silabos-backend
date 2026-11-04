@@ -345,7 +345,40 @@ class FinalizedProcessFrozenTest extends TestCase
         $this->assertSame('borrador', $draft->fresh()?->estado);
     }
 
-    public function test_a_new_teacher_restarts_a_draft_when_reopening_without_asking(): void
+    public function test_replacing_a_teacher_warns_first_and_cancelling_leaves_the_assignment_as_it_was(): void
+    {
+        [$process, $draft] = $this->finalizedProcess();
+        $assignment = TeacherAssignment::query()->where('paralelo_id', $draft->paralelo_id)->firstOrFail();
+        $replacement = $this->createTeacher('suplente@silabos.test');
+        $syllabi = $this->storedSyllabi();
+        $data = $this->storedData();
+
+        $this->assertWarned($this->replaceTeacher($replacement, $draft->paralelo_id), $process);
+
+        $this->assertSame($data, $this->storedData());
+        $this->assertTrue($assignment->fresh()?->activo);
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $draft))->assertOk();
+
+        $this->replaceTeacher($replacement, $draft->paralelo_id, ['confirm_purge' => true])->assertSuccessful();
+
+        $this->assertNull($assignment->fresh());
+        $this->assertSame([$replacement->id], $draft->fresh()?->teachers()->pluck('usuarios.id')->all());
+        $this->assertSame($syllabi, $this->storedSyllabi());
+    }
+
+    public function test_replacing_a_teacher_with_a_rejected_new_one_keeps_the_current_assignment(): void
+    {
+        [, $draft] = $this->finalizedProcess();
+        $assignment = TeacherAssignment::query()->where('paralelo_id', $draft->paralelo_id)->firstOrFail();
+        $unverified = $this->createTeacher('sin-verificar@silabos.test');
+        $unverified->forceFill(['correo_verificado_en' => null])->save();
+
+        $this->replaceTeacher($unverified, $draft->paralelo_id, ['confirm_purge' => true])->assertUnprocessable()->assertJsonValidationErrors('user_id');
+
+        $this->assertTrue($assignment->fresh()?->activo);
+    }
+
+    public function test_a_new_teacher_restarts_a_draft_when_reopening_after_confirming(): void
     {
         [$process, $draft] = $this->finalizedProcess();
         $assignment = TeacherAssignment::query()->where('paralelo_id', $draft->paralelo_id)->firstOrFail();
@@ -356,8 +389,15 @@ class FinalizedProcessFrozenTest extends TestCase
             ->deleteJson(route('api.v1.coordination.academic.destroy', ['asignacion_docente', $assignment->id]))->assertSuccessful();
         $this->assignTeacher($replacement, $assignment->paralelo_id, ['confirm_purge' => true])->assertSuccessful();
         $this->assertSame($stored, $this->storedSyllabi());
+        $data = $this->storedData();
 
-        $this->extend($process, $this->institutionDay(20))->assertOk();
+        $this->extend($process, $this->institutionDay(20))
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'cambios_pendientes')
+            ->assertJsonPath('counts', ['to_draft' => 0, 'restarted' => 1, 'to_coordination' => 0]);
+        $this->assertSame($data, $this->storedData());
+
+        $this->extend($process, $this->institutionDay(20), ['confirmar_cambios' => true])->assertOk();
 
         $this->assertDatabaseMissing('silabos', ['silabo_id' => $draft->id]);
         $fresh = Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->sole();
@@ -561,14 +601,45 @@ class FinalizedProcessFrozenTest extends TestCase
 
         $this->extend($process, $this->institutionDay(20))
             ->assertUnprocessable()
-            ->assertJsonPath('counts.restarted', 1);
+            ->assertJsonPath('counts', ['to_draft' => 0, 'restarted' => 2, 'to_coordination' => 0]);
         $this->extend($process, $this->institutionDay(20), ['confirmar_cambios' => true])->assertOk();
 
         $this->assertDatabaseMissing('silabos', ['silabo_id' => $draft->id]);
         $this->assertSame($period->semanas_lectivas + 1, data_get(Syllabus::query()->where('paralelo_id', $draft->paralelo_id)->sole()->contexto_academico, 'scheduled_subject.teaching_weeks'));
     }
 
-    public function test_a_subject_that_stops_generating_syllabi_loses_them_only_when_reopening(): void
+    public function test_a_period_change_asks_before_restarting_a_draft_with_teacher_text(): void
+    {
+        [$process, $draft] = $this->finalizedProcess();
+        $period = AcademicPeriod::query()->firstOrFail();
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.academic.update', ['periodo', $period->id]), [
+            'starts_on' => $period->fecha_inicio->toDateString(), 'ends_on' => $period->fecha_fin->toDateString(),
+            'teaching_weeks' => $period->semanas_lectivas + 1, 'confirm_purge' => true,
+        ])->assertSuccessful();
+        $data = $this->storedData();
+
+        $this->extend($process, $this->institutionDay(20))
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'cambios_pendientes')
+            ->assertJsonPath('counts', ['to_draft' => 0, 'restarted' => 1, 'to_coordination' => 0]);
+
+        $this->assertSame($data, $this->storedData());
+        $this->assertSame('borrador', $draft->fresh()?->estado);
+    }
+
+    public function test_an_unstarted_syllabus_that_is_restarted_does_not_ask(): void
+    {
+        [$process, $draft] = $this->finalizedProcess();
+        $draft->update(['estado' => 'sin_iniciar', 'iniciado_en' => null]);
+        $subject = $draft->parallel->subject;
+        $this->updateSubject($subject, ['generates_syllabus' => false, 'confirm_purge' => true])->assertSuccessful();
+
+        $this->extend($process, $this->institutionDay(20))->assertOk();
+
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $draft->id]);
+    }
+
+    public function test_a_subject_that_stops_generating_syllabi_loses_them_only_when_reopening_after_confirming(): void
     {
         [$process, $draft] = $this->finalizedProcess();
         $subject = $draft->parallel->subject;
@@ -577,8 +648,15 @@ class FinalizedProcessFrozenTest extends TestCase
         $this->assertWarned($this->updateSubject($subject, ['generates_syllabus' => false]), $process);
         $this->updateSubject($subject, ['generates_syllabus' => false, 'confirm_purge' => true])->assertSuccessful();
         $this->assertSame($stored, $this->storedSyllabi());
+        $data = $this->storedData();
 
-        $this->extend($process, $this->institutionDay(20))->assertOk();
+        $this->extend($process, $this->institutionDay(20))
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'cambios_pendientes')
+            ->assertJsonPath('counts', ['to_draft' => 0, 'restarted' => 1, 'to_coordination' => 0]);
+        $this->assertSame($data, $this->storedData());
+
+        $this->extend($process, $this->institutionDay(20), ['confirmar_cambios' => true])->assertOk();
 
         $this->assertDatabaseMissing('silabos', ['silabo_id' => $draft->id]);
     }
@@ -711,6 +789,12 @@ class FinalizedProcessFrozenTest extends TestCase
         return $this->actingAsCoordinator()->postJson(route('api.v1.coordination.academic.store', 'asignacion_docente'), [
             'user_id' => $teacher->id, 'parallel_id' => $parallelId, ...$extra,
         ]);
+    }
+
+    /** @param  array<string, mixed>  $extra */
+    private function replaceTeacher(User $teacher, string $parallelId, array $extra = []): TestResponse
+    {
+        return $this->actingAsCoordinator()->putJson(route('api.v1.coordination.academic.parallels.teacher.update', $parallelId), ['user_id' => $teacher->id, ...$extra]);
     }
 
     private function assertWarned(TestResponse $response, SyllabusProcess $process): void

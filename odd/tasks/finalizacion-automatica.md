@@ -81,3 +81,6 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
   - «Aún podría reabrirse» añade a `finalizedButCurrent` que queden prórrogas y plazo (`DeadlineExtensions::mayReopen`): si no, el aviso diría algo falso.
   - No se avisa al quitar un docente sin poner otro ni al desactivar registros: no llegan a los sílabos. La importación de malla solo crea materias nuevas, sin sílabos, así que no avisa.
   - Un paralelo con sílabo sin iniciar de una convocatoria finalizada ya no se elimina.
+- L11 (2026-11-04): correcciones tras el verificador:
+  - Cancelar el aviso borraba al docente: el reemplazo pasa a ser una sola operación, `PUT coordination/academic/parallels/{parallel}/teacher`, en una transacción con las mismas auditorías. Efecto lateral: si el docente nuevo se rechaza, el anterior ya no se pierde.
+  - Reabrir borraba borradores sin preguntar: `restarted` cuenta todo sílabo con contenido del docente que se rehace o se quita (período, materia que deja de generar sílabo, docente nuevo), y pide `confirmar_cambios`.

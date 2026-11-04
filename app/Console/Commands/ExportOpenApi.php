@@ -407,6 +407,16 @@ class ExportOpenApi extends Command
                         'user_id' => ['type' => 'string', 'format' => 'uuid'],
                     ],
                 ]]];
+            } elseif ($name === 'api.v1.coordination.academic.parallels.teacher.update') {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object',
+                    'required' => ['user_id'],
+                    'properties' => [
+                        'user_id' => ['type' => 'string', 'format' => 'uuid'],
+                        'confirm_purge' => ['type' => 'boolean'],
+                    ],
+                    'additionalProperties' => false,
+                ]]];
             } elseif ($isProcessTransition) {
                 $content = ['application/json' => ['schema' => [
                     'type' => 'object',

@@ -158,7 +158,8 @@ y el botón «Documentos» (DOC-10).
   prorrogado. La convocatoria se volvió a abrir.»); si la plantilla cambió después de
   finalizar, muestra el conteo por estado y pide confirmar para adaptar los sílabos
   (`confirmar_rehacer`). Si lo que cambió mientras estuvo finalizada devuelve sílabos enviados o
-  aprobados, muestra cuántos vuelven a borrador, a empezar o a Coordinación, pide escribir
+  aprobados o rehace o quita sílabos con contenido del docente, muestra cuántos vuelven a borrador
+  o a Coordinación y cuántos se rehacen o se quitan, pide escribir
   «aplicar cambios» y reenvía con `confirmar_cambios`; con los dos casos se confirma una sola vez
   con «adaptar sílabos».
 
