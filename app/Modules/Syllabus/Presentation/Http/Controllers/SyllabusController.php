@@ -274,7 +274,11 @@ class SyllabusController extends Controller
             && is_array($syllabus->contexto_academico['closed_document'] ?? null)) {
             $snapshot = $syllabus->contexto_academico['closed_document'];
         }
+        $unsentForm = $snapshot !== null && ! in_array($syllabus->estado, ['en_revision', 'aprobado'], true);
         $frozen = $snapshot === null ? null : SnapshotDocuments::present($snapshot);
+        if ($unsentForm && $frozen !== null) {
+            $frozen['sections'] = $this->readOnlyForm($frozen['sections']);
+        }
         $archived = $frozen === null ? SyllabusDocumentFields::archivedSections($syllabus) : null;
         $archivedView = $archived === null ? null : SnapshotDocuments::present(['sections' => $archived, 'identification' => $identification, 'template_definition' => $template->definition()->toArray()]);
         if ($archivedView !== null) {
@@ -408,5 +412,28 @@ class SyllabusController extends Controller
                 ];
             })->all())->values()->all(),
         ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $sections
+     * @return array<int, array<string, mixed>>
+     */
+    private function readOnlyForm(array $sections): array
+    {
+        $ids = collect($sections)->flatMap(fn (array $section): array => $section['fields'])->pluck('definition_id')->filter()->all();
+        $definitions = FieldDefinition::withoutGlobalScopes()->whereIn('definicion_campo_id', $ids)->get()->keyBy('id');
+
+        foreach ($sections as &$section) {
+            foreach ($section['fields'] as &$field) {
+                $field['teacher_editable'] = $field['quien_llena'] === FieldDefinition::TEACHER;
+                $field['required'] = $field['quien_llena'] !== FieldDefinition::INSTITUTIONAL;
+                $definition = $definitions->get($field['definition_id'] ?? '');
+                if ($definition instanceof FieldDefinition && $field['required'] && FieldResponse::enabled()) {
+                    $field['template'] = FieldResponse::template($definition->contenido);
+                }
+            }
+        }
+
+        return $sections;
     }
 }

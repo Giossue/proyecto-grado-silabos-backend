@@ -56,7 +56,7 @@ y el botón «Documentos» (DOC-10).
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
 | DOC-02 | Mis sílabos | `/docente/mis-silabos` | Entrada del docente; no tiene Panel ni indicadores. Bajo la barra superior, un aviso con los días que quedan para enviar sus sílabos a revisión y la fecha límite (en rojo cuando venció). Debajo, tarjetas del período vigente, hasta tres por fila: asignatura, paralelo y estado. Botón «Historial» y, solo si Coordinación compartió documentos de su carrera, el ícono «Documentos de apoyo» (DOC-11). |
-| DOC-04 | Sílabo | `/docente/mis-silabos/:syllabus` | Editor a pantalla completa, sin menú lateral. En la cabecera, el ícono «Documentos de apoyo» (DOC-11) cuando hay documentos. Detalle abajo. |
+| DOC-04 | Sílabo | `/docente/mis-silabos/:syllabus` | Editor a pantalla completa, sin menú lateral. Con la convocatoria finalizada, un sílabo sin enviar se ve como el formulario, con lo escrito y sin poder editarlo; el documento queda para lo ya enviado. En la cabecera, el ícono «Documentos de apoyo» (DOC-11) cuando hay documentos. Detalle abajo. |
 | DOC-05 | Validación | dentro de DOC-04 | Campos faltantes y reglas de bloques; el botón de envío explica qué falta. |
 | DOC-06 | Asistente de unidades | botón flotante en DOC-04 | Solo mientras el sílabo se edita (Borrador o Corrección solicitada). «Asistente» abre el chat de IA con preguntas sugeridas y «Nuevo chat»; «Cerrar asistente» lo oculta. |
 | DOC-07 | Envío | diálogo en DOC-04 | Primer envío: «Firmar y enviar» pide el archivo `.p12`/`.pfx` y la clave. Reenvío tras una corrección: «Enviar», sin firmar. |

@@ -684,6 +684,20 @@ class FinalizedProcessFrozenTest extends TestCase
         $this->assertSame(SyllabusProcess::STATE_OPEN, $process->fresh()?->estado);
     }
 
+    public function test_an_unsent_syllabus_of_a_finalized_process_still_shows_its_form_read_only(): void
+    {
+        [, $draft] = $this->finalizedProcess();
+
+        $syllabus = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $draft))->assertOk()->json('syllabus');
+        $fields = collect($syllabus['sections'])->flatMap(fn (array $section): array => $section['fields']);
+
+        $this->assertFalse($syllabus['editable']);
+        $this->assertNotEmpty($fields->where('quien_llena', 'docente'));
+        $this->assertTrue($fields->where('quien_llena', 'docente')->every(fn (array $field): bool => $field['teacher_editable'] === true));
+        $this->assertTrue($fields->where('quien_llena', 'institucional')->every(fn (array $field): bool => $field['teacher_editable'] === false));
+        $this->assertTrue($fields->where('quien_llena', 'docente')->every(fn (array $field): bool => is_array($field['template'] ?? null)));
+    }
+
     /** @return array{SyllabusProcess, Syllabus} */
     private function finalizedProcess(bool $withApproved = false): array
     {
