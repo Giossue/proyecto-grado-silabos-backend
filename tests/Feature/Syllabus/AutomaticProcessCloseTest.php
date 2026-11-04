@@ -18,6 +18,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\ConfiguresFacultyLogos;
@@ -32,6 +33,8 @@ class AutomaticProcessCloseTest extends TestCase
 
     private const CLASSES_END_IN = 40;
 
+    private const DELIVERY_ENDS_IN = 20;
+
     private User $administrator;
 
     private User $coordinator;
@@ -42,6 +45,8 @@ class AutomaticProcessCloseTest extends TestCase
 
     private string $lastClassDay;
 
+    private string $deliveryDay;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -51,24 +56,28 @@ class AutomaticProcessCloseTest extends TestCase
         $this->coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
         $this->teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->lastClassDay = $this->institutionDay(self::CLASSES_END_IN);
+        $this->deliveryDay = $this->institutionDay(self::DELIVERY_ENDS_IN);
         AcademicPeriod::query()->firstOrFail()->update([
             'fecha_inicio' => $this->institutionDay(-120),
             'fecha_fin' => $this->lastClassDay,
         ]);
     }
 
-    public function test_the_day_after_the_last_class_day_the_process_is_finalized_like_by_hand_and_audited_as_the_system(): void
+    public function test_the_day_after_the_delivery_day_the_process_is_finalized_like_by_hand_and_audited_as_the_system(): void
     {
         [$process, $convocation] = $this->openedProcess();
         [$draft, $sent] = $this->draftAndSentSyllabi($convocation);
         $notices = InternalNotification::query()->count();
         Mail::fake();
 
-        $this->at($this->dayAfterClasses(), '00:10');
+        $this->at($this->dayAfterDelivery(), '00:10');
         $this->artisan('convocatorias:cerrar-vencidas')->assertSuccessful();
 
+        $this->assertLessThan($this->lastClassDay, $this->dayAfterDelivery());
         $this->assertSame(SyllabusProcess::STATE_CLOSED, $process->fresh()?->estado);
         $this->assertSame(Convocation::STATE_CLOSED, $convocation->fresh()?->estado);
+        $this->assertSame(Convocation::STATE_OPEN, DB::table('convocatorias_carreras')->where('convocatoria_carrera_id', $convocation->id)->value('estado_previo_cierre_convocatoria_carrera'));
+        $this->assertNotNull(DB::table('convocatorias_universidad')->where('convocatoria_universidad_id', $process->id)->value('finalizada_en'));
         $this->assertArrayHasKey('closed_document', $draft->fresh()?->contexto_academico ?? []);
         $this->assertArrayNotHasKey('closed_document', $sent->fresh()?->contexto_academico ?? []);
         $audit = AuditEvent::query()->where('accion', 'proceso_silabos.cerrado')->where('recurso_id', $process->id)->sole();
@@ -80,12 +89,12 @@ class AutomaticProcessCloseTest extends TestCase
         Mail::assertNothingQueued();
     }
 
-    public function test_a_paused_process_is_also_finalized_once_classes_are_over(): void
+    public function test_a_paused_process_is_also_finalized_once_the_delivery_day_is_over(): void
     {
         [$process, $convocation] = $this->openedProcess();
         $this->transition($process, 'pausar')->assertSuccessful();
 
-        $this->at($this->dayAfterClasses(), '00:10');
+        $this->at($this->dayAfterDelivery(), '00:10');
         $this->artisan('convocatorias:cerrar-vencidas')->assertSuccessful();
 
         $this->assertSame(SyllabusProcess::STATE_CLOSED, $process->fresh()?->estado);
@@ -94,16 +103,56 @@ class AutomaticProcessCloseTest extends TestCase
         $this->assertEquals(['previous_state' => SyllabusProcess::STATE_PAUSED, 'automatic' => true], $audit->metadatos);
     }
 
-    public function test_the_process_stays_open_through_its_last_class_day_even_when_utc_already_moved_on(): void
+    public function test_the_process_stays_open_through_its_delivery_day_even_when_utc_already_moved_on(): void
     {
         [$process, $convocation] = $this->openedProcess();
 
-        $this->at($this->lastClassDay, '23:30');
-        $this->artisan('convocatorias:cerrar-vencidas')->assertSuccessful();
+        $this->at($this->deliveryDay, '23:30');
+        $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 0.')->assertSuccessful();
 
         $this->assertSame(SyllabusProcess::STATE_OPEN, $process->fresh()?->estado);
         $this->assertSame(Convocation::STATE_OPEN, $convocation->fresh()?->estado);
         $this->assertFalse(AuditEvent::query()->where('accion', 'proceso_silabos.cerrado')->exists());
+    }
+
+    public function test_syllabi_under_review_do_not_hold_the_finalization_and_keep_their_state(): void
+    {
+        [$process, $convocation] = $this->openedProcess();
+        [$draft, $sent] = $this->draftAndSentSyllabi($convocation);
+        $parallel = $draft->parallel->replicate();
+        $parallel->codigo = 'CORREGIR';
+        $parallel->save();
+        $correction = Syllabus::query()->create([
+            'convocatoria_id' => $convocation->id,
+            'paralelo_id' => $parallel->id,
+            'contexto_academico' => $draft->fresh()?->contexto_academico,
+            'estado' => 'correccion_solicitada',
+        ]);
+
+        $this->at($this->dayAfterDelivery(), '00:10');
+        $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 1.')->assertSuccessful();
+
+        $this->assertSame(SyllabusProcess::STATE_CLOSED, $process->fresh()?->estado);
+        $this->assertSame('en_revision', $sent->fresh()?->estado);
+        $this->assertSame('correccion_solicitada', $correction->fresh()?->estado);
+        $this->assertSame('borrador', $draft->fresh()?->estado);
+    }
+
+    public function test_an_extension_moves_the_automatic_finalization_to_the_day_after_the_new_delivery_day(): void
+    {
+        [$process] = $this->openedProcess();
+        $newDeliveryDay = $this->institutionDay(self::DELIVERY_ENDS_IN + 5);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $process), ['due_at' => $newDeliveryDay])->assertOk();
+
+        $this->at($this->dayAfterDelivery(), '00:10');
+        $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 0.')->assertSuccessful();
+        $this->at($newDeliveryDay, '23:59');
+        $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 0.')->assertSuccessful();
+        $this->assertSame(SyllabusProcess::STATE_OPEN, $process->fresh()?->estado);
+
+        $this->at(CarbonImmutable::parse($newDeliveryDay)->addDay()->toDateString(), '00:10');
+        $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 1.')->assertSuccessful();
+        $this->assertSame(SyllabusProcess::STATE_CLOSED, $process->fresh()?->estado);
     }
 
     public function test_a_process_already_finalized_by_hand_is_left_as_it_was(): void
@@ -111,7 +160,7 @@ class AutomaticProcessCloseTest extends TestCase
         [$process] = $this->openedProcess();
         $this->transition($process, 'cerrar')->assertSuccessful();
 
-        $this->at($this->dayAfterClasses(), '00:10');
+        $this->at($this->dayAfterDelivery(), '00:10');
         $this->artisan('convocatorias:cerrar-vencidas')->assertSuccessful();
         $this->artisan('convocatorias:cerrar-vencidas')->assertSuccessful();
 
@@ -120,21 +169,21 @@ class AutomaticProcessCloseTest extends TestCase
         $this->assertSame($this->administrator->id, $audit->actor_usuario_id);
     }
 
-    public function test_the_automatic_close_runs_once_the_day_after_classes_and_leaves_the_syllabus_read_only(): void
+    public function test_the_automatic_close_runs_once_the_day_after_delivery_and_leaves_the_syllabus_read_only(): void
     {
         [$process, $convocation] = $this->openedProcess();
         [$draft] = $this->draftAndSentSyllabi($convocation);
 
-        $this->at($this->lastClassDay, '00:10');
+        $this->at($this->deliveryDay, '00:10');
         $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 0.')->assertSuccessful();
         $this->assertSame(SyllabusProcess::STATE_OPEN, $process->fresh()?->estado);
 
-        $this->at($this->dayAfterClasses(), '00:01');
+        $this->at($this->dayAfterDelivery(), '00:01');
         $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 1.')->assertSuccessful();
         $closedDocument = $draft->fresh()?->contexto_academico['closed_document'] ?? null;
         $this->assertNotNull($closedDocument);
 
-        $this->at($this->dayAfterClasses(), '09:00');
+        $this->at($this->dayAfterDelivery(), '09:00');
         $this->artisan('convocatorias:cerrar-vencidas')->expectsOutputToContain('Convocatorias finalizadas: 0.')->assertSuccessful();
         $this->assertEquals($closedDocument, $draft->fresh()?->contexto_academico['closed_document'] ?? null);
         $this->assertSame(1, AuditEvent::query()->where('accion', 'proceso_silabos.cerrado')->count());
@@ -165,24 +214,24 @@ class AutomaticProcessCloseTest extends TestCase
         $this->assertSame(['previous_state' => SyllabusProcess::STATE_OPEN], $audit->metadatos);
     }
 
-    public function test_three_days_before_the_last_class_day_only_people_with_unapproved_syllabi_are_warned_once(): void
+    public function test_three_days_before_the_delivery_day_only_people_with_unapproved_syllabi_are_warned_once(): void
     {
         [$process, $convocation] = $this->openedProcess(withOtherTeacher: true);
         Syllabus::query()->where('convocatoria_id', $convocation->id)
             ->whereHas('teachers', fn ($query) => $query->whereKey($this->otherTeacher->id))
             ->update(['estado' => 'aprobado']);
         $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
-        $closesOn = CarbonImmutable::parse($this->lastClassDay)->format('d/m/Y');
+        $closesOn = CarbonImmutable::parse($this->deliveryDay)->format('d/m/Y');
         Mail::fake();
 
-        $this->at($this->classesEndIn(3), '08:00');
+        $this->at($this->deliveryEndsIn(3), '08:00');
         $this->artisan('convocatorias:avisar-cierre')->assertSuccessful();
         $this->artisan('convocatorias:avisar-cierre')->assertSuccessful();
 
         foreach ([$this->teacher, $this->coordinator] as $person) {
             $notice = InternalNotification::query()->where('usuario_id', $person->id)->where('tipo', 'proceso.cierre_proximo')->sole();
             $this->assertSame('La convocatoria se cierra pronto', $notice->titulo);
-            $this->assertSame("La convocatoria {$process->nombre} se cierra al terminar el {$closesOn}, último día de clases. Lo que no esté aprobado quedará solo para consulta.", $notice->mensaje);
+            $this->assertSame("La convocatoria {$process->nombre} se finaliza al terminar el {$closesOn}, último día de entrega. Lo que no esté aprobado quedará solo para consulta.", $notice->mensaje);
             $this->assertSame('proceso_silabos', $notice->tipo_recurso);
             $this->assertSame($process->id, $notice->recurso_id);
             $this->assertSame($process->periodo_academico_id, $notice->periodo_academico_id);
@@ -198,21 +247,41 @@ class AutomaticProcessCloseTest extends TestCase
         $this->assertSame('/coordinacion/revisiones', $this->openNotice($this->coordinator)->json('path'));
     }
 
-    public function test_the_warning_goes_out_only_three_days_before_and_also_while_paused(): void
+    public function test_the_warning_goes_out_only_three_days_before_delivery_and_also_while_paused(): void
     {
         [$process] = $this->openedProcess();
         $this->transition($process, 'pausar')->assertSuccessful();
 
-        foreach ([4, 2] as $daysLeft) {
-            $this->at($this->classesEndIn($daysLeft), '08:00');
+        $lastClassWarning = CarbonImmutable::parse($this->lastClassDay)->subDays(3)->toDateString();
+        foreach ([$this->deliveryEndsIn(4), $this->deliveryEndsIn(2), $lastClassWarning] as $day) {
+            $this->at($day, '08:00');
             $this->artisan('convocatorias:avisar-cierre')->assertSuccessful();
             $this->assertSame(0, $this->closingNotices());
         }
 
-        $this->at($this->classesEndIn(3), '08:00');
+        $this->at($this->deliveryEndsIn(3), '08:00');
         $this->artisan('convocatorias:avisar-cierre')->assertSuccessful();
         $this->assertSame(1, InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo', 'proceso.cierre_proximo')->count());
         $this->assertSame(1, InternalNotification::query()->where('usuario_id', $this->coordinator->id)->where('tipo', 'proceso.cierre_proximo')->count());
+    }
+
+    public function test_an_extension_brings_a_new_warning_three_days_before_the_new_delivery_day(): void
+    {
+        [$process] = $this->openedProcess();
+        $newDeliveryDay = $this->institutionDay(self::DELIVERY_ENDS_IN + 5);
+        $closesOn = CarbonImmutable::parse($newDeliveryDay)->format('d/m/Y');
+
+        $this->at($this->deliveryEndsIn(3), '08:00');
+        $this->artisan('convocatorias:avisar-cierre')->expectsOutputToContain('Convocatorias avisadas: 1.')->assertSuccessful();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $process), ['due_at' => $newDeliveryDay])->assertOk();
+
+        $this->at(CarbonImmutable::parse($newDeliveryDay)->subDays(3)->toDateString(), '08:00');
+        $this->artisan('convocatorias:avisar-cierre')->expectsOutputToContain('Convocatorias avisadas: 1.')->assertSuccessful();
+        $this->artisan('convocatorias:avisar-cierre')->assertSuccessful();
+
+        $notices = InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo', 'proceso.cierre_proximo')->orderBy('notificado_en')->pluck('mensaje');
+        $this->assertCount(2, $notices);
+        $this->assertStringContainsString("se finaliza al terminar el {$closesOn}, último día de entrega", (string) $notices->last());
     }
 
     public function test_the_warning_email_follows_the_preference_and_a_coordinator_who_also_teaches_is_warned_once(): void
@@ -229,11 +298,11 @@ class AutomaticProcessCloseTest extends TestCase
             ->assertOk();
         Mail::fake();
 
-        $this->at($this->classesEndIn(4), '23:30');
+        $this->at($this->deliveryEndsIn(4), '23:30');
         $this->artisan('convocatorias:avisar-cierre')->expectsOutputToContain('Convocatorias avisadas: 0.')->assertSuccessful();
         $this->assertSame(0, $this->closingNotices());
 
-        $this->at($this->classesEndIn(3), '23:30');
+        $this->at($this->deliveryEndsIn(3), '23:30');
         $this->artisan('convocatorias:avisar-cierre')->expectsOutputToContain('Convocatorias avisadas: 1.')->assertSuccessful();
         $this->artisan('convocatorias:avisar-cierre')->assertSuccessful();
 
@@ -250,7 +319,7 @@ class AutomaticProcessCloseTest extends TestCase
         [$process, $convocation] = $this->openedProcess();
         Syllabus::query()->where('convocatoria_id', $convocation->id)->update(['estado' => 'aprobado']);
 
-        $this->at($this->classesEndIn(3), '08:00');
+        $this->at($this->deliveryEndsIn(3), '08:00');
         $this->artisan('convocatorias:avisar-cierre')->assertSuccessful();
         $this->assertSame(0, $this->closingNotices());
 
@@ -294,7 +363,7 @@ class AutomaticProcessCloseTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             'period_id' => AcademicPeriod::query()->valueOrFail('id'),
             'starts_at' => now()->toIso8601String(),
-            'due_at' => now()->addMonth()->toIso8601String(),
+            'due_at' => $this->deliveryDay,
         ])->assertSuccessful();
         $process = SyllabusProcess::query()->firstOrFail();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), ['process_id' => $process->id])->assertSuccessful();
@@ -327,14 +396,14 @@ class AutomaticProcessCloseTest extends TestCase
         return InternalNotification::query()->where('tipo', 'proceso.cierre_proximo')->count();
     }
 
-    private function classesEndIn(int $days): string
+    private function deliveryEndsIn(int $days): string
     {
-        return CarbonImmutable::parse($this->lastClassDay)->subDays($days)->toDateString();
+        return CarbonImmutable::parse($this->deliveryDay)->subDays($days)->toDateString();
     }
 
-    private function dayAfterClasses(): string
+    private function dayAfterDelivery(): string
     {
-        return CarbonImmutable::parse($this->lastClassDay)->addDay()->toDateString();
+        return CarbonImmutable::parse($this->deliveryDay)->addDay()->toDateString();
     }
 
     private function at(string $day, string $time): void

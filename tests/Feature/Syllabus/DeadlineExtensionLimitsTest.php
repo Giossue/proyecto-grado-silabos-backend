@@ -4,6 +4,7 @@ namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Support\InstitutionDate;
@@ -161,15 +162,32 @@ class DeadlineExtensionLimitsTest extends TestCase
         $this->processList()->assertJsonPath('processes.0.extension_block_reason', "Las clases del período terminaron el {$limit}.");
     }
 
-    public function test_a_closed_process_is_not_extended(): void
+    public function test_a_closed_process_is_reopened_by_an_extension_that_respects_the_same_limits(): void
     {
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', SyllabusTemplate::query()->firstOrFail()))->assertSuccessful();
         $process = $this->process(dueIn: 10, classesEndIn: 60);
         $process->update(['estado' => SyllabusProcess::STATE_CLOSED]);
+        $this->processList()->assertJsonPath('processes.0.extension_block_reason', null);
 
-        $this->extend($process, $this->institutionDay(20))->assertForbidden();
+        $this->extend($process, $this->institutionDay(61))->assertUnprocessable()->assertJsonValidationErrors(['due_at']);
+        $this->assertSame(SyllabusProcess::STATE_CLOSED, $process->fresh()?->estado);
+
+        $this->extend($process, $this->institutionDay(20))->assertOk()
+            ->assertExactJson(['message' => 'Plazo prorrogado. La convocatoria se volvió a abrir.']);
         $process->refresh();
-        $this->assertSame($this->institutionDay(10), InstitutionDate::dateOf($process->entrega_en));
-        $this->assertSame(0, $process->cantidad_prorrogas);
+        $this->assertSame(SyllabusProcess::STATE_OPEN, $process->estado);
+        $this->assertSame($this->institutionDay(20), InstitutionDate::dateOf($process->entrega_en));
+        $this->assertSame(1, $process->cantidad_prorrogas);
+    }
+
+    public function test_a_confirmation_flag_that_is_not_a_boolean_is_rejected(): void
+    {
+        $process = $this->process(dueIn: 10, classesEndIn: 60);
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $process), ['due_at' => $this->institutionDay(20), 'confirmar_rehacer' => 'quizas'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['confirmar_rehacer']);
+        $this->assertSame(0, $process->fresh()?->cantidad_prorrogas);
     }
 
     private function process(int $dueIn, int $classesEndIn): SyllabusProcess

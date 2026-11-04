@@ -42,7 +42,7 @@ Al pulsar una fila se abren sus opciones: pausar, reanudar, prorrogar el plazo, 
 
 El plazo se puede prorrogar 2 veces como máximo, y nunca después del último día de clases del período.
 
-Finalizar no se deshace: antes le muestra cuántos sílabos quedan sin aprobar, y esos quedan solo para consulta. Si no la finaliza, el sistema lo hace solo al terminar el último día de clases; 3 días antes avisa a docentes y coordinación con sílabos sin aprobar.
+Finalizar le muestra antes cuántos sílabos quedan sin aprobar, y esos quedan solo para consulta. Si no la finaliza, el sistema lo hace solo al terminar el último día de entrega; 3 días antes avisa a docentes y coordinación con sílabos sin aprobar. Una convocatoria finalizada se vuelve a abrir con «Prorrogar plazo», con los mismos límites, si no hay otra en curso.
 
 Eliminar solo se puede con la convocatoria abierta o pausada. Borra todos sus sílabos, incluso los aprobados; antes le muestra cuántos se pierden y le pide un mensaje que llega por aviso y correo a docentes, coordinación y biblioteca.
 

@@ -27,6 +27,7 @@ class ExtendProcessDeadlineRequest extends FormRequest
         return [
             'stage' => ['prohibited'],
             'due_at' => ['required', 'date'],
+            'confirmar_rehacer' => ['sometimes', 'boolean'],
         ];
     }
 

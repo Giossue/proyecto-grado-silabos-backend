@@ -9,7 +9,7 @@ class CloseEndedConvocations extends Command
 {
     protected $signature = 'convocatorias:cerrar-vencidas';
 
-    protected $description = 'Finaliza la convocatoria abierta o pausada cuyo período ya terminó, con el mismo efecto que Finalizar';
+    protected $description = 'Finaliza la convocatoria abierta o pausada el día después de su último día de entrega, con el mismo efecto que Finalizar';
 
     public function handle(CloseEndedProcesses $close): int
     {

@@ -34,11 +34,29 @@ final class RegenerateProcessSyllabi
     /** @return array<string, int> */
     public function counts(SyllabusProcess $process): array
     {
+        return $this->countSyllabi($process, toReopen: false);
+    }
+
+    /** @return array<string, int> */
+    public function countsToReopen(SyllabusProcess $process): array
+    {
+        return $this->countSyllabi($process, toReopen: true);
+    }
+
+    /** @return array<string, int> */
+    private function countSyllabi(SyllabusProcess $process, bool $toReopen): array
+    {
         $counts = self::EMPTY_COUNTS;
-        $rows = DB::table('silabos')
+        $query = DB::table('silabos')
             ->join('convocatorias_carreras', 'convocatorias_carreras.convocatoria_carrera_id', '=', 'silabos.convocatoria_carrera_id')
-            ->where('convocatorias_carreras.convocatoria_universidad_id', $process->id)
-            ->whereIn('convocatorias_carreras.estado_convocatoria_carrera', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
+            ->where('convocatorias_carreras.convocatoria_universidad_id', $process->id);
+        if ($toReopen) {
+            $query->where('convocatorias_carreras.estado_convocatoria_carrera', Convocation::STATE_CLOSED)
+                ->whereNotNull('convocatorias_carreras.estado_previo_cierre_convocatoria_carrera');
+        } else {
+            $query->whereIn('convocatorias_carreras.estado_convocatoria_carrera', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED]);
+        }
+        $rows = $query
             ->select('silabos.estado_silabo', DB::raw('count(*) as total'))
             ->groupBy('silabos.estado_silabo')
             ->get();

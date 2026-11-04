@@ -106,14 +106,24 @@ class SyllabusProcessController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute(
+        $result = $action->execute(
             $process,
             $request->string('due_at')->toString(),
             $actor,
             $request,
         );
 
-        return response()->json(['message' => 'Plazo prorrogado para todas las convocatorias del proceso.']);
+        if ($result['confirmation_required']) {
+            return response()->json([
+                'message' => 'La plantilla cambió después de finalizar. Confirme para adaptar los sílabos del período: se conserva lo escrito y los enviados o aprobados vuelven a borrador.',
+                'code' => 'plantilla_cambiada',
+                'counts' => $result['counts'],
+            ], 422);
+        }
+
+        return response()->json(['message' => $result['reopened']
+            ? 'Plazo prorrogado. La convocatoria se volvió a abrir.'
+            : 'Plazo prorrogado para todas las convocatorias del proceso.']);
     }
 
     public function transition(

@@ -8,6 +8,8 @@ use Carbon\CarbonImmutable;
 
 final class DeadlineExtensions
 {
+    public const ANOTHER_IN_PROGRESS = 'Hay otra convocatoria en curso; finalícela o elimínela antes de reabrir esta';
+
     public static function limitOn(SyllabusProcess $process): string
     {
         return $process->academicPeriod->fecha_fin->toDateString();
@@ -24,6 +26,10 @@ final class DeadlineExtensions
         }
         if ($limitOn < InstitutionDate::todayOn()) {
             return 'Las clases del período terminaron el '.self::display($limitOn).'.';
+        }
+        if ($process->estado === SyllabusProcess::STATE_CLOSED
+            && SyllabusProcess::query()->inProgress()->whereKeyNot($process->id)->exists()) {
+            return self::ANOTHER_IN_PROGRESS;
         }
 
         return null;

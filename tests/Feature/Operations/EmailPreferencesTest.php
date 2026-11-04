@@ -35,6 +35,10 @@ class EmailPreferencesTest extends TestCase
         $this->assertSame(['coordinacion.resumen_diario:si', 'proceso.reanudado:si', 'proceso.cierre_proximo:si'], $types('coordinador@silabos.test'));
         $this->assertSame(['biblioteca.resumen_diario:si', 'coordinacion.aprobado:si', 'silabo.reenviado_biblioteca:si', 'proceso.reanudado:si'], $types('bibliotecario@silabos.test'));
         $this->assertSame([], $types('admin@silabos.test'));
+        foreach (['docente@silabos.test' => 'si tiene sílabos sin aprobar', 'coordinador@silabos.test' => 'si su carrera tiene sílabos sin aprobar'] as $email => $condition) {
+            $closing = collect($this->as($email)->getJson(route('api.v1.notifications.email-preferences.show'))->json('options'))->firstWhere('type', 'proceso.cierre_proximo');
+            $this->assertSame("3 días antes del último día de entrega, {$condition}", $closing['description'] ?? null);
+        }
     }
 
     public function test_a_teacher_turns_off_one_notice_and_stops_getting_that_email_only(): void

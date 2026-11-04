@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $carrera_id
  * @property string $proceso_id
  * @property string $estado
+ * @property string|null $estado_previo
  * @property-read string $nombre
  * @property-read Career $career
  * @property-read SyllabusProcess $process
@@ -29,6 +30,7 @@ class Convocation extends Model
         'id' => 'convocatoria_carrera_id',
         'estado' => 'estado_convocatoria_carrera',
         'proceso_id' => 'convocatoria_universidad_id',
+        'estado_previo' => 'estado_previo_cierre_convocatoria_carrera',
     ];
 
     protected static function booted(): void

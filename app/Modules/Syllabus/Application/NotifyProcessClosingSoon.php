@@ -21,22 +21,23 @@ final class NotifyProcessClosingSoon
 
     public function execute(): int
     {
-        $lastClassDay = InstitutionDate::today()->addDays(self::DAYS_BEFORE)->toDateString();
+        $deliveryDay = InstitutionDate::today()->addDays(self::DAYS_BEFORE)->toDateString();
         $processes = SyllabusProcess::query()->inProgress()->with('academicPeriod')
-            ->whereHas('academicPeriod', fn ($query) => $query->whereDate('fecha_fin_periodo', $lastClassDay))
+            ->where('entrega_en', '>=', InstitutionDate::startOfDay($deliveryDay)->utc())
+            ->where('entrega_en', '<', InstitutionDate::startOfDay($deliveryDay)->addDay()->utc())
             ->get();
 
         foreach ($processes as $process) {
-            $closesOn = CarbonImmutable::parse($lastClassDay)->format('d/m/Y');
+            $closesOn = CarbonImmutable::parse($deliveryDay)->format('d/m/Y');
             $this->notifications->execute(
                 eventType: self::EVENT,
-                deduplicationKey: self::EVENT.":{$process->id}:{$lastClassDay}",
+                deduplicationKey: self::EVENT.":{$process->id}:{$deliveryDay}",
                 recipientIds: [
                     ...$this->recipients->teachersWithPendingWork($process),
                     ...$this->recipients->coordinatorsWithPendingWork($process),
                 ],
                 title: 'La convocatoria se cierra pronto',
-                message: "La convocatoria {$process->nombre} se cierra al terminar el {$closesOn}, último día de clases. Lo que no esté aprobado quedará solo para consulta.",
+                message: "La convocatoria {$process->nombre} se finaliza al terminar el {$closesOn}, último día de entrega. Lo que no esté aprobado quedará solo para consulta.",
                 resourceType: 'proceso_silabos',
                 resourceId: $process->id,
                 periodId: $process->periodo_academico_id,

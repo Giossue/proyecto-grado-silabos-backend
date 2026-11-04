@@ -37,12 +37,12 @@ final class EmailNoticeCatalog
             'silabo.devuelto_borrador' => ['label' => 'Sílabo devuelto a borrador', 'description' => 'Cambió un dato de la carrera, de la malla o la plantilla'],
             'silabo.aprobado' => ['label' => 'Sílabo aprobado', 'description' => 'Su sílabo quedó aprobado, con el PDF listo'],
             self::SYLLABUS_RESTARTED => ['label' => 'Sílabo reiniciado', 'description' => 'Su sílabo volvió a empezar: Coordinación lo reinició o cambió la malla o el paralelo'],
-            'proceso.cierre_proximo' => ['label' => 'Cierre de la convocatoria', 'description' => '3 días antes del último día de clases, si tiene sílabos sin aprobar'],
+            'proceso.cierre_proximo' => ['label' => 'Cierre de la convocatoria', 'description' => '3 días antes del último día de entrega, si tiene sílabos sin aprobar'],
         ],
         'coordinador' => [
             self::DAILY_SUMMARY => ['label' => 'Resumen diario', 'description' => 'Sílabos por revisar, de lunes a viernes, solo si hay pendientes'],
             'proceso.reanudado' => ['label' => 'Convocatoria reanudada por Administración', 'description' => 'Se retoman las revisiones tras una pausa institucional'],
-            'proceso.cierre_proximo' => ['label' => 'Cierre de la convocatoria', 'description' => '3 días antes del último día de clases, si su carrera tiene sílabos sin aprobar'],
+            'proceso.cierre_proximo' => ['label' => 'Cierre de la convocatoria', 'description' => '3 días antes del último día de entrega, si su carrera tiene sílabos sin aprobar'],
         ],
         'bibliotecario' => [
             self::LIBRARY_SUMMARY => ['label' => 'Resumen diario', 'description' => 'Sílabos por revisar, de lunes a viernes, solo si hay pendientes'],

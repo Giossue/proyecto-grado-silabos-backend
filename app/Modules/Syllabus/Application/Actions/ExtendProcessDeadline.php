@@ -3,6 +3,8 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\TemplateStructureValidator;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -10,6 +12,8 @@ use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\DeadlineExtensions;
+use App\Modules\Syllabus\Application\ProcessClosing;
+use App\Modules\Syllabus\Application\ProcessTemplateChange;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Support\InstitutionDate;
@@ -25,14 +29,19 @@ class ExtendProcessDeadline
         private readonly RecordAuditEvent $audit,
         private readonly WorkflowNotificationRecipients $recipients,
         private readonly ScheduleInternalNotification $notifications,
+        private readonly ProcessClosing $closing,
+        private readonly ProcessTemplateChange $templateChange,
+        private readonly RegenerateProcessSyllabi $regenerate,
+        private readonly TemplateStructureValidator $templateStructure,
     ) {}
 
+    /** @return array{process: SyllabusProcess, confirmation_required: bool, counts: array<string, int>, reopened: bool} */
     public function execute(
         SyllabusProcess $process,
         string $newDueAt,
         User $actor,
         Request $request,
-    ): SyllabusProcess {
+    ): array {
         $activeRole = $this->roles->resolve($request);
         if ($activeRole?->role->codigo_rol !== RoleCode::Administrator->value) {
             abort(403);
@@ -41,10 +50,11 @@ class ExtendProcessDeadline
         $requested = CarbonImmutable::parse($newDueAt);
         $requestedOn = InstitutionDate::dateOf($requested);
 
-        return DB::transaction(function () use ($activeRole, $actor, $process, $request, $requested, $requestedOn, $stage): SyllabusProcess {
+        return DB::transaction(function () use ($activeRole, $actor, $process, $request, $requested, $requestedOn, $stage): array {
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
-            if ($locked->estado === SyllabusProcess::STATE_CLOSED) {
-                throw ValidationException::withMessages(['process' => 'Un proceso cerrado ya no admite prórrogas.']);
+            $reopening = $locked->estado === SyllabusProcess::STATE_CLOSED;
+            if ($reopening) {
+                SyllabusProcess::query()->inProgress()->whereKeyNot($locked->id)->lockForUpdate()->get(['id']);
             }
             $previous = $locked->entrega_en;
             $previousOn = InstitutionDate::dateOf($previous);
@@ -66,8 +76,25 @@ class ExtendProcessDeadline
                 throw ValidationException::withMessages(['due_at' => DeadlineExtensions::pastLimitMessage($locked)]);
             }
 
+            $changedAt = null;
+            $counts = [];
+            if ($reopening) {
+                $this->templateStructure->assertUsable(SyllabusTemplate::institutional(), 'process');
+                $changedAt = ProcessTemplateChange::since(ProcessClosing::templateReference($locked));
+                if ($changedAt !== null) {
+                    $counts = $this->regenerate->countsToReopen($locked);
+                    if (! $request->boolean('confirmar_rehacer')) {
+                        return ['process' => $locked, 'confirmation_required' => true, 'counts' => $counts, 'reopened' => false];
+                    }
+                }
+                $this->closing->reopen($locked);
+            }
+
             $number = $locked->cantidad_prorrogas + 1;
             $locked->update(['entrega_en' => $requested, 'cantidad_prorrogas' => $number]);
+            if ($changedAt !== null) {
+                $this->templateChange->adapt($locked, $changedAt, $counts, $actor->id, $activeRole->id);
+            }
 
             $reached = Convocation::query()->where('proceso_id', $locked->id)->count();
 
@@ -86,9 +113,20 @@ class ExtendProcessDeadline
                     'extension_number' => $number,
                 ],
             );
+            if ($reopening) {
+                $this->audit->execute(
+                    actorId: $actor->id,
+                    roleAssignmentId: $activeRole->id,
+                    action: 'proceso_silabos.reabierto',
+                    resourceType: 'proceso_silabos',
+                    resourceId: $locked->id,
+                    result: 'exito',
+                    metadata: ['previous_state' => SyllabusProcess::STATE_CLOSED],
+                );
+            }
             $this->notify($locked, $requested, $request);
 
-            return $locked->refresh();
+            return ['process' => $locked->refresh(), 'confirmation_required' => false, 'counts' => $counts, 'reopened' => $reopening];
         });
     }
 

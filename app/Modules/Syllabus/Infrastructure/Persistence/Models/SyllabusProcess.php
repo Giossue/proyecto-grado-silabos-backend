@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable $inicia_en
  * @property CarbonImmutable $entrega_en
  * @property CarbonImmutable|null $pausado_en
+ * @property CarbonImmutable|null $finalizada_en
  * @property string $estado
  * @property int $cantidad_prorrogas
  * @property-read string $nombre
@@ -56,7 +57,7 @@ class SyllabusProcess extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado', 'pausado_en', 'cantidad_prorrogas',
+        'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado', 'pausado_en', 'finalizada_en', 'cantidad_prorrogas',
     ];
 
     /** @return array<string, string> */
@@ -66,6 +67,7 @@ class SyllabusProcess extends Model
             'inicia_en' => 'immutable_datetime',
             'entrega_en' => 'immutable_datetime',
             'pausado_en' => 'immutable_datetime',
+            'finalizada_en' => 'immutable_datetime',
             'cantidad_prorrogas' => 'integer',
         ];
     }

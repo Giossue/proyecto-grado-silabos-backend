@@ -9,7 +9,7 @@ class WarnConvocationClosing extends Command
 {
     protected $signature = 'convocatorias:avisar-cierre';
 
-    protected $description = 'Avisa 3 días antes del último día de clases a docentes y coordinación con sílabos sin aprobar';
+    protected $description = 'Avisa 3 días antes del último día de entrega a docentes y coordinación con sílabos sin aprobar';
 
     public function handle(NotifyProcessClosingSoon $warn): int
     {

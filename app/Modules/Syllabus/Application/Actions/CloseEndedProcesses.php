@@ -19,16 +19,16 @@ class CloseEndedProcesses
     {
         $today = InstitutionDate::todayOn();
         $ids = SyllabusProcess::query()->inProgress()
-            ->whereHas('academicPeriod', fn ($query) => $query->whereDate('fecha_fin_periodo', '<', $today))
+            ->where('entrega_en', '<', InstitutionDate::startOfDay($today)->utc())
             ->pluck('id');
 
         $closed = 0;
         foreach ($ids as $id) {
             $closed += DB::transaction(function () use ($id, $today): int {
-                $locked = SyllabusProcess::query()->with('academicPeriod')->whereKey($id)->lockForUpdate()->first();
+                $locked = SyllabusProcess::query()->whereKey($id)->lockForUpdate()->first();
                 if ($locked === null
                     || ! in_array($locked->estado, [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED], true)
-                    || $locked->academicPeriod->fecha_fin->toDateString() >= $today) {
+                    || InstitutionDate::dateOf($locked->entrega_en) >= $today) {
                     return 0;
                 }
                 $previous = $locked->estado;

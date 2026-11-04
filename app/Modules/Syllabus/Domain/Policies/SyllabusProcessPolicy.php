@@ -44,7 +44,7 @@ class SyllabusProcessPolicy
 
     public function extendDeadline(User $user, SyllabusProcess $process): bool
     {
-        return $this->viewAny($user) && $process->estado !== SyllabusProcess::STATE_CLOSED;
+        return $this->viewAny($user);
     }
 
     public function close(User $user, SyllabusProcess $process): bool

@@ -413,6 +413,16 @@ class ExportOpenApi extends Command
                     'properties' => ['confirmar_rehacer' => ['type' => 'boolean']],
                     'additionalProperties' => false,
                 ]]];
+            } elseif ($name === 'api.v1.admin.processes.deadline.extend') {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object',
+                    'required' => ['due_at'],
+                    'properties' => [
+                        'due_at' => ['type' => 'string'],
+                        'confirmar_rehacer' => ['type' => 'boolean'],
+                    ],
+                    'additionalProperties' => false,
+                ]]];
             }
             if (in_array($name, ['api.v1.admin.template.structure.fields.store', 'api.v1.admin.template.structure.fields.update'], true)) {
                 $content = ['application/json' => ['schema' => [

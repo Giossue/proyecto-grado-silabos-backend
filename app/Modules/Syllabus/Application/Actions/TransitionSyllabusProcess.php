@@ -10,8 +10,8 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\NotifyConvocationResumed;
 use App\Modules\Syllabus\Application\ProcessClosing;
+use App\Modules\Syllabus\Application\ProcessTemplateChange;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
-use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -38,6 +38,7 @@ class TransitionSyllabusProcess
         private readonly RegenerateProcessSyllabi $regenerate,
         private readonly ProcessClosing $closing,
         private readonly NotifyConvocationResumed $resumed,
+        private readonly ProcessTemplateChange $templateChange,
     ) {}
 
     /** @return array{process: SyllabusProcess, confirmation_required: bool, counts: array<string, int>} */
@@ -68,41 +69,22 @@ class TransitionSyllabusProcess
                 $this->templateStructure->assertUsable(SyllabusTemplate::institutional(), 'process');
             }
 
-            $templateChange = false;
+            $changedAt = $rule['to'] === SyllabusProcess::STATE_OPEN ? ProcessTemplateChange::since($locked->pausado_en) : null;
             $counts = [];
-            $template = SyllabusTemplate::query()->first();
-            if ($rule['to'] === SyllabusProcess::STATE_OPEN
-                && $locked->pausado_en !== null
-                && $template?->plantilla_modificada_en instanceof CarbonInterface) {
-                $templateChange = $template->plantilla_modificada_en->greaterThan($locked->pausado_en);
-                if ($templateChange) {
-                    $counts = $this->regenerate->counts($locked);
-                    if (! $request->boolean('confirmar_rehacer')) {
-                        return [
-                            'process' => $locked,
-                            'confirmation_required' => true,
-                            'counts' => $counts,
-                        ];
-                    }
+            if ($changedAt !== null) {
+                $counts = $this->regenerate->counts($locked);
+                if (! $request->boolean('confirmar_rehacer')) {
+                    return [
+                        'process' => $locked,
+                        'confirmation_required' => true,
+                        'counts' => $counts,
+                    ];
                 }
             }
 
             $previous = $locked->estado;
-            if ($templateChange) {
-                $this->regenerate->regenerate($locked, $template->plantilla_modificada_en->toISOString());
-                $metadata = ['total' => array_sum($counts)];
-                foreach ($counts as $state => $count) {
-                    $metadata['estado_'.$state] = $count;
-                }
-                $this->audit->execute(
-                    actorId: $actor->id,
-                    roleAssignmentId: $activeRole->id,
-                    action: 'proceso.plantilla_rehecho',
-                    resourceType: 'proceso_silabos',
-                    resourceId: $locked->id,
-                    result: 'exito',
-                    metadata: $metadata,
-                );
+            if ($changedAt !== null) {
+                $this->templateChange->adapt($locked, $changedAt, $counts, $actor->id, $activeRole->id);
             }
             if ($rule['to'] === SyllabusProcess::STATE_CLOSED) {
                 $this->closing->close($locked);
