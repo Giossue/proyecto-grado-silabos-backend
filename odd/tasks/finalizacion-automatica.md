@@ -29,8 +29,8 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 |---|---|---|---|---|
 | T1 | S1, S2, S5–S8, S9 (backend y docs) | delegada: escritor de backend (en paralelo con T2; superficies disjuntas; respaldo de contexto) | hecha: 707 pruebas, Pint y PHPStan | 7ace4c98, ba088228 |
 | T2 | S3, S4, S7, S9 (frontend) | delegada: escritor de frontend (en paralelo con T1) | hecha: 749 pruebas, typecheck, lint y contrato | frontend eed4757 |
-| T4 | S10 | delegada: escritor de backend (vigencia hasta el fin de clases; en paralelo con T5) | pendiente | |
-| T5 | S11 | delegada: escritor de backend y frontend (plantilla usable en el motivo y en «Antes de empezar»; en paralelo con T4) | pendiente | |
+| T4 | S10 | delegada: escritor de backend (vigencia hasta el fin de clases; en paralelo con T5) | hecha: 721 pruebas; verificador PASS | 028b0533 |
+| T5 | S11 | delegada: escritor de backend y frontend (plantilla usable en el motivo y en «Antes de empezar»; en paralelo con T4) | hecha: verificador PASS | 586b59ae |
 | T3 | todas | delegada: verificador independiente (ítems de alto riesgo 1 y 4) | hecha: PASS en S1–S9, sin bloqueos | — |
 
 ## Log
@@ -57,3 +57,10 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
   - A5: los cambios hechos con la convocatoria finalizada no se reconcilian al reabrir.
   - A6: la lista se refresca tras cerrar el diálogo y cambia el texto del banner y del detalle de Coordinación.
 - L7 (2026-11-03): «Ok, es que eso no debe pasar, porque hasta que no finalice totalmente una convocatoria no debería pasar eso que mencionas, necesito que mientras que admin no abra una nueva convocatoria, se siga tomando como si fuera aún la anterior o más bien, tomando en cuenta la finalización de clases, porque ESO es el periodo académico. y el punto 3 arreglalo como tu lo mencionas, y no creo que del todo, si ves que hay un botón flotante? el que dice Todo Listo, por qué no usamos eso? y claro funcionado con lo que dices».
+- L8 (2026-11-03): veredicto del verificador sobre S10 y S11: PASS, sin bloqueos. Avisos:
+  - A1: dos períodos que empiezan el mismo día cuentan ambos como vigentes.
+  - A2: puede haber un interbloqueo poco probable entre una regeneración y una reapertura simultáneas (500 sin corrupción).
+  - A3: una fotografía nueva toma la plantilla actual.
+  - A4: con la convocatoria finalizada, un cambio de docente o un traspaso deja sílabos sin poder editarse hasta reabrir.
+  - A5: la comprobación de la plantilla se hace en cada carga del panel.
+  - Decisión del escritor: `skipIncomplete` al reabrir.
