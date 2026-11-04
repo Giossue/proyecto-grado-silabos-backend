@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
+use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -22,7 +23,10 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class SetupChecklist
 {
-    public function __construct(private readonly CoordinatorConvocationReadiness $coordinatorReadiness) {}
+    public function __construct(
+        private readonly CoordinatorConvocationReadiness $coordinatorReadiness,
+        private readonly TemplateStructureValidator $templateStructure,
+    ) {}
 
     /** @return array{title: string, done: int, total: int}|null */
     public function summaryFor(User $user, RoleAssignment $assignment): ?array
@@ -51,7 +55,10 @@ class SetupChecklist
             ->where('rol', $role->value))->exists();
         $accountsReady = $hasAccountWithRole(RoleCode::Coordinator) && $hasAccountWithRole(RoleCode::Librarian);
         $template = SyllabusTemplate::query()->first();
-        $templateReady = $template?->hasStructure() ?? false;
+        $templateProblem = $this->templateStructure->problem($template);
+        $templateHint = $templateProblem !== null && ($template?->hasStructure() ?? false)
+            ? $templateProblem
+            : 'Secciones y campos con un responsable: Docente, Coordinación o Institucional. El mismo editor permite texto, listas y tablas.';
 
         return $this->build(
             'Antes de empezar',
@@ -61,7 +68,7 @@ class SetupChecklist
                 $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada. Puede importarlas desde Excel.', $careerCount > 0),
                 $this->step('accounts', 'Crear las cuentas de coordinación y de biblioteca', 'Al menos una de cada una, también por importación desde Excel. Los docentes los crea cada Coordinación.', $accountsReady),
                 $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0),
-                $this->step('template', 'Armar la plantilla del sílabo', 'Secciones y campos con un responsable: Docente, Coordinación o Institucional. El mismo editor permite texto, listas y tablas.', $templateReady),
+                $this->step('template', 'Armar la plantilla del sílabo', $templateHint, $templateProblem === null),
                 $this->step('process', 'Abrir la convocatoria institucional', 'Desde Convocatorias, indique las fechas del periodo lectivo y de elaboración y entrega; cada Coordinación abrirá después la de su carrera.', SyllabusProcess::query()->exists()),
             ],
         );

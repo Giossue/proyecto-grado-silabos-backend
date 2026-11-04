@@ -2,6 +2,8 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Configuration\Application\TemplateStructureValidator;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
@@ -9,6 +11,8 @@ use Carbon\CarbonImmutable;
 final class DeadlineExtensions
 {
     public const ANOTHER_IN_PROGRESS = 'Hay otra convocatoria en curso; finalícela o elimínela antes de reabrir esta';
+
+    public const TEMPLATE_NOT_READY = 'La plantilla no está lista para usarse. Complétela; «Antes de empezar» indica qué falta.';
 
     public static function limitOn(SyllabusProcess $process): string
     {
@@ -30,6 +34,10 @@ final class DeadlineExtensions
         if ($process->estado === SyllabusProcess::STATE_CLOSED
             && SyllabusProcess::query()->inProgress()->whereKeyNot($process->id)->exists()) {
             return self::ANOTHER_IN_PROGRESS;
+        }
+        if ($process->estado === SyllabusProcess::STATE_CLOSED
+            && app(TemplateStructureValidator::class)->problem(SyllabusTemplate::query()->first()) !== null) {
+            return self::TEMPLATE_NOT_READY;
         }
 
         return null;

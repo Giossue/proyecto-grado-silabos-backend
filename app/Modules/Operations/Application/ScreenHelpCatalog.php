@@ -42,13 +42,13 @@ Al pulsar una fila se abren sus opciones: pausar, reanudar, prorrogar el plazo, 
 
 El plazo se puede prorrogar 2 veces como máximo, y nunca después del último día de clases del período.
 
-Finalizar le muestra antes cuántos sílabos quedan sin aprobar, y esos quedan solo para consulta. Si no la finaliza, el sistema lo hace solo al terminar el último día de entrega; 3 días antes avisa a docentes y coordinación con sílabos sin aprobar. Una convocatoria finalizada se vuelve a abrir con «Prorrogar plazo», con los mismos límites, si no hay otra en curso.
+Finalizar le muestra antes cuántos sílabos quedan sin aprobar, y esos quedan solo para consulta. Si no la finaliza, el sistema lo hace solo al terminar el último día de entrega; 3 días antes avisa a docentes y coordinación con sílabos sin aprobar. Una convocatoria finalizada se vuelve a abrir con «Prorrogar plazo», con los mismos límites, si no hay otra en curso y la plantilla está lista para usarse.
 
 Eliminar solo se puede con la convocatoria abierta o pausada. Borra todos sus sílabos, incluso los aprobados; antes le muestra cuántos se pierden y le pide un mensaje que llega por aviso y correo a docentes, coordinación y biblioteca.
 
 Mientras la convocatoria esté abierta, la plantilla del sílabo no se puede modificar; para corregirla, pause el proceso.
 
-Arriba están los indicadores de la convocatoria vigente. El botón rojo de check, abajo a la derecha, abre «Antes de empezar»: los pasos previos (facultades, carreras, cuentas, coordinadores y plantilla); al pulsar uno le muestra en el menú dónde se hace. «Nueva convocatoria» se habilita cuando están todos y no hay otra abierta o pausada.',
+Arriba están los indicadores de la convocatoria vigente. El botón rojo de check, abajo a la derecha, abre «Antes de empezar»: los pasos previos (facultades, carreras, cuentas, coordinadores y plantilla); al pulsar uno le muestra en el menú dónde se hace. El de la plantilla queda pendiente mientras no se pueda usar y dice qué le falta. «Nueva convocatoria» se habilita cuando están todos y no hay otra abierta o pausada.',
         ],
         '/admin/estructura-academica' => [
             'title' => 'Facultades y carreras',

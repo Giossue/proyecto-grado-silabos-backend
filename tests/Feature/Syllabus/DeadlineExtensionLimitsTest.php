@@ -22,6 +22,8 @@ class DeadlineExtensionLimitsTest extends TestCase
     use RefreshDatabase;
     use UsesInstitutionalDays;
 
+    private const TEMPLATE_NOT_READY = 'La plantilla no está lista para usarse. Complétela; «Antes de empezar» indica qué falta.';
+
     private User $administrator;
 
     protected function setUp(): void
@@ -179,6 +181,37 @@ class DeadlineExtensionLimitsTest extends TestCase
         $this->assertSame(SyllabusProcess::STATE_OPEN, $process->estado);
         $this->assertSame($this->institutionDay(20), InstitutionDate::dateOf($process->entrega_en));
         $this->assertSame(1, $process->cantidad_prorrogas);
+    }
+
+    public function test_a_closed_process_is_not_reopened_while_the_template_cannot_be_used(): void
+    {
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla'])->assertSuccessful();
+        $process = $this->process(dueIn: 10, classesEndIn: 60);
+        $this->processList()->assertJsonPath('processes.0.extension_block_reason', null);
+        $process->update(['estado' => SyllabusProcess::STATE_CLOSED]);
+
+        $this->processList()->assertJsonPath('processes.0.extension_block_reason', self::TEMPLATE_NOT_READY);
+        $this->extend($process, $this->institutionDay(20))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['process' => self::TEMPLATE_NOT_READY]);
+        $process->refresh();
+        $this->assertSame(SyllabusProcess::STATE_CLOSED, $process->estado);
+        $this->assertSame(0, $process->cantidad_prorrogas);
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', SyllabusTemplate::query()->firstOrFail()))->assertSuccessful();
+        $this->processList()->assertJsonPath('processes.0.extension_block_reason', null);
+        $this->extend($process, $this->institutionDay(20))->assertOk();
+        $this->assertSame(SyllabusProcess::STATE_OPEN, $process->fresh()?->estado);
+    }
+
+    public function test_an_open_process_can_still_be_extended_while_the_template_cannot_be_used(): void
+    {
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla'])->assertSuccessful();
+        $process = $this->process(dueIn: 10, classesEndIn: 60);
+
+        $this->processList()->assertJsonPath('processes.0.extension_block_reason', null);
+        $this->extend($process, $this->institutionDay(20))->assertOk();
+        $this->assertSame(1, $process->fresh()?->cantidad_prorrogas);
     }
 
     public function test_a_confirmation_flag_that_is_not_a_boolean_is_rejected(): void
