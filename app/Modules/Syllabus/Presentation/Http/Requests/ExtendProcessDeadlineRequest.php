@@ -28,7 +28,14 @@ class ExtendProcessDeadlineRequest extends FormRequest
             'stage' => ['prohibited'],
             'due_at' => ['required', 'date'],
             'confirmar_rehacer' => ['sometimes', 'boolean'],
+            'confirmar_cambios' => ['sometimes', 'boolean'],
         ];
+    }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return ['confirmar_cambios' => 'confirmación para aplicar los cambios pendientes'];
     }
 
     /** @return array<string, string> */

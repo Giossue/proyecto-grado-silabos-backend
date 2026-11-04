@@ -13,8 +13,6 @@ final class ProcessClosing
 {
     public const CLOSED_DOCUMENT = 'closed_document';
 
-    public const SNAPSHOT_STATES = ['en_revision', 'aprobado'];
-
     public function __construct(private readonly SyllabusSnapshot $snapshots) {}
 
     public function close(SyllabusProcess $locked): void
@@ -26,7 +24,7 @@ final class ProcessClosing
         ]);
         $locked->refresh();
         $syllabi = Syllabus::query()->whereHas('convocation', fn ($query) => $query->where('proceso_id', $locked->id))
-            ->whereNotIn('estado', self::SNAPSHOT_STATES)->lockForUpdate()->get();
+            ->whereNotIn('estado', ['en_revision', 'aprobado'])->lockForUpdate()->get();
         foreach ($syllabi as $syllabus) {
             $snapshot = $this->snapshots->build($syllabus);
             $syllabus->update(['contexto_academico' => [...$syllabus->contexto_academico, self::CLOSED_DOCUMENT => $snapshot]]);
@@ -38,20 +36,6 @@ final class ProcessClosing
                 'estado_previo' => DB::raw('estado_convocatoria_carrera'),
                 'estado' => Convocation::STATE_CLOSED,
             ]);
-    }
-
-    public function refreshSnapshot(Syllabus $syllabus): void
-    {
-        $syllabus->loadMissing('convocation');
-        if ($syllabus->convocation->estado !== Convocation::STATE_CLOSED || in_array($syllabus->estado, self::SNAPSHOT_STATES, true)) {
-            return;
-        }
-        $previous = $syllabus->contexto_academico[self::CLOSED_DOCUMENT] ?? null;
-        $context = Arr::except($syllabus->contexto_academico, [self::CLOSED_DOCUMENT]);
-        $syllabus->contexto_academico = $context;
-        $snapshot = $this->snapshots->rebuild($syllabus, is_array($previous) ? $previous : null);
-        $syllabus->contexto_academico = [...$context, self::CLOSED_DOCUMENT => $snapshot];
-        $syllabus->save();
     }
 
     /** @return list<string> Convocatorias de carrera que vuelven a quedar abiertas. */

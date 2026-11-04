@@ -128,6 +128,18 @@ class ParallelTeacherChangeTest extends TestCase
             ->assertOk()->assertJsonPath('syllabi.data.0.id', $fresh->id);
     }
 
+    public function test_reopening_with_no_change_keeps_a_really_submitted_syllabus_as_it_was(): void
+    {
+        $syllabus = $this->submittedSyllabus();
+        $process = $syllabus->convocation->process()->firstOrFail();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $process), ['due_at' => $this->institutionDay(40)])->assertOk();
+
+        $this->assertSame('en_revision', $syllabus->fresh()?->estado);
+        $this->assertDatabaseHas('revisiones_silabo', ['silabo_id' => $syllabus->id]);
+    }
+
     public function test_with_the_convocation_open_parallels_can_be_created_edited_and_removed_without_pausing(): void
     {
         $syllabus = $this->validDraft();

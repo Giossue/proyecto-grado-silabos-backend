@@ -15,6 +15,7 @@ use App\Modules\Syllabus\Application\DeadlineExtensions;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Application\ProcessClosing;
 use App\Modules\Syllabus\Application\ProcessTemplateChange;
+use App\Modules\Syllabus\Application\ReopenCatchUp;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Support\InstitutionDate;
@@ -35,9 +36,10 @@ class ExtendProcessDeadline
         private readonly RegenerateProcessSyllabi $regenerate,
         private readonly TemplateStructureValidator $templateStructure,
         private readonly GenerateConvocationSyllabi $generator,
+        private readonly ReopenCatchUp $catchUp,
     ) {}
 
-    /** @return array{process: SyllabusProcess, confirmation_required: bool, counts: array<string, int>, reopened: bool} */
+    /** @return array{process: SyllabusProcess, confirmation_required: bool, confirmation_code: string|null, counts: array<string, int>, pending_counts: array<string, int>|null, reopened: bool} */
     public function execute(
         SyllabusProcess $process,
         string $newDueAt,
@@ -81,14 +83,22 @@ class ExtendProcessDeadline
             $changedAt = null;
             $counts = [];
             $reopened = [];
+            $convocationIds = [];
+            $plan = null;
             if ($reopening) {
                 $this->templateStructure->assertUsable(SyllabusTemplate::institutional(), 'process');
                 $changedAt = ProcessTemplateChange::since(ProcessClosing::templateReference($locked));
+                $convocationIds = $this->catchUp->convocationsToReopen($locked);
+                $plan = $this->catchUp->plan($convocationIds, $locked->finalizada_en);
+                $pending = array_sum($plan['counts']) > 0 ? $plan['counts'] : null;
                 if ($changedAt !== null) {
                     $counts = $this->regenerate->countsToReopen($locked);
                     if (! $request->boolean('confirmar_rehacer')) {
-                        return ['process' => $locked, 'confirmation_required' => true, 'counts' => $counts, 'reopened' => false];
+                        return $this->needsConfirmation($locked, 'plantilla_cambiada', $counts, $pending);
                     }
+                }
+                if ($pending !== null && ! $request->boolean('confirmar_cambios')) {
+                    return $this->needsConfirmation($locked, 'cambios_pendientes', $pending, null);
                 }
                 $reopened = $this->closing->reopen($locked);
             }
@@ -97,6 +107,9 @@ class ExtendProcessDeadline
             $locked->update(['entrega_en' => $requested, 'cantidad_prorrogas' => $number]);
             if ($changedAt !== null) {
                 $this->templateChange->adapt($locked, $changedAt, $counts, $actor->id, $activeRole->id);
+            }
+            if ($plan !== null) {
+                $this->catchUp->apply($plan, $convocationIds, $locked->periodo_academico_id);
             }
             foreach (Convocation::query()->whereKey($reopened)->with('process')->orderBy('id')->lockForUpdate()->get() as $convocation) {
                 $this->generator->execute($convocation, allowEmpty: true, skipIncomplete: true);
@@ -132,8 +145,18 @@ class ExtendProcessDeadline
             }
             $this->notify($locked, $requested, $request);
 
-            return ['process' => $locked->refresh(), 'confirmation_required' => false, 'counts' => $counts, 'reopened' => $reopening];
+            return ['process' => $locked->refresh(), 'confirmation_required' => false, 'confirmation_code' => null, 'counts' => $counts, 'pending_counts' => null, 'reopened' => $reopening];
         });
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     * @param  array<string, int>|null  $pendingCounts
+     * @return array{process: SyllabusProcess, confirmation_required: bool, confirmation_code: string|null, counts: array<string, int>, pending_counts: array<string, int>|null, reopened: bool}
+     */
+    private function needsConfirmation(SyllabusProcess $process, string $code, array $counts, ?array $pendingCounts): array
+    {
+        return ['process' => $process, 'confirmation_required' => true, 'confirmation_code' => $code, 'counts' => $counts, 'pending_counts' => $pendingCounts, 'reopened' => false];
     }
 
     private function notify(SyllabusProcess $process, CarbonImmutable $dueAt, Request $request): void

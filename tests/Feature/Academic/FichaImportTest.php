@@ -5,12 +5,18 @@ namespace Tests\Feature\Academic;
 use App\Models\User;
 use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Application\FichaWorkbookContext;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Spreadsheets\FichaWorkbook;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Syllabus\Application\AcademicContextSnapshot;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\SyllabusTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -57,6 +63,33 @@ class FichaImportTest extends TestCase
         $book->disconnectWorksheets();
 
         return new UploadedFile($path, 'proyecto.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+    }
+
+    private function finalizedSyllabus(Subject $subject): Syllabus
+    {
+        $period = AcademicPeriod::query()->firstOrFail();
+        $period->update(['fecha_inicio' => now()->subDays(90), 'fecha_fin' => now()->addDays(60)]);
+        $process = SyllabusProcess::query()->create([
+            'periodo_academico_id' => $period->id,
+            'inicia_en' => now()->subDays(30),
+            'entrega_en' => now()->subDay(),
+            'estado' => SyllabusProcess::STATE_CLOSED,
+            'finalizada_en' => now()->subHour(),
+        ]);
+        $convocation = Convocation::query()->create([
+            'proceso_id' => $process->id,
+            'carrera_id' => $this->context->carrera_id,
+            'estado' => Convocation::STATE_CLOSED,
+        ]);
+        $convocation->forceFill(['estado_previo' => Convocation::STATE_OPEN])->save();
+        $parallel = Parallel::query()->firstOrCreate(['asignatura_id' => $subject->id, 'codigo' => 'A'], ['jornada' => 'matutina']);
+
+        return Syllabus::query()->create([
+            'convocatoria_id' => $convocation->id,
+            'paralelo_id' => $parallel->id,
+            'contexto_academico' => app(AcademicContextSnapshot::class)->build($parallel, $period),
+            'estado' => 'sin_iniciar',
+        ]);
     }
 
     private function asCoordinator(): static
@@ -141,6 +174,28 @@ class FichaImportTest extends TestCase
         $this->assertStringContainsString('Descripción que ya estaba', json_encode($kept->valor, JSON_UNESCAPED_UNICODE));
         $objectives = FieldDefinition::query()->where('clave', 'objetivos_especificos')->firstOrFail();
         $this->assertTrue(FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $objectives->id)->exists());
+    }
+
+    public function test_a_finalized_convocation_warns_before_applying_the_workbook_and_keeps_its_syllabi(): void
+    {
+        $subject = Subject::query()->where('carrera_id', $this->context->carrera_id)->where('activo', true)->firstOrFail();
+        $syllabus = $this->finalizedSyllabus($subject);
+        $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
+        $stored = fn (): string => md5((string) json_encode([$syllabus->fresh()?->getAttributes(), FieldValue::query()->where('silabo_id', $syllabus->id)->get()->toArray()]));
+        $before = $stored();
+
+        $file = $this->workbook($subject->id);
+        $preview = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.spreadsheet'), ['file' => $file], ['Accept' => 'application/json'])->assertOk()->json('preview');
+        $payload = ['file' => $file, 'fingerprint' => $preview['fingerprint'], 'file_hash' => $preview['file_hash'], 'subjects' => [$subject->id]];
+
+        $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.apply'), $payload, ['Accept' => 'application/json'])
+            ->assertUnprocessable()->assertJsonPath('errors.purge_mode.0', 'convocatoria_finalizada');
+        $this->assertFalse(FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $description->id)->exists());
+
+        $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.apply'), [...$payload, 'confirm_purge' => '1'], ['Accept' => 'application/json'])->assertOk();
+
+        $this->assertTrue(FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $description->id)->exists());
+        $this->assertSame($before, $stored());
     }
 
     public function test_only_the_career_coordinator_can_use_the_workbook(): void

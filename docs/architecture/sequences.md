@@ -208,6 +208,9 @@ La plantilla no se puede cambiar con un proceso `abierto`.
 - Si el cambio afecta sílabos de una convocatoria `abierta` o `pausada`, la API responde
   `422` con `purge_required` y la cantidad. Con `confirm_purge` aplica el cambio y
   regenera esos sílabos en la misma transacción, incluidos los aprobados.
+- Si el cambio habría llegado a una convocatoria finalizada que aún podría reabrirse, la API
+  responde `422` con `purge_required` y `purge_mode: convocatoria_finalizada`, y deshace lo
+  hecho. Con `confirm_purge` guarda el cambio sin tocar sus sílabos.
 - Regenerar borra borrador, revisiones, aprobación, exportaciones, firmas, archivos y
   mensajes de IA, y crea un sílabo nuevo desde la base corregida. El docente recibe un
   aviso. No existe la reapertura de un sílabo aprobado.

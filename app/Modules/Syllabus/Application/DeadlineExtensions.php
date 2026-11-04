@@ -43,6 +43,11 @@ final class DeadlineExtensions
         return null;
     }
 
+    public static function mayReopen(SyllabusProcess $process): bool
+    {
+        return in_array(self::blockReason($process), [null, self::TEMPLATE_NOT_READY], true);
+    }
+
     public static function pastLimitMessage(SyllabusProcess $process): string
     {
         return 'La nueva fecha no puede pasar del último día de clases ('.self::display(self::limitOn($process)).').';

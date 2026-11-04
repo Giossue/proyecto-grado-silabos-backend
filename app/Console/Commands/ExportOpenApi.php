@@ -420,6 +420,7 @@ class ExportOpenApi extends Command
                     'properties' => [
                         'due_at' => ['type' => 'string'],
                         'confirmar_rehacer' => ['type' => 'boolean'],
+                        'confirmar_cambios' => ['type' => 'boolean'],
                     ],
                     'additionalProperties' => false,
                 ]]];

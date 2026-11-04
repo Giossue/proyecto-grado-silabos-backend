@@ -36,7 +36,7 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 | T2 | S3, S4, S7, S9 (frontend) | delegada: escritor de frontend (en paralelo con T1) | hecha: 749 pruebas, typecheck, lint y contrato | frontend eed4757 |
 | T4 | S10 | delegada: escritor de backend (vigencia hasta el fin de clases; en paralelo con T5) | hecha: 721 pruebas; verificador PASS | 028b0533 |
 | T5 | S11 | delegada: escritor de backend y frontend (plantilla usable en el motivo y en «Antes de empezar»; en paralelo con T4) | hecha: verificador PASS | 586b59ae |
-| T6 | S12 | delegada: escritor de backend y frontend (respaldo de contexto) | pendiente | |
+| T6 | S12 | delegada: escritor de backend y frontend (respaldo de contexto) | hecha: ver L10 | |
 | T7 | S12 | delegada: verificador independiente (ítems 1 y 4) | pendiente | |
 | T3 | todas | delegada: verificador independiente (ítems de alto riesgo 1 y 4) | hecha: PASS en S1–S9, sin bloqueos | — |
 
@@ -72,3 +72,12 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
   - A5: la comprobación de la plantilla se hace en cada carga del panel.
   - Decisión del escritor: `skipIncomplete` al reabrir.
 - L9 (2026-11-04): «Es que a ver, todo está guardado en los periodo, si un admin hizo ese chiste, A MENOS que haga prorroga no habrá afectaciones, y se aplicará el siguiente periodo o convocatoria, pero claro, lo recomendable es avisarle de que no haga eso». Respuesta: «Para todo». Confirmado con el ejemplo del nombre de la carrera: «ok mejor».
+- L10 (2026-11-04): decisiones del escritor de S12:
+  - `InProgressWork` y `CoordinationHandover` vuelven a alcanzar solo abierta y en pausa; se quitan `current()`, `refreshSnapshot` y `rebuild`.
+  - `FinalizedChangeNotice` aplica el cambio en la transacción, compara lo que recibirían los sílabos antes y después, y lo deshace con 422 (`purge_required`, `purge_count: 0`, `purge_mode: convocatoria_finalizada`). La confirmación es la misma `confirm_purge`: una finalizada que puede reabrirse y una en curso no coexisten.
+  - `ReopenCatchUp` compara lo guardado con lo vigente. Docente: asignación posterior a `finalizada_en` y autor distinto (última revisión o correo de `closed_document`). Coordinador: auditoría `academico.coordinacion.reemplazada` posterior a `finalizada_en`.
+  - Reabrir responde 422 `cambios_pendientes` con `counts` (`to_draft`, `restarted`, `to_coordination`); se confirma con `confirmar_cambios`. Con cambio de plantilla, `plantilla_cambiada` trae `pending_counts`.
+  - Volver a Coordinación también pide confirmar, aunque S12 solo nombra Borrador: borra firmas y aprobaciones.
+  - «Aún podría reabrirse» añade a `finalizedButCurrent` que queden prórrogas y plazo (`DeadlineExtensions::mayReopen`): si no, el aviso diría algo falso.
+  - No se avisa al quitar un docente sin poner otro ni al desactivar registros: no llegan a los sílabos. La importación de malla solo crea materias nuevas, sin sílabos, así que no avisa.
+  - Un paralelo con sílabo sin iniciar de una convocatoria finalizada ya no se elimina.

@@ -89,14 +89,6 @@ class SyllabusProcess extends Model
     }
 
     /** @param  Builder<SyllabusProcess>  $query */
-    public function scopeCurrent(Builder $query): void
-    {
-        $query->where(fn (Builder $current) => $current
-            ->whereIn('estado', [self::STATE_OPEN, self::STATE_PAUSED])
-            ->orWhere(fn (Builder $finalized) => $finalized->finalizedButCurrent()));
-    }
-
-    /** @param  Builder<SyllabusProcess>  $query */
     public function scopeFinalizedButCurrent(Builder $query): void
     {
         $own = $query->getModel()->getTable();

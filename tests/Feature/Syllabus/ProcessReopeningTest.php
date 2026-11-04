@@ -284,7 +284,7 @@ class ProcessReopeningTest extends TestCase
         $approved = Syllabus::query()->create([
             'convocatoria_id' => $draft->convocatoria_id,
             'paralelo_id' => $parallel->id,
-            'contexto_academico' => $draft->contexto_academico,
+            'contexto_academico' => [...$draft->contexto_academico, 'parallel' => [...(array) data_get($draft->contexto_academico, 'parallel'), 'id' => $parallel->id, 'code' => 'APROBADO']],
             'estado' => 'aprobado',
         ]);
         $revision = SyllabusRevision::query()->create([

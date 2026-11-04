@@ -65,15 +65,6 @@ class Convocation extends Model
     }
 
     /** @param  Builder<Convocation>  $query */
-    public function scopeCurrent(Builder $query): void
-    {
-        $query->where(fn (Builder $state) => $state
-            ->whereIn('estado', [self::STATE_OPEN, self::STATE_PAUSED])
-            ->orWhere(fn (Builder $finalized) => $finalized->where('estado', self::STATE_CLOSED)->whereNotNull('estado_previo_cierre_convocatoria_carrera')))
-            ->whereHas('process', fn (Builder $process) => $process->current());
-    }
-
-    /** @param  Builder<Convocation>  $query */
     public function scopeLockingCareerData(Builder $query): void
     {
         $query->where('estado', self::STATE_OPEN)

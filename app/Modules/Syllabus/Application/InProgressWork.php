@@ -14,9 +14,11 @@ use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -32,7 +34,7 @@ final class InProgressWork
 
     public const SENT_STATES = ['en_revision', 'correccion_solicitada', 'aprobado'];
 
-    private const DOCUMENT_PATHS = [
+    public const DOCUMENT_PATHS = [
         'career.name', 'career.code', 'career.faculty', 'career.faculty_logo', 'scheduled_subject.campus',
         'subject.name', 'subject.code', 'subject.cycle', 'subject.organization_unit', 'subject.credits',
         'subject.total_hours', 'subject.hours_ac', 'subject.hours_pae', 'subject.hours_aa',
@@ -48,7 +50,7 @@ final class InProgressWork
         private readonly SubjectProfileFields $profiles,
         private readonly ScheduleWorkflowNotification $workflowNotifications,
         private readonly WorkflowNotificationRecipients $recipients,
-        private readonly ProcessClosing $closing,
+        private readonly FinalizedChangeNotice $notice,
     ) {}
 
     /**
@@ -139,6 +141,7 @@ final class InProgressWork
         ?string $reason = null,
         ?string $subjectId = null,
         ?array $subjectIds = null,
+        bool $skipIncomplete = false,
     ): array {
         $syllabi = $this->inProgress($careerIds, $periodId, $subjectId, $subjectIds)->with('convocation:id,carrera_id')->lockForUpdate()
             ->get(['id', 'convocatoria_id', 'paralelo_id', 'contexto_academico']);
@@ -183,7 +186,7 @@ final class InProgressWork
             ->lockForUpdate()
             ->get();
         foreach ($convocations as $convocation) {
-            $generated += $this->generator->execute($convocation, $subjectId, $subjectIds, allowEmpty: true);
+            $generated += $this->generator->execute($convocation, $subjectId, $subjectIds, allowEmpty: true, skipIncomplete: $skipIncomplete);
         }
 
         return ['deleted' => count($syllabusIds), 'generated' => $generated];
@@ -392,7 +395,7 @@ final class InProgressWork
 
     public function refreshParallel(string $parallelId): int
     {
-        $syllabi = $this->inProgress(null)->where('paralelo_id', $parallelId)->with(['career.faculty', 'convocation'])->lockForUpdate()->get();
+        $syllabi = $this->inProgress(null)->where('paralelo_id', $parallelId)->with('career.faculty')->lockForUpdate()->get();
         foreach ($syllabi as $syllabus) {
             $this->applyIdentification($syllabus);
         }
@@ -445,7 +448,6 @@ final class InProgressWork
         data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
         $syllabus->contexto_academico = $context;
         $syllabus->save();
-        $this->closing->refreshSnapshot($syllabus);
     }
 
     /**
@@ -464,7 +466,7 @@ final class InProgressWork
                     ->pluck('paralelos.asignatura_id')->all(),
             )));
             $before = $this->profilesFor($subjects);
-            $result = $change();
+            $result = $this->notice->guard($request, $careerId, $change);
             $this->sync($request, $careerId, $subjectIds, $before);
 
             return $result;
@@ -484,6 +486,61 @@ final class InProgressWork
             ->get();
         $fields = $this->profiles->fields()->keyBy('id');
         $profilesAfter = $this->profilesFor(array_map('strval', array_keys($profilesBefore)));
+        $pending = $this->pendingChanges($syllabi, function (Parallel $parallel) use ($fields, $profilesAfter, $profilesBefore): array {
+            $documents = [];
+            foreach ($fields as $fieldId => $field) {
+                $before = $profilesBefore[$parallel->asignatura_id][$fieldId] ?? null;
+                $after = $profilesAfter[$parallel->asignatura_id][$fieldId] ?? null;
+                if ($before != $after) {
+                    $documents[$fieldId] = $after === null || FieldDocument::isEmpty($after) ? $field->contenido : $after;
+                }
+            }
+
+            return $documents;
+        });
+
+        $count = count(array_filter($pending, fn (array $item): bool => $item['back_to_draft']));
+        if ($count > 0 && ! $request->boolean(self::CONFIRMATION_FIELD)) {
+            throw ValidationException::withMessages([
+                'purge_required' => $count === 1
+                    ? 'Este cambio devolverá 1 sílabo enviado o aprobado a borrador. Se conserva lo escrito; el docente deberá enviarlo y firmarlo de nuevo, y recibirá un aviso por correo.'
+                    : "Este cambio devolverá {$count} sílabos enviados o aprobados a borrador. Se conserva lo escrito; cada docente deberá enviarlo y firmarlo de nuevo, y recibirá un aviso por correo.",
+                'purge_count' => (string) $count,
+            ]);
+        }
+        $this->applyChanges($pending);
+
+        return $count;
+    }
+
+    /**
+     * @param  iterable<Syllabus>  $syllabi
+     * @return list<string>
+     */
+    public function returningToDraft(iterable $syllabi): array
+    {
+        $pending = $this->pendingChanges($syllabi, $this->heldDocuments(...), onlyStoredPaths: true);
+
+        return array_values(array_map(
+            fn (array $item): string => (string) $item['syllabus']->id,
+            array_filter($pending, fn (array $item): bool => $item['back_to_draft']),
+        ));
+    }
+
+    /** @param  list<string>  $careerIds */
+    public function catchUp(array $careerIds): void
+    {
+        $syllabi = $this->inProgress($careerIds)->with('convocation.process.academicPeriod')->orderBy('id')->lockForUpdate()->get();
+        $this->applyChanges($this->pendingChanges($syllabi, $this->heldDocuments(...), onlyStoredPaths: true));
+    }
+
+    /**
+     * @param  iterable<Syllabus>  $syllabi
+     * @param  Closure(Parallel, Syllabus): array<string, array<string, mixed>>  $documentsFor
+     * @return list<array{syllabus: Syllabus, context: array<string, mixed>, documents: array<string, array<string, mixed>>, back_to_draft: bool}>
+     */
+    private function pendingChanges(iterable $syllabi, Closure $documentsFor, bool $onlyStoredPaths = false): array
+    {
         $pending = [];
         foreach ($syllabi as $syllabus) {
             $parallel = Parallel::query()->find($syllabus->paralelo_id);
@@ -501,19 +558,11 @@ final class InProgressWork
             foreach ([...self::DOCUMENT_PATHS, ...self::SILENT_PATHS] as $path) {
                 $value = data_get($context, $path);
                 if (data_get($updated, $path) != $value) {
-                    in_array($path, self::DOCUMENT_PATHS, true) ? $visible = true : $silent = true;
+                    in_array($path, self::DOCUMENT_PATHS, true) && (! $onlyStoredPaths || Arr::has($updated, $path)) ? $visible = true : $silent = true;
                     data_set($updated, $path, $value);
                 }
             }
-            $subjectId = $parallel->asignatura_id;
-            $documents = [];
-            foreach ($fields as $fieldId => $field) {
-                $before = $profilesBefore[$subjectId][$fieldId] ?? null;
-                $after = $profilesAfter[$subjectId][$fieldId] ?? null;
-                if ($before != $after) {
-                    $documents[$fieldId] = $after === null || FieldDocument::isEmpty($after) ? $field->contenido : $after;
-                }
-            }
+            $documents = $documentsFor($parallel, $syllabus);
             if (! $visible && ! $silent && $documents === []) {
                 continue;
             }
@@ -525,16 +574,34 @@ final class InProgressWork
             ];
         }
 
-        $returning = array_values(array_filter($pending, fn (array $item): bool => $item['back_to_draft']));
-        $count = count($returning);
-        if ($count > 0 && ! $request->boolean(self::CONFIRMATION_FIELD)) {
-            throw ValidationException::withMessages([
-                'purge_required' => $count === 1
-                    ? 'Este cambio devolverá 1 sílabo enviado o aprobado a borrador. Se conserva lo escrito; el docente deberá enviarlo y firmarlo de nuevo, y recibirá un aviso por correo.'
-                    : "Este cambio devolverá {$count} sílabos enviados o aprobados a borrador. Se conserva lo escrito; cada docente deberá enviarlo y firmarlo de nuevo, y recibirá un aviso por correo.",
-                'purge_count' => (string) $count,
-            ]);
+        return $pending;
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function heldDocuments(Parallel $parallel, Syllabus $syllabus): array
+    {
+        $held = FieldValue::query()->where('silabo_id', $syllabus->id)->get()->keyBy('definicion_campo_id');
+        $profile = $this->profiles->values((string) $parallel->asignatura_id);
+        $documents = [];
+        foreach ($this->profiles->fields() as $field) {
+            $value = $held->get($field->id);
+            if (! $value instanceof FieldValue) {
+                continue;
+            }
+            $current = $profile[$field->id] ?? null;
+            $expected = $current === null || FieldDocument::isEmpty($current) ? $field->contenido : $current;
+            if (FieldDocument::normalize($value->valor) != FieldDocument::normalize($expected)) {
+                $documents[$field->id] = $expected;
+            }
         }
+
+        return $documents;
+    }
+
+    /** @param  list<array{syllabus: Syllabus, context: array<string, mixed>, documents: array<string, array<string, mixed>>, back_to_draft: bool}>  $pending */
+    private function applyChanges(array $pending): void
+    {
+        $returning = array_values(array_filter($pending, fn (array $item): bool => $item['back_to_draft']));
         if ($returning !== []) {
             $this->clearHistory(array_map(fn (array $item): string => (string) $item['syllabus']->id, $returning));
         }
@@ -554,7 +621,6 @@ final class InProgressWork
                 $syllabus->guardado_en = now()->toImmutable();
             }
             $syllabus->save();
-            $this->closing->refreshSnapshot($syllabus);
             if ($item['back_to_draft']) {
                 $this->workflowNotifications->execute(
                     syllabus: $syllabus,
@@ -565,8 +631,6 @@ final class InProgressWork
                 );
             }
         }
-
-        return $count;
     }
 
     /**
@@ -594,7 +658,9 @@ final class InProgressWork
             ->when($subjectId !== null, fn (Builder $query) => $query->forSubjects([$subjectId]))
             ->when($subjectIds !== null, fn (Builder $query) => $query->forSubjects($subjectIds))
             ->whereHas('convocation', fn (Builder $query) => $query
-                ->current()
+                ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
+                ->whereHas('process', fn (Builder $process) => $process
+                    ->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
                 ->when(is_string($careerIds), fn (Builder $scoped) => $scoped->where('carrera_id', $careerIds))
                 ->when(is_array($careerIds), fn (Builder $scoped) => $scoped->whereIn('carrera_id', $careerIds))
                 ->when($periodId !== null, fn (Builder $scoped) => $scoped->whereHas(

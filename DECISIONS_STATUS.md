@@ -147,23 +147,35 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   existente (ADR-0012). Una convocatoria cerrada queda solo para consulta: sus
   sílabos ya no se editan, envían, revisan ni firman, y después se puede abrir la del
   período siguiente.
-- Un cambio de docente solo rehace el sílabo del paralelo en la convocatoria vigente (ver
-  «Convocatoria finalizada vigente»); los de convocatorias que ya no rigen se conservan (I-231).
-- Convocatoria finalizada vigente (2026-11-03): una convocatoria finalizada sigue rigiendo
-  mientras no termine el último día de clases de su período (`periodos_academicos.fecha_fin_periodo`,
-  día de la institución) y Administración no haya creado otra convocatoria institucional después
-  de ella (una abierta o en pausa, o una de un período que empieza más tarde). Mientras rija, los
-  cambios de malla, del proyecto de carrera, de paralelos y de docentes, y el traspaso de
-  coordinación se aplican a sus sílabos con las mismas reglas y confirmaciones que con la
-  convocatoria abierta o en pausa (identificación actualizada, enviados o aprobados que vuelven a
-  borrador tras `confirm_purge`, rehechos y aprobaciones devueltas a Coordinación; también un
-  cambio de fechas del período pide confirmar y rehace sus sílabos, como en pausa). En los sílabos
-  sin enviar se rehace la fotografía `closed_document` con los datos nuevos, conservando la
-  plantilla con la que se finalizó; la vista sigue en solo lectura y las decisiones siguen
-  bloqueadas hasta reabrir con una prórroga. Pasado el último día de clases, o con una
-  convocatoria más nueva, ya no se toca. La regla es una sola: `SyllabusProcess::current()` y
-  `Convocation::current()`, usadas por `InProgressWork` y `CoordinationHandover`.
-- Paralelo nuevo en una convocatoria finalizada vigente (2026-11-03): como en una abierta o en
+- Un cambio de docente solo rehace el sílabo del paralelo en una convocatoria abierta o en pausa;
+  los de convocatorias finalizadas se conservan (I-231), salvo que se reabran con una prórroga.
+- Convocatoria finalizada congelada (2026-11-04, reemplaza «Convocatoria finalizada vigente» del
+  2026-11-03): con la convocatoria finalizada, los cambios de facultad, carrera, malla, proyecto de
+  carrera, paralelos, docentes, coordinador y fechas del período no tocan sus sílabos: ni el
+  estado, ni el contenido, ni `closed_document`, ni las revisiones. Cambiar un docente no borra un
+  sílabo aprobado, y un paralelo con sílabo de una convocatoria finalizada no se elimina. Si no se
+  reabre, esos cambios valen para la próxima convocatoria.
+- Reabrir pone al día (2026-11-04): «Prorrogar plazo» sobre una finalizada aplica lo que cambió, con
+  el mismo efecto que en una abierta. Lo pendiente se calcula comparando los datos vigentes con lo
+  que guardan los sílabos: identificación, período, paralelo y proyecto de carrera. Un docente nuevo
+  se detecta por su asignación posterior a `finalizada_en` y un autor distinto (la última revisión o,
+  en un borrador, el correo de `closed_document`). El traspaso de coordinación se detecta por la
+  auditoría `academico.coordinacion.reemplazada` posterior a `finalizada_en`, porque comparar firmas
+  confundiría un cambio de rol sin traspaso. Si un sílabo enviado o aprobado volvería a Borrador, se
+  rehace o vuelve a Coordinación, nada cambia hasta confirmar: 422 con `code: cambios_pendientes` y
+  `counts` (`to_draft`, `restarted`, `to_coordination`); se reenvía con `confirmar_cambios`. Si
+  además cambió la plantilla, `plantilla_cambiada` trae `pending_counts` y se confirman juntas. Un
+  borrador que se rehace por un docente nuevo no pide confirmación, igual que en una abierta. Código
+  en `ReopenCatchUp`.
+- Aviso al guardar (2026-11-04): con una convocatoria finalizada que aún podría reabrirse (no
+  terminaron las clases, no hay otra más nueva y quedan prórrogas y plazo), un cambio que habría
+  llegado a sus sílabos responde 422 con `purge_required` (texto: «La convocatoria {período} ya finalizó. Este cambio no afecta sus sílabos: conservan los datos que tenían. Se aplicará en la próxima convocatoria, o en esta si la reabre con una prórroga. Evite estos cambios hasta abrir la próxima convocatoria, salvo que sea necesario.»), `purge_count` 0 y
+  `purge_mode: convocatoria_finalizada`, y deshace lo hecho. Con `confirm_purge` se guarda. El
+  diálogo no pide frase y ofrece «Guardar de todos modos» y «Cancelar». No se avisa si el cambio no
+  habría llegado (orden en el ciclo, número de ciclos, bibliotecas de Koha, guardar sin cambios,
+  quitar un docente sin poner otro). Un cambio en lote pregunta una vez. Código en
+  `FinalizedChangeNotice`.
+- Paralelo nuevo en una convocatoria finalizada (2026-11-03): como en una abierta o en
   pausa, no recibe sílabo al crearse; lo recibe al reabrir la convocatoria con una prórroga, que
   hace lo mismo que reanudar: cada convocatoria de carrera que vuelve a «abierta» crea los sílabos
   sin iniciar de los paralelos que no tienen. Los paralelos sin exactamente un docente vigente se
@@ -274,8 +286,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   institucional. Al reanudar confirma, y los sílabos afectados se adaptan a la plantilla:
   cada campo del docente conserva la respuesta del campo con su misma clave si todavía encaja en él (si no encaja, solo ese campo queda vacío); los de Coordinación vuelven del proyecto de carrera y los campos quitados se descartan. Los enviados o aprobados vuelven a borrador sin historial ni firmas, porque
   deben cumplir la plantilla vigente. Las convocatorias cerradas no se adaptan a la plantilla
-  hasta reabrirlas (I-118); los cambios de malla, proyecto de carrera, paralelos y docentes sí
-  alcanzan a la finalizada vigente (2026-11-03).
+  hasta reabrirlas (I-118); lo mismo vale para la malla, el proyecto de carrera, los paralelos y
+  los docentes (2026-11-04).
 
 ## Proyecto de carrera
 

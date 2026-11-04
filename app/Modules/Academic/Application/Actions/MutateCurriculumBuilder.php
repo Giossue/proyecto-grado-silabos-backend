@@ -10,9 +10,11 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\FinalizedChangeNotice;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,7 @@ class MutateCurriculumBuilder
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
+        private readonly FinalizedChangeNotice $notice,
     ) {}
 
     /** @param array{cycle_count: int|string} $data */
@@ -34,7 +37,7 @@ class MutateCurriculumBuilder
         User $actor,
         Request $request,
     ): Career {
-        return DB::transaction(function () use ($actor, $curriculumId, $data, $request): Career {
+        return $this->transaction($request, function () use ($actor, $curriculumId, $data, $request): Career {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
             $cycleCount = (int) $data['cycle_count'];
 
@@ -62,7 +65,7 @@ class MutateCurriculumBuilder
     /** @param array<string, mixed> $data */
     public function createRequirement(string $curriculumId, array $data, User $actor, Request $request): SubjectRequirement
     {
-        return DB::transaction(function () use ($actor, $curriculumId, $data, $request): SubjectRequirement {
+        return $this->transaction($request, function () use ($actor, $curriculumId, $data, $request): SubjectRequirement {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
             $subjects = Subject::query()
                 ->where('carrera_id', $career->id)
@@ -125,7 +128,7 @@ class MutateCurriculumBuilder
         User $actor,
         Request $request,
     ): void {
-        DB::transaction(function () use ($actor, $curriculumId, $requirementId, $request): void {
+        $this->transaction($request, function () use ($actor, $curriculumId, $requirementId, $request): void {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
             $requirement = SubjectRequirement::query()
                 ->whereHas('subject', fn ($query) => $query->where('carrera_id', $career->id))
@@ -145,7 +148,7 @@ class MutateCurriculumBuilder
         User $actor,
         Request $request,
     ): void {
-        DB::transaction(function () use ($actor, $curriculumId, $subjectId, $request): void {
+        $this->transaction($request, function () use ($actor, $curriculumId, $subjectId, $request): void {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
             $subject = Subject::query()
                 ->where('carrera_id', $career->id)
@@ -191,7 +194,7 @@ class MutateCurriculumBuilder
     /** @param array<string, mixed> $data */
     public function updateSubjectLayout(string $curriculumId, array $data, User $actor, Request $request): Subject
     {
-        return DB::transaction(function () use ($actor, $curriculumId, $data, $request): Subject {
+        return $this->transaction($request, function () use ($actor, $curriculumId, $data, $request): Subject {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
             if ((int) $data['cycle'] > $career->cantidad_ciclos_malla) {
                 throw ValidationException::withMessages(['cycle' => 'El ciclo excede la configuración de la malla.']);
@@ -235,6 +238,17 @@ class MutateCurriculumBuilder
 
             return $subject;
         });
+    }
+
+    /**
+     * @template TResult
+     *
+     * @param  Closure(): TResult  $change
+     * @return TResult
+     */
+    private function transaction(Request $request, Closure $change): mixed
+    {
+        return DB::transaction(fn (): mixed => $this->notice->guard($request, $this->roles->resolve($request)?->carrera_id, $change));
     }
 
     /** @return array{RoleAssignment, Career} */

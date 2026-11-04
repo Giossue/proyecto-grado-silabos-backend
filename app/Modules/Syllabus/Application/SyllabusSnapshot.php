@@ -59,38 +59,6 @@ class SyllabusSnapshot
     }
 
     /**
-     * @param  array<string, mixed>|null  $previous
-     * @return array<string, mixed>
-     */
-    public function rebuild(Syllabus $syllabus, ?array $previous): array
-    {
-        $fresh = $this->build($syllabus);
-        if ($previous === null || ($previous['schema_version'] ?? null) !== self::VERSION || ! is_array($previous['sections'] ?? null)) {
-            return $fresh;
-        }
-        $values = $syllabus->values()->get()->keyBy('definicion_campo_id');
-        $variables = $fresh['template_variables'];
-        $sections = $previous['sections'];
-        foreach ($sections as &$section) {
-            foreach ($section['fields'] as &$field) {
-                $stored = $values->get($field['definition_id'] ?? null);
-                if (($field['quien_llena'] ?? null) !== FieldDefinition::INSTITUTIONAL && $stored instanceof FieldValue) {
-                    $field['document'] = FieldDocument::normalize($stored->valor);
-                }
-                $field['value'] = FieldDocument::resolve($field['document'], $variables);
-            }
-        }
-
-        return [
-            ...$fresh,
-            'template_id' => $previous['template_id'] ?? $fresh['template_id'],
-            'template_name' => $previous['template_name'] ?? $fresh['template_name'],
-            'template_definition' => $previous['template_definition'] ?? $fresh['template_definition'],
-            'sections' => $sections,
-        ];
-    }
-
-    /**
      * @param  array<string, string>  $variables
      * @return list<array<string, mixed>>|null
      */

@@ -157,7 +157,10 @@ y el botón «Documentos» (DOC-10).
   indica qué falta.» Sobre una finalizada, la prórroga la vuelve a abrir («Plazo
   prorrogado. La convocatoria se volvió a abrir.»); si la plantilla cambió después de
   finalizar, muestra el conteo por estado y pide confirmar para adaptar los sílabos
-  (`confirmar_rehacer`).
+  (`confirmar_rehacer`). Si lo que cambió mientras estuvo finalizada devuelve sílabos enviados o
+  aprobados, muestra cuántos vuelven a borrador, a empezar o a Coordinación, pide escribir
+  «aplicar cambios» y reenvía con `confirmar_cambios`; con los dos casos se confirma una sola vez
+  con «adaptar sílabos».
 
 ### COR-13 Malla
 
@@ -294,6 +297,7 @@ envían. Cada persona firma una sola vez por sílabo.
   Convocatorias» («Ir a Revisión» para Coordinación). Convocatorias usa la misma franja
   para «Convocatoria en curso». El servidor rechaza igual la petición.
 - **Convocatoria finalizada.** En todos los roles, la franja de plazo pasa a «La convocatoria finalizó» y se queda hasta que Administración abra otra convocatoria. El detalle cambia por rol; Administración ve «Puede reabrirla con una prórroga o abrir una nueva» y, con las clases terminadas, «Puede abrir una nueva». El docente la ve si tuvo sílabos en esa convocatoria. La convocatoria institucional manda sobre la de carrera; con la institucional abierta y la de carrera sin abrir, Coordinación ve «Aún no abre la convocatoria de su carrera». En Facultades y carreras, el aviso de cambios solo sale con una convocatoria en curso (abierta o en pausa).
+- **Cambios con una convocatoria finalizada.** Si un cambio habría llegado a los sílabos de una convocatoria finalizada que aún podría reabrirse, al guardar sale el diálogo «La convocatoria ya finalizó» con «La convocatoria {período} ya finalizó. Este cambio no afecta sus sílabos: conservan los datos que tenían. Se aplicará en la próxima convocatoria, o en esta si la reabre con una prórroga. Evite estos cambios hasta abrir la próxima convocatoria, salvo que sea necesario.» (sin punto final, como todo texto de diálogo), «Guardar de todos modos» y «Cancelar». No pide frase. Sale en Facultades y carreras, la malla, el proyecto de carrera (también con Excel), paralelos, asignación de docentes (también en lote, una sola vez por lote) y al reemplazar un coordinador en Usuarios y roles.
 - **Aviso de plazo.** Docente, Coordinación y Biblioteca ven en todas sus pantallas, bajo
   la barra superior, una franja ámbar con los días que quedan, qué les toca hacer antes
   del plazo de entrega y la fecha límite. Biblioteca usa el plazo de la convocatoria

@@ -5,6 +5,7 @@ namespace App\Modules\Academic\Infrastructure\Persistence\Models;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Support\Database\MapsLegacyColumnNames;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string|null $asignacion_rol_id
  * @property bool $activo
+ * @property CarbonImmutable $asignado_en
  * @property-read RoleAssignment $roleAssignment
  * @property-read Parallel $parallel
  */

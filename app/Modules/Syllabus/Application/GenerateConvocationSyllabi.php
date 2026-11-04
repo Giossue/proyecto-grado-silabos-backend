@@ -14,7 +14,6 @@ final class GenerateConvocationSyllabi
     public function __construct(
         private readonly AcademicContextSnapshot $academicContext,
         private readonly InheritMasterValues $inherit,
-        private readonly ProcessClosing $closing,
     ) {}
 
     /** @param list<string>|null $subjectIds */
@@ -97,6 +96,5 @@ final class GenerateConvocationSyllabi
         $fields = SyllabusTemplate::institutional()->sections
             ->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields));
         $this->inherit->execute($syllabus, $fields, $parallel);
-        $this->closing->refreshSnapshot($syllabus->setRelation('convocation', $convocation));
     }
 }

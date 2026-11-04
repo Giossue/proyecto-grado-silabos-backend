@@ -13,6 +13,7 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\FinalizedChangeNotice;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use BackedEnum;
@@ -68,6 +69,7 @@ class UpdateAcademicRecord
         private readonly AcademicPeriodWeeks $periodWeeks,
         private readonly InProgressWork $work,
         private readonly ProcessLocks $locks,
+        private readonly FinalizedChangeNotice $notice,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -135,9 +137,15 @@ class UpdateAcademicRecord
                 return $record;
             };
 
-            return $record instanceof AcademicPeriod
-                ? $this->work->replace($request, $change, null, $record->id)
-                : $change();
+            if ($record instanceof AcademicPeriod) {
+                return $this->work->replace($request, fn (): Model => $this->notice->guard($request, null, $change, null, $record->id), null, $record->id);
+            }
+
+            $careerIds = $record instanceof Faculty
+                ? array_values(Career::query()->where('facultad_id', $record->id)->pluck('id')->map(fn ($id): string => (string) $id)->all())
+                : [$record->id];
+
+            return $this->notice->guard($request, $careerIds, $change);
         });
     }
 

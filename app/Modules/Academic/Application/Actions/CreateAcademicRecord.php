@@ -20,6 +20,7 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Domain\RoleCombination;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\FinalizedChangeNotice;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -39,6 +40,7 @@ class CreateAcademicRecord
         private readonly ScheduledSubjectInheritance $inheritance,
         private readonly AcademicPeriodLabel $periodLabel,
         private readonly AcademicPeriodWeeks $periodWeeks,
+        private readonly FinalizedChangeNotice $notice,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -53,7 +55,7 @@ class CreateAcademicRecord
             $this->locks->assertCareerEditable($activeRole->carrera_id);
         }
 
-        return $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity): Model {
+        $create = fn (): Model => $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity): Model {
             $record = $this->create($entity, $data, $activeRole);
 
             $this->audit->execute(
@@ -67,6 +69,19 @@ class CreateAcademicRecord
 
             return $record;
         }, []);
+
+        return $entity === 'asignacion_docente'
+            ? $this->notice->guard($request, $activeRole->carrera_id, $create, $this->subjectOf($data))
+            : $create();
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return list<string>
+     */
+    private function subjectOf(array $data): array
+    {
+        return array_values(array_map('strval', Parallel::query()->whereKey($this->stringValue($data, 'parallel_id'))->pluck('asignatura_id')->all()));
     }
 
     /** @param array<string, mixed> $data */

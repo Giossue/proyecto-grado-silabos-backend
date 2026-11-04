@@ -9,6 +9,7 @@ use App\Modules\Identity\Domain\RoleCombination;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\CoordinationHandover;
+use App\Modules\Syllabus\Application\FinalizedChangeNotice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +20,7 @@ class AssignRole
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly CoordinationHandover $handover,
+        private readonly FinalizedChangeNotice $notice,
     ) {}
 
     /** @param array{role_code: string, career_id?: string|null, replace_coordinator?: bool} $data */
@@ -26,7 +28,7 @@ class AssignRole
     {
         $activeRole = $this->roles->resolve($request);
 
-        return DB::transaction(function () use ($actor, $activeRole, $data, $target): RoleAssignment {
+        return DB::transaction(function () use ($actor, $activeRole, $data, $request, $target): RoleAssignment {
             $role = RoleCode::tryFrom($data['role_code']);
             if ($role === null) {
                 throw ValidationException::withMessages(['role_code' => 'El rol indicado no es válido.']);
@@ -73,6 +75,7 @@ class AssignRole
                             'replace_coordinator' => "La carrera ya tiene como coordinador a {$current->user->nombre}.",
                         ]);
                     }
+                    $this->notice->guardHandover($request, (string) $careerId);
                     $current->update(['activo' => false]);
                     $returned = $this->handover->returnApprovals((string) $careerId);
                     $this->audit->execute(

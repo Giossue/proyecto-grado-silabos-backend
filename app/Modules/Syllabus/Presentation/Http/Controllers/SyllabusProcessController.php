@@ -113,11 +113,19 @@ class SyllabusProcessController extends Controller
             $request,
         );
 
+        if ($result['confirmation_code'] === 'cambios_pendientes') {
+            return response()->json([
+                'message' => 'Hubo cambios mientras la convocatoria estuvo finalizada. Confirme para aplicarlos: hay sílabos enviados o aprobados que volverán a borrador, volverán a empezar o volverán a Coordinación.',
+                'code' => 'cambios_pendientes',
+                'counts' => $result['counts'],
+            ], 422);
+        }
         if ($result['confirmation_required']) {
             return response()->json([
                 'message' => 'La plantilla cambió después de finalizar. Confirme para adaptar los sílabos del período: se conserva lo escrito y los enviados o aprobados vuelven a borrador.',
                 'code' => 'plantilla_cambiada',
                 'counts' => $result['counts'],
+                ...($result['pending_counts'] === null ? [] : ['pending_counts' => $result['pending_counts']]),
             ], 422);
         }
 

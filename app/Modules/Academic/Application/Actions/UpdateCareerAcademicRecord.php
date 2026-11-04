@@ -11,6 +11,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\FinalizedChangeNotice;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use DateTimeInterface;
@@ -66,6 +67,7 @@ class UpdateCareerAcademicRecord
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
         private readonly ScheduledSubjectInheritance $inheritance,
+        private readonly FinalizedChangeNotice $notice,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -127,7 +129,7 @@ class UpdateCareerAcademicRecord
         };
 
         return $togglesSyllabi
-            ? $this->work->replace($request, $change, $activeRole->carrera_id, null, null, $recordId)
+            ? $this->notice->guard($request, $activeRole->carrera_id, fn (): Model => $this->work->replace($request, $change, $activeRole->carrera_id, null, null, $recordId))
             : $this->work->keepContent($request, $activeRole->carrera_id, $change);
     }
 

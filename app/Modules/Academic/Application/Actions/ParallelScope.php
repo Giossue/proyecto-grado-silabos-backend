@@ -5,6 +5,7 @@ namespace App\Modules\Academic\Application\Actions;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
@@ -46,7 +47,8 @@ final class ParallelScope
     public static function deleteUntouchedSyllabi(Parallel $parallel, string $message): void
     {
         $syllabi = Syllabus::query()->where('paralelo_id', $parallel->id);
-        if ((clone $syllabi)->where(fn ($query) => $query->where('estado', '!=', 'sin_iniciar')->orWhereNotNull('iniciado_en'))->exists()) {
+        if ((clone $syllabi)->where(fn ($query) => $query->where('estado', '!=', 'sin_iniciar')->orWhereNotNull('iniciado_en')
+            ->orWhereHas('convocation', fn ($convocation) => $convocation->where('estado', Convocation::STATE_CLOSED)))->exists()) {
             throw ValidationException::withMessages(['record' => $message]);
         }
         $syllabi->delete();
