@@ -26,13 +26,14 @@ class ScreenHelpTest extends TestCase
 
         $this->assertFalse(Schema::hasTable('ayudas_pantalla'));
         $this->assertGreaterThanOrEqual(30, count($screens));
-        foreach (['/admin/convocatorias', '/admin/configuracion/sistema', '/docente/mis-silabos/:syllabus', '/coordinacion/revisiones/:revision/historial', '/docente/configuracion/notificaciones', '/coordinacion/malla', '/coordinacion/revisiones', '/docente/mis-silabos', '/biblioteca/revisiones', '/biblioteca/historial'] as $screen) {
+        foreach (['/admin/convocatorias', '/admin/configuracion/sistema', '/docente/mis-silabos/:syllabus', '/coordinacion/revisiones/:revision/historial', '/docente/configuracion/notificaciones', '/coordinacion/malla', '/coordinacion/revisiones', '/docente/mis-silabos', '/biblioteca/revisiones', '/biblioteca/historial', '/coordinacion/historial'] as $screen) {
             $this->assertContains($screen, $screens);
         }
         foreach (['/admin/ayuda', '/docente/panel', '/biblioteca/panel', '/coordinacion/panel'] as $screen) {
             $this->assertNotContains($screen, $screens);
         }
         $this->assertStringStartsWith('Arriba ve el aviso con el plazo de entrega', ScreenHelpCatalog::HELP['/coordinacion/revisiones']['content']);
+        $this->assertStringContainsString('aunque ya no dicte ese paralelo ni esté en la carrera', ScreenHelpCatalog::HELP['/coordinacion/historial']['content']);
         $this->assertStringStartsWith('Arriba ve el aviso con el plazo de la convocatoria', ScreenHelpCatalog::HELP['/docente/mis-silabos']['content']);
         $this->assertStringStartsWith('Aquí están sus avisos del período actual', ScreenHelpCatalog::HELP['/docente/notificaciones']['content']);
         $this->assertStringContainsString('Al pulsar una fila se abren sus opciones: pausar, reanudar, prorrogar el plazo, finalizar o eliminar', ScreenHelpCatalog::HELP['/admin/convocatorias']['content']);

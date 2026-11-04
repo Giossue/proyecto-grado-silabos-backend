@@ -5169,6 +5169,41 @@
                 ]
             }
         },
+        "/api/v1/coordination/history": {
+            "get": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_history_index",
+                "summary": "api.v1.coordination.history.index",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/coordination/reviews": {
             "get": {
                 "tags": [

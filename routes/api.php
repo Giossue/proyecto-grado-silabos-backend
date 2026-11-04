@@ -30,6 +30,7 @@ use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
 use App\Modules\Operations\Presentation\Http\Controllers\ScreenHelpController;
 use App\Modules\Operations\Presentation\Http\Controllers\SystemSettingsController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ConvocationController;
+use App\Modules\Syllabus\Presentation\Http\Controllers\CoordinationHistoryController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ReviewController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusProcessController;
@@ -217,6 +218,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.convocations.show');
             Route::post('coordination/convocations/{convocation}/{transition}', [ConvocationController::class, 'transition'])
                 ->middleware('active-role')->whereIn('transition', ['pausar', 'reanudar'])->name('api.v1.coordination.convocations.transition');
+            Route::get('coordination/history', [CoordinationHistoryController::class, 'index'])
+                ->middleware('active-role')->name('api.v1.coordination.history.index');
             Route::get('coordination/reviews', [ReviewController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.coordination.reviews.index');
             Route::get('coordination/reviews/{before}/compare/{after}', [ReviewController::class, 'compare'])

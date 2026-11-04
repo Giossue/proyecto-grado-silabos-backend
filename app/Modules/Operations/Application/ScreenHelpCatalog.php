@@ -152,6 +152,12 @@ Abajo ve los dispositivos donde su cuenta está abierta. Si no reconoce alguno, 
 
 Cree uno o suba varios con un Excel; cada uno recibe un correo para entrar. Si la persona ya tiene cuenta, solo se suma a su carrera; si no, recibe el enlace de registro. Pulse un docente para ver sus datos, reenviarle la invitación si venció sin aceptarla o quitarlo de la carrera; su cuenta (contraseña y datos) la gestiona Administración. Mientras haya una convocatoria en curso no se puede quitar a nadie.',
         ],
+        '/coordinacion/historial' => [
+            'title' => 'Historial',
+            'content' => 'Aquí están los sílabos aprobados de su carrera en períodos que ya terminaron, del período más reciente al más antiguo. Solo se pueden ver.
+
+Busque por materia o código, o elija un período. «Elaborado por» es el docente que envió el sílabo, aunque ya no dicte ese paralelo ni esté en la carrera. Pulse una fila para ver el sílabo o el ícono «Ver PDF» para abrir el documento firmado.',
+        ],
         '/coordinacion/malla' => [
             'title' => 'Malla curricular',
             'content' => 'Aquí ve la malla de su carrera: sus ciclos, sus materias y qué materia es requisito de otra.
