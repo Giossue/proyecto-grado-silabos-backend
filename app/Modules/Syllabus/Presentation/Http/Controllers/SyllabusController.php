@@ -424,6 +424,7 @@ class SyllabusController extends Controller
         $definitions = FieldDefinition::withoutGlobalScopes()->whereIn('definicion_campo_id', $ids)->get()->keyBy('id');
 
         foreach ($sections as &$section) {
+            $section['id'] ??= $section['key'];
             foreach ($section['fields'] as &$field) {
                 $field['teacher_editable'] = $field['quien_llena'] === FieldDefinition::TEACHER;
                 $field['required'] = $field['quien_llena'] !== FieldDefinition::INSTITUTIONAL;
