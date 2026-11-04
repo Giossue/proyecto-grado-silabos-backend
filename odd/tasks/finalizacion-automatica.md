@@ -21,7 +21,7 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 |---|---|---|---|---|
 | T1 | S1, S2, S5–S8, S9 (backend y docs) | delegada: escritor de backend (en paralelo con T2; superficies disjuntas; respaldo de contexto) | hecha: 707 pruebas, Pint y PHPStan | 7ace4c98, ba088228 |
 | T2 | S3, S4, S7, S9 (frontend) | delegada: escritor de frontend (en paralelo con T1) | hecha: 749 pruebas, typecheck, lint y contrato | frontend eed4757 |
-| T3 | todas | delegada: verificador independiente (ítems de alto riesgo 1 y 4) | en curso | |
+| T3 | todas | delegada: verificador independiente (ítems de alto riesgo 1 y 4) | hecha: PASS en S1–S9, sin bloqueos | — |
 
 ## Log
 
@@ -39,3 +39,10 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
   - Hay CHECKs en las columnas nuevas.
   - Migración aplicada en la base local.
   - Límites documentados: los cambios de malla o del proyecto de carrera hechos mientras está finalizada no se aplican al reabrir; la carrera simultánea con una creación devuelve 500 por el índice único.
+- L6 (2026-11-03): veredicto del verificador: PASS en S1–S9, sin bloqueos. Avisos:
+  - A1: una creación o reapertura simultánea devuelve 500 por el índice único (igual que antes).
+  - A2: un `confirmar_rehacer` que no es booleano ahora responde 422.
+  - A3: `extension_block_reason` no incluye que la plantilla no sea usable.
+  - A4: los datos antiguos sin auditoría toman «abierta» por defecto.
+  - A5: los cambios hechos con la convocatoria finalizada no se reconcilian al reabrir.
+  - A6: la lista se refresca tras cerrar el diálogo y cambia el texto del banner y del detalle de Coordinación.
