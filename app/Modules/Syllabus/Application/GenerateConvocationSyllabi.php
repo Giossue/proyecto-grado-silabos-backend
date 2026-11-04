@@ -14,10 +14,11 @@ final class GenerateConvocationSyllabi
     public function __construct(
         private readonly AcademicContextSnapshot $academicContext,
         private readonly InheritMasterValues $inherit,
+        private readonly ProcessClosing $closing,
     ) {}
 
     /** @param list<string>|null $subjectIds */
-    public function execute(Convocation $convocation, ?string $subjectId = null, ?array $subjectIds = null, bool $allowEmpty = false): int
+    public function execute(Convocation $convocation, ?string $subjectId = null, ?array $subjectIds = null, bool $allowEmpty = false, bool $skipIncomplete = false): int
     {
         $parallels = Parallel::query()
             ->whereHas('subject', fn ($query) => $query->where('carrera_id', $convocation->carrera_id)->where('activo', true)->where('genera_silabo', true))
@@ -58,7 +59,7 @@ final class GenerateConvocationSyllabi
 
         foreach ($parallels->groupBy('asignatura_id') as $subjectParallels) {
             $pending = $subjectParallels->reject(fn (Parallel $parallel): bool => $covered->has($parallel->id));
-            if ($pending->contains(fn (Parallel $parallel): bool => $parallel->teacherAssignments->count() !== 1)) {
+            if (! $skipIncomplete && $pending->contains(fn (Parallel $parallel): bool => $parallel->teacherAssignments->count() !== 1)) {
                 throw ValidationException::withMessages([
                     'convocation' => "La materia {$subjectParallels->first()->subject->nombre} debe tener exactamente un docente vigente por paralelo.",
                 ]);
@@ -67,7 +68,7 @@ final class GenerateConvocationSyllabi
 
         $generated = 0;
         foreach ($parallels as $parallel) {
-            if ($covered->has($parallel->id)) {
+            if ($covered->has($parallel->id) || ($skipIncomplete && $parallel->teacherAssignments->count() !== 1)) {
                 continue;
             }
             $this->generate($convocation, $parallel);
@@ -96,5 +97,6 @@ final class GenerateConvocationSyllabi
         $fields = SyllabusTemplate::institutional()->sections
             ->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields));
         $this->inherit->execute($syllabus, $fields, $parallel);
+        $this->closing->refreshSnapshot($syllabus->setRelation('convocation', $convocation));
     }
 }

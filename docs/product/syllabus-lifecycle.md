@@ -160,25 +160,50 @@ esta» (también en `extension_block_reason`). Al reabrir:
 - la convocatoria vuelve a «abierto» y cada convocatoria de carrera vuelve al estado que
   tenía al finalizar (abierta o pausada);
 - los sílabos dejan la fotografía `closed_document` y vuelven a verse en vivo;
+- cada convocatoria de carrera que vuelve a «abierta» crea, como al reanudar, los sílabos sin
+  iniciar de los paralelos que todavía no tienen uno (por ejemplo, los creados mientras estaba
+  finalizada); los paralelos sin exactamente un docente vigente se omiten sin impedir la
+  reapertura, y las que vuelven a «pausada» los crean al reanudarse (2026-11-03);
 - cuenta como una prórroga, avisa a los docentes con sílabos sin aprobar y queda en la
   auditoría `proceso_silabos.plazo_extendido` y `proceso_silabos.reabierto`.
 
 Si la plantilla cambió después de finalizar (o durante la pausa en la que se finalizó),
 la respuesta es la misma confirmación que al reanudar: 422 con `code: plantilla_cambiada` y
 el conteo por estado. Con `confirmar_rehacer` se reabre y se adaptan los sílabos: se
-conserva lo escrito y los enviados o aprobados vuelven a Borrador. Los cambios de malla o
-de proyecto de carrera hechos con la convocatoria finalizada no se aplican al reabrir.
+conserva lo escrito y los enviados o aprobados vuelven a Borrador. Los cambios de malla, de
+proyecto de carrera, de paralelos y de docentes hechos mientras estaba finalizada y vigente
+ya están en los sílabos al reabrir (ver «Convocatoria finalizada vigente»).
+
+### Convocatoria finalizada vigente
+
+Una convocatoria finalizada sigue rigiendo el período (2026-11-03) mientras:
+
+- no haya terminado el último día de clases de su período (`fecha_fin_periodo`, día de la
+  institución), y
+- Administración no haya creado otra convocatoria institucional después de ella (una abierta o
+  en pausa, o una de un período que empieza más tarde).
+
+Mientras rija, los cambios de la tabla siguiente (malla, proyecto de carrera, paralelos,
+docentes, facultad o carrera) y el traspaso de coordinación se aplican a sus sílabos con las
+mismas reglas y confirmaciones que con la convocatoria abierta o en pausa: se actualiza la
+identificación, los enviados o aprobados vuelven a Borrador tras confirmar (`confirm_purge`), se
+rehacen los que corresponda; un cambio de fechas del período también pide confirmar y los rehace,
+como en pausa. En los sílabos sin enviar se
+rehace la fotografía `closed_document`, conservando la plantilla con la que se finalizó, para que
+la consulta muestre los datos vigentes. Los sílabos siguen en solo lectura para el docente y las
+decisiones de revisión siguen bloqueadas hasta reabrir con una prórroga. Pasado el último día de
+clases, o cuando ya existe una convocatoria más nueva, ya no se tocan.
 
 ## Pausas y cambios con sílabos en curso
 
 | Qué cambia | Requisito | Efecto |
 |---|---|---|
 | Plantilla | Convocatoria pausada o inexistente (Administración) | Al reanudar, si la plantilla cambió, se muestra el conteo por estado y se pide «Reanudar y adaptar sílabos». Los sílabos de la convocatoria se adaptan: cada campo del docente conserva la respuesta del campo con su misma clave si todavía encaja en él (si no encaja, solo ese campo queda vacío); los de Coordinación vuelven del proyecto de carrera y los campos quitados se descartan. Los enviados, en corrección o aprobados vuelven a Borrador sin historial ni firmas; los sin iniciar se generan de nuevo. Sin confirmación, sigue en pausa. |
-| Malla: horas, créditos, modalidad, nombre, código, ciclo, unidad o requisitos | Convocatoria de la carrera pausada o sin abrir (Coordinación) | Actualiza los datos solo en los sílabos que los muestran: los de esa materia y, si cambia su código, los de las materias que la tienen como requisito. Conserva lo escrito. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar. |
-| Malla: orden en el ciclo o número de ciclos | Convocatoria de la carrera pausada o sin abrir | Actualiza los datos sin cambiar el estado. |
-| Proyecto de carrera de una asignatura | Convocatoria de la carrera pausada o sin abrir | Copia los campos cambiados a los sílabos de esa asignatura y conserva lo del docente. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar. |
-| Facultad: nombre, campus o logo. Carrera: nombre, código, modalidad o facultad | Siempre, también con la convocatoria abierta (Administración, 2026-11-02) | Los borradores toman los datos nuevos. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar, conservando lo escrito (2026-11-01). Los sílabos de convocatorias cerradas no se tocan. |
-| Docente de un paralelo | Ninguno; se puede con la convocatoria abierta | El sílabo del paralelo en la convocatoria en curso se borra con todo su historial y empieza de cero para el docente nuevo. Los sílabos de convocatorias cerradas no se tocan. |
+| Malla: horas, créditos, modalidad, nombre, código, ciclo, unidad o requisitos | Convocatoria de la carrera pausada, finalizada o sin abrir (Coordinación) | Actualiza los datos solo en los sílabos que los muestran: los de esa materia y, si cambia su código, los de las materias que la tienen como requisito. Conserva lo escrito. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar. |
+| Malla: orden en el ciclo o número de ciclos | Convocatoria de la carrera pausada, finalizada o sin abrir | Actualiza los datos sin cambiar el estado. |
+| Proyecto de carrera de una asignatura | Convocatoria de la carrera pausada, finalizada o sin abrir | Copia los campos cambiados a los sílabos de esa asignatura y conserva lo del docente. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar. |
+| Facultad: nombre, campus o logo. Carrera: nombre, código, modalidad o facultad | Siempre, también con la convocatoria abierta (Administración, 2026-11-02) | Los borradores toman los datos nuevos. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar, conservando lo escrito (2026-11-01). Los sílabos de convocatorias que ya no rigen no se tocan. |
+| Docente de un paralelo | Ninguno; se puede con la convocatoria abierta | El sílabo del paralelo en la convocatoria vigente (abierta, en pausa o finalizada vigente) se borra con todo su historial y empieza de cero para el docente nuevo. Un paralelo nuevo recibe su sílabo al reanudar la convocatoria de la carrera o, si está finalizada vigente, al reabrirla con una prórroga (2026-11-03). Los sílabos de convocatorias que ya no rigen no se tocan. |
 | Código o jornada de un paralelo | Ninguno | Sin enviar: se actualiza la identificación. Enviado o aprobado: pide confirmación y lo rehace. |
 
 Rehacer un sílabo borra su contenido, revisiones, aprobación, firmas y chat, y avisa al

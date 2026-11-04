@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Support\Database\MapsLegacyColumnNames;
+use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * @property string $id
@@ -84,6 +86,30 @@ class SyllabusProcess extends Model
     public function scopeInProgress(Builder $query): void
     {
         $query->whereIn('estado', [self::STATE_OPEN, self::STATE_PAUSED]);
+    }
+
+    /** @param  Builder<SyllabusProcess>  $query */
+    public function scopeCurrent(Builder $query): void
+    {
+        $query->where(fn (Builder $current) => $current
+            ->whereIn('estado', [self::STATE_OPEN, self::STATE_PAUSED])
+            ->orWhere(fn (Builder $finalized) => $finalized->finalizedButCurrent()));
+    }
+
+    /** @param  Builder<SyllabusProcess>  $query */
+    public function scopeFinalizedButCurrent(Builder $query): void
+    {
+        $own = $query->getModel()->getTable();
+        $query->where('estado', self::STATE_CLOSED)
+            ->whereHas('academicPeriod', fn (Builder $period) => $period->where('fecha_fin', '>=', InstitutionDate::todayOn()))
+            ->whereNotExists(fn (QueryBuilder $newer) => $newer->selectRaw('1')
+                ->from('convocatorias_universidad as posterior')
+                ->join('periodos_academicos as periodo_posterior', 'periodo_posterior.periodo_academico_id', '=', 'posterior.periodo_academico_id')
+                ->join('periodos_academicos as periodo_propio', 'periodo_propio.periodo_academico_id', '=', "{$own}.periodo_academico_id")
+                ->whereColumn('posterior.convocatoria_universidad_id', '<>', "{$own}.convocatoria_universidad_id")
+                ->where(fn (QueryBuilder $later) => $later
+                    ->whereIn('posterior.estado_convocatoria_universidad', [self::STATE_OPEN, self::STATE_PAUSED])
+                    ->orWhereColumn('periodo_posterior.fecha_inicio_periodo', '>', 'periodo_propio.fecha_inicio_periodo')));
     }
 
     public function isOpen(): bool

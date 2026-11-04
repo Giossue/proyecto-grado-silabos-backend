@@ -147,8 +147,27 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   existente (ADR-0012). Una convocatoria cerrada queda solo para consulta: sus
   sílabos ya no se editan, envían, revisan ni firman, y después se puede abrir la del
   período siguiente.
-- Un cambio de docente solo rehace el sílabo del paralelo en la convocatoria en curso;
-  los de convocatorias cerradas se conservan (I-231).
+- Un cambio de docente solo rehace el sílabo del paralelo en la convocatoria vigente (ver
+  «Convocatoria finalizada vigente»); los de convocatorias que ya no rigen se conservan (I-231).
+- Convocatoria finalizada vigente (2026-11-03): una convocatoria finalizada sigue rigiendo
+  mientras no termine el último día de clases de su período (`periodos_academicos.fecha_fin_periodo`,
+  día de la institución) y Administración no haya creado otra convocatoria institucional después
+  de ella (una abierta o en pausa, o una de un período que empieza más tarde). Mientras rija, los
+  cambios de malla, del proyecto de carrera, de paralelos y de docentes, y el traspaso de
+  coordinación se aplican a sus sílabos con las mismas reglas y confirmaciones que con la
+  convocatoria abierta o en pausa (identificación actualizada, enviados o aprobados que vuelven a
+  borrador tras `confirm_purge`, rehechos y aprobaciones devueltas a Coordinación; también un
+  cambio de fechas del período pide confirmar y rehace sus sílabos, como en pausa). En los sílabos
+  sin enviar se rehace la fotografía `closed_document` con los datos nuevos, conservando la
+  plantilla con la que se finalizó; la vista sigue en solo lectura y las decisiones siguen
+  bloqueadas hasta reabrir con una prórroga. Pasado el último día de clases, o con una
+  convocatoria más nueva, ya no se toca. La regla es una sola: `SyllabusProcess::current()` y
+  `Convocation::current()`, usadas por `InProgressWork` y `CoordinationHandover`.
+- Paralelo nuevo en una convocatoria finalizada vigente (2026-11-03): como en una abierta o en
+  pausa, no recibe sílabo al crearse; lo recibe al reabrir la convocatoria con una prórroga, que
+  hace lo mismo que reanudar: cada convocatoria de carrera que vuelve a «abierta» crea los sílabos
+  sin iniciar de los paralelos que no tienen. Los paralelos sin exactamente un docente vigente se
+  omiten sin impedir la reapertura; las que vuelven a «pausada» los crean al reanudarse.
 - En el historial, un sílabo de un período terminado pertenece a quien lo envió; si
   nunca se envió, al docente actual del paralelo (I-231).
 - La acción manual de cierre se llama «Finalizar» (2026-11-02); la ruta sigue siendo `cerrar`
@@ -250,7 +269,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Para cambiar la plantilla con sílabos existentes, Administración pausa la convocatoria
   institucional. Al reanudar confirma, y los sílabos afectados se adaptan a la plantilla:
   cada campo del docente conserva la respuesta del campo con su misma clave si todavía encaja en él (si no encaja, solo ese campo queda vacío); los de Coordinación vuelven del proyecto de carrera y los campos quitados se descartan. Los enviados o aprobados vuelven a borrador sin historial ni firmas, porque
-  deben cumplir la plantilla vigente. Las convocatorias cerradas no se tocan (I-118).
+  deben cumplir la plantilla vigente. Las convocatorias cerradas no se adaptan a la plantilla
+  hasta reabrirlas (I-118); los cambios de malla, proyecto de carrera, paralelos y docentes sí
+  alcanzan a la finalizada vigente (2026-11-03).
 
 ## Proyecto de carrera
 

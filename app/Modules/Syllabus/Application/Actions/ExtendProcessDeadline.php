@@ -12,6 +12,7 @@ use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\DeadlineExtensions;
+use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Application\ProcessClosing;
 use App\Modules\Syllabus\Application\ProcessTemplateChange;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -33,6 +34,7 @@ class ExtendProcessDeadline
         private readonly ProcessTemplateChange $templateChange,
         private readonly RegenerateProcessSyllabi $regenerate,
         private readonly TemplateStructureValidator $templateStructure,
+        private readonly GenerateConvocationSyllabi $generator,
     ) {}
 
     /** @return array{process: SyllabusProcess, confirmation_required: bool, counts: array<string, int>, reopened: bool} */
@@ -78,6 +80,7 @@ class ExtendProcessDeadline
 
             $changedAt = null;
             $counts = [];
+            $reopened = [];
             if ($reopening) {
                 $this->templateStructure->assertUsable(SyllabusTemplate::institutional(), 'process');
                 $changedAt = ProcessTemplateChange::since(ProcessClosing::templateReference($locked));
@@ -87,13 +90,16 @@ class ExtendProcessDeadline
                         return ['process' => $locked, 'confirmation_required' => true, 'counts' => $counts, 'reopened' => false];
                     }
                 }
-                $this->closing->reopen($locked);
+                $reopened = $this->closing->reopen($locked);
             }
 
             $number = $locked->cantidad_prorrogas + 1;
             $locked->update(['entrega_en' => $requested, 'cantidad_prorrogas' => $number]);
             if ($changedAt !== null) {
                 $this->templateChange->adapt($locked, $changedAt, $counts, $actor->id, $activeRole->id);
+            }
+            foreach (Convocation::query()->whereKey($reopened)->with('process')->orderBy('id')->lockForUpdate()->get() as $convocation) {
+                $this->generator->execute($convocation, allowEmpty: true, skipIncomplete: true);
             }
 
             $reached = Convocation::query()->where('proceso_id', $locked->id)->count();

@@ -3,7 +3,6 @@
 namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Support\Facades\DB;
@@ -22,8 +21,7 @@ class CoordinationHandover
     {
         $syllabi = Syllabus::query()
             ->whereIn('estado', ['en_revision', 'aprobado'])
-            ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $careerId)
-                ->where('estado', '!=', Convocation::STATE_CLOSED))
+            ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $careerId)->current())
             ->lockForUpdate()
             ->get();
         $returned = [];

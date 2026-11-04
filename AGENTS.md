@@ -147,10 +147,11 @@ pida.
 - Cambiar la plantilla con sílabos existentes exige pausar y confirmar; esos sílabos se
   rehacen desde cero, incluso los aprobados. Cambiar la malla o un proyecto de carrera también exige
   pausar, pero conserva lo escrito: solo cambian los sílabos de las materias afectadas y
-  los enviados o aprobados vuelven a Borrador tras confirmar. Los procesos cerrados no se
-  tocan.
+  los enviados o aprobados vuelven a Borrador tras confirmar. Una convocatoria finalizada
+  sigue vigente para estos cambios mientras no termine el último día de clases de su período
+  y no exista otra más nueva; después ya no se toca.
 - Cambiar el docente o los paralelos no exige pausa. Un docente nuevo empieza desde cero
-  el sílabo de la convocatoria en curso; nada de una convocatoria cerrada se borra.
+  el sílabo de la convocatoria vigente; nada de una convocatoria que ya no rige se borra.
 - La convocatoria se finaliza sola el día después de su fecha de entrega (Administración
   también puede finalizarla antes); lo finalizado queda solo para consulta y no se elimina.
   «Prorrogar plazo» la vuelve a abrir, con los mismos límites, si no hay otra en curso. Eliminar una convocatoria abierta o pausada la borra de

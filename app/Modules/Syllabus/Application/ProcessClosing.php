@@ -13,6 +13,8 @@ final class ProcessClosing
 {
     public const CLOSED_DOCUMENT = 'closed_document';
 
+    public const SNAPSHOT_STATES = ['en_revision', 'aprobado'];
+
     public function __construct(private readonly SyllabusSnapshot $snapshots) {}
 
     public function close(SyllabusProcess $locked): void
@@ -24,7 +26,7 @@ final class ProcessClosing
         ]);
         $locked->refresh();
         $syllabi = Syllabus::query()->whereHas('convocation', fn ($query) => $query->where('proceso_id', $locked->id))
-            ->whereNotIn('estado', ['en_revision', 'aprobado'])->lockForUpdate()->get();
+            ->whereNotIn('estado', self::SNAPSHOT_STATES)->lockForUpdate()->get();
         foreach ($syllabi as $syllabus) {
             $snapshot = $this->snapshots->build($syllabus);
             $syllabus->update(['contexto_academico' => [...$syllabus->contexto_academico, self::CLOSED_DOCUMENT => $snapshot]]);
@@ -38,7 +40,22 @@ final class ProcessClosing
             ]);
     }
 
-    public function reopen(SyllabusProcess $locked): void
+    public function refreshSnapshot(Syllabus $syllabus): void
+    {
+        $syllabus->loadMissing('convocation');
+        if ($syllabus->convocation->estado !== Convocation::STATE_CLOSED || in_array($syllabus->estado, self::SNAPSHOT_STATES, true)) {
+            return;
+        }
+        $previous = $syllabus->contexto_academico[self::CLOSED_DOCUMENT] ?? null;
+        $context = Arr::except($syllabus->contexto_academico, [self::CLOSED_DOCUMENT]);
+        $syllabus->contexto_academico = $context;
+        $snapshot = $this->snapshots->rebuild($syllabus, is_array($previous) ? $previous : null);
+        $syllabus->contexto_academico = [...$context, self::CLOSED_DOCUMENT => $snapshot];
+        $syllabus->save();
+    }
+
+    /** @return list<string> Convocatorias de carrera que vuelven a quedar abiertas. */
+    public function reopen(SyllabusProcess $locked): array
     {
         $convocations = Convocation::query()
             ->where('proceso_id', $locked->id)
@@ -57,6 +74,9 @@ final class ProcessClosing
                 $syllabus->update(['contexto_academico' => Arr::except($syllabus->contexto_academico, [self::CLOSED_DOCUMENT])]);
             }
         }
+        $reopened = array_values(array_map('strval', $convocations
+            ->filter(fn (Convocation $convocation): bool => $convocation->estado_previo === Convocation::STATE_OPEN)
+            ->modelKeys()));
         Convocation::query()->whereKey($convocations->modelKeys())->update([
             'estado' => DB::raw('estado_previo_cierre_convocatoria_carrera'),
             'estado_previo' => null,
@@ -67,6 +87,8 @@ final class ProcessClosing
             'pausado_en' => null,
         ]);
         $locked->refresh();
+
+        return $reopened;
     }
 
     public static function templateReference(SyllabusProcess $closed): ?CarbonImmutable

@@ -14,7 +14,6 @@ use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -49,6 +48,7 @@ final class InProgressWork
         private readonly SubjectProfileFields $profiles,
         private readonly ScheduleWorkflowNotification $workflowNotifications,
         private readonly WorkflowNotificationRecipients $recipients,
+        private readonly ProcessClosing $closing,
     ) {}
 
     /**
@@ -392,7 +392,7 @@ final class InProgressWork
 
     public function refreshParallel(string $parallelId): int
     {
-        $syllabi = $this->inProgress(null)->where('paralelo_id', $parallelId)->with('career.faculty')->lockForUpdate()->get();
+        $syllabi = $this->inProgress(null)->where('paralelo_id', $parallelId)->with(['career.faculty', 'convocation'])->lockForUpdate()->get();
         foreach ($syllabi as $syllabus) {
             $this->applyIdentification($syllabus);
         }
@@ -445,6 +445,7 @@ final class InProgressWork
         data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
         $syllabus->contexto_academico = $context;
         $syllabus->save();
+        $this->closing->refreshSnapshot($syllabus);
     }
 
     /**
@@ -553,6 +554,7 @@ final class InProgressWork
                 $syllabus->guardado_en = now()->toImmutable();
             }
             $syllabus->save();
+            $this->closing->refreshSnapshot($syllabus);
             if ($item['back_to_draft']) {
                 $this->workflowNotifications->execute(
                     syllabus: $syllabus,
@@ -592,9 +594,7 @@ final class InProgressWork
             ->when($subjectId !== null, fn (Builder $query) => $query->forSubjects([$subjectId]))
             ->when($subjectIds !== null, fn (Builder $query) => $query->forSubjects($subjectIds))
             ->whereHas('convocation', fn (Builder $query) => $query
-                ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
-                ->whereHas('process', fn (Builder $process) => $process
-                    ->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
+                ->current()
                 ->when(is_string($careerIds), fn (Builder $scoped) => $scoped->where('carrera_id', $careerIds))
                 ->when(is_array($careerIds), fn (Builder $scoped) => $scoped->whereIn('carrera_id', $careerIds))
                 ->when($periodId !== null, fn (Builder $scoped) => $scoped->whereHas(

@@ -86,7 +86,7 @@ class ParallelTeacherChangeTest extends TestCase
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $fresh))->assertForbidden();
     }
 
-    public function test_a_new_teacher_never_erases_the_syllabi_of_a_closed_process_and_history_keeps_its_author(): void
+    public function test_a_new_teacher_never_erases_the_syllabi_of_a_process_whose_classes_ended_and_history_keeps_its_author(): void
     {
         $syllabus = $this->submittedSyllabus();
         $process = $syllabus->convocation->process()->firstOrFail();
@@ -95,6 +95,8 @@ class ParallelTeacherChangeTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()->assertJsonPath('syllabus.editable', false);
+        $period = $process->academicPeriod()->firstOrFail();
+        $period->update(['fecha_inicio' => $this->institutionDay(-150), 'fecha_fin' => $this->institutionDay(-1)]);
 
         $this->removeAssignment($assignment)->assertSuccessful();
         $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertSuccessful();
@@ -103,8 +105,6 @@ class ParallelTeacherChangeTest extends TestCase
         $this->assertDatabaseHas('revisiones_silabo', ['silabo_id' => $syllabus->id]);
         $this->assertSame(1, Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->count());
 
-        $period = $process->academicPeriod()->firstOrFail();
-        $period->update(['fecha_inicio' => $this->institutionDay(-150), 'fecha_fin' => $this->institutionDay(-1)]);
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.history.index'))
             ->assertOk()->assertJsonCount(1, 'careers');
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
@@ -140,6 +140,7 @@ class ParallelTeacherChangeTest extends TestCase
         $created = Parallel::query()->where('asignatura_id', $parallel->asignatura_id)->where('codigo_paralelo', 'Z')->firstOrFail();
         $createdAssignment = $created->teacherAssignments()->where('activo', true)->sole();
         $this->assertSame($this->teacher->id, $createdAssignment->roleAssignment->usuario_id);
+        $this->assertSame(0, Syllabus::query()->where('paralelo_id', $created->id)->count());
         $this->actingAsCoordinator()
             ->deleteJson(route('api.v1.coordination.academic.destroy', ['asignacion_docente', $createdAssignment->id]))->assertSuccessful();
         $this->actingAsCoordinator()

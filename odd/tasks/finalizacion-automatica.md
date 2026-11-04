@@ -14,6 +14,14 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 - S7 (decisión técnica derivada): si la plantilla cambió después de la finalización, reabrir con una prórroga pide confirmación. Usa la misma respuesta 422 `code: plantilla_cambiada` con `counts` y el campo `confirmar_rehacer` que la reanudación, y luego adapta los sílabos con `RegenerateProcessSyllabi::regenerate`.
 - S8: el aviso de cierre próximo (`proceso.cierre_proximo`) se envía 3 días antes de la fecha de entrega (no del último día de clases). Su texto menciona la entrega, y la deduplicación usa la fecha de entrega, así que una prórroga genera un aviso nuevo.
 - S9: se actualizan los textos que dicen que finalizar «no se deshace», que el cierre llega después del último día de clases o que la prórroga solo existe en abierta o pausada: la interfaz, la ayuda (ScreenHelpCatalog), las descripciones de los comandos y la documentación (syllabus-lifecycle, DECISIONS_STATUS, screens, AGENTS, deployment, deploy-dokploy, traceability).
+- S10: «necesito que mientras que admin no abra una nueva convocatoria, se siga tomando como si fuera aún la anterior o más bien, tomando en cuenta la finalización de clases, porque ESO es el periodo académico».
+  - Una convocatoria finalizada sigue vigente mientras no haya terminado el último día de clases de su período (`fecha_fin`, día de la institución) y Administración no haya creado otra convocatoria institucional después de ella.
+  - Mientras siga vigente, los cambios de malla, del proyecto de carrera, de paralelos y de docentes se aplican a sus sílabos con las mismas reglas y confirmaciones que con la convocatoria abierta o en pausa: actualización de la identificación, sílabos enviados o aprobados que vuelven a borrador, traspaso de coordinación y paralelos nuevos con sílabo.
+  - En los sílabos sin enviar de esa convocatoria se rehace la fotografía `closed_document`, para que la vista de consulta muestre los datos vigentes.
+  - Pasado el último día de clases, o cuando ya existe una convocatoria más nueva, ya no se tocan.
+- S11: «el punto 3 arreglalo como tu lo mencionas … si ves que hay un botón flotante? el que dice Todo Listo, por qué no usamos eso? y claro funcionado con lo que dices».
+  - Si la plantilla no se puede usar (la misma comprobación que hace el servidor al abrir, reanudar o reabrir), `extension_block_reason` lo dice y remite a «Antes de empezar».
+  - El paso «Armar la plantilla del sílabo» de la lista flotante «Antes de empezar» usa esa misma comprobación: si la plantilla no es usable, la lista deja de mostrar «Todo listo» y señala el paso pendiente.
 
 ## Tasks
 
@@ -21,6 +29,8 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 |---|---|---|---|---|
 | T1 | S1, S2, S5–S8, S9 (backend y docs) | delegada: escritor de backend (en paralelo con T2; superficies disjuntas; respaldo de contexto) | hecha: 707 pruebas, Pint y PHPStan | 7ace4c98, ba088228 |
 | T2 | S3, S4, S7, S9 (frontend) | delegada: escritor de frontend (en paralelo con T1) | hecha: 749 pruebas, typecheck, lint y contrato | frontend eed4757 |
+| T4 | S10 | delegada: escritor de backend (vigencia hasta el fin de clases; en paralelo con T5) | pendiente | |
+| T5 | S11 | delegada: escritor de backend y frontend (plantilla usable en el motivo y en «Antes de empezar»; en paralelo con T4) | pendiente | |
 | T3 | todas | delegada: verificador independiente (ítems de alto riesgo 1 y 4) | hecha: PASS en S1–S9, sin bloqueos | — |
 
 ## Log
@@ -46,3 +56,4 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
   - A4: los datos antiguos sin auditoría toman «abierta» por defecto.
   - A5: los cambios hechos con la convocatoria finalizada no se reconcilian al reabrir.
   - A6: la lista se refresca tras cerrar el diálogo y cambia el texto del banner y del detalle de Coordinación.
+- L7 (2026-11-03): «Ok, es que eso no debe pasar, porque hasta que no finalice totalmente una convocatoria no debería pasar eso que mencionas, necesito que mientras que admin no abra una nueva convocatoria, se siga tomando como si fuera aún la anterior o más bien, tomando en cuenta la finalización de clases, porque ESO es el periodo académico. y el punto 3 arreglalo como tu lo mencionas, y no creo que del todo, si ves que hay un botón flotante? el que dice Todo Listo, por qué no usamos eso? y claro funcionado con lo que dices».
