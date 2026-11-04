@@ -37,7 +37,7 @@ final class NotifyProcessClosingSoon
                     ...$this->recipients->coordinatorsWithPendingWork($process),
                 ],
                 title: 'La convocatoria se cierra pronto',
-                message: "La convocatoria {$process->nombre} se finaliza al terminar el {$closesOn}, último día de entrega. Lo que no esté aprobado quedará solo para consulta.",
+                message: "El {$closesOn} es el último día de entrega de {$process->nombre}. Lo que no esté aprobado al terminar ese día quedará solo para consulta.",
                 resourceType: 'proceso_silabos',
                 resourceId: $process->id,
                 periodId: $process->periodo_academico_id,

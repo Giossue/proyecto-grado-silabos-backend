@@ -29,7 +29,7 @@ final class NotifyConvocationResumed
                 deduplicationKey: "convocatoria.reanudada:{$convocation->id}:{$teacherId}:{$at}",
                 recipientIds: [$teacherId],
                 title: 'Se reanudó la convocatoria',
-                message: "Se reanudó la convocatoria de {$convocation->career->nombre}. Ya puede seguir con sus sílabos.",
+                message: "Ya puede seguir con sus sílabos de {$convocation->career->nombre}.",
                 resourceType: 'convocatoria',
                 resourceId: $convocation->id,
             );
@@ -54,8 +54,8 @@ final class NotifyConvocationResumed
                 eventType: 'proceso.reanudado',
                 deduplicationKey: "proceso.reanudado:{$process->id}:{$coordinatorId}:{$at}",
                 recipientIds: [$coordinatorId],
-                title: 'Se reanudó la convocatoria institucional',
-                message: "Administración reanudó la convocatoria {$process->academicPeriod->codigo}. Se retoman la edición y las revisiones de los sílabos.",
+                title: 'Administración reanudó la convocatoria',
+                message: "Se retoman la edición y las revisiones de los sílabos del período {$process->academicPeriod->codigo}.",
                 resourceType: 'proceso_silabos',
                 resourceId: $process->id,
             );

@@ -68,7 +68,7 @@ final class DeleteSyllabusProcess
                 deduplicationKey: self::EVENT.":{$locked->id}",
                 recipientIds: $recipientIds,
                 title: 'Convocatoria eliminada',
-                message: "Administración eliminó la convocatoria {$name} y todos sus sílabos. Mensaje: {$message}",
+                message: "Se borraron todos los sílabos de {$name}. Mensaje de Administración: {$message}",
                 resourceType: 'periodo_academico',
                 resourceId: $locked->periodo_academico_id,
                 periodId: $locked->periodo_academico_id,

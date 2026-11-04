@@ -248,7 +248,7 @@ class SyllabusProcessTest extends TestCase
         foreach ([$this->teacher, $this->coordinator, $librarian] as $person) {
             $notice = InternalNotification::query()->where('usuario_id', $person->id)->where('tipo', 'proceso.eliminado')->sole();
             $this->assertSame('Convocatoria eliminada', $notice->titulo);
-            $this->assertSame("Administración eliminó la convocatoria {$name} y todos sus sílabos. Mensaje: Abriremos otra con las fechas correctas.", $notice->mensaje);
+            $this->assertSame("Se borraron todos los sílabos de {$name}. Mensaje de Administración: Abriremos otra con las fechas correctas.", $notice->mensaje);
             $this->assertSame($process->periodo_academico_id, $notice->periodo_academico_id);
             Mail::assertQueued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo($person->correo_electronico) && $mail->title === 'Convocatoria eliminada');
         }
@@ -453,7 +453,7 @@ class SyllabusProcessTest extends TestCase
             ->deleteJson(route('api.v1.admin.processes.destroy', $process), ['mensaje' => $text])
             ->assertOk();
         $notice = InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo', 'proceso.eliminado')->sole();
-        $this->assertStringEndsWith('Mensaje: '.$text, $notice->mensaje);
+        $this->assertStringEndsWith('Mensaje de Administración: '.$text, $notice->mensaje);
     }
 
     public function test_administration_must_choose_process_dates_explicitly(): void
@@ -932,8 +932,8 @@ class SyllabusProcessTest extends TestCase
             ->where('tipo', 'proceso.plantilla_rehecho')->sole();
         $this->assertSame('proceso_silabos', $deliveredNotice->tipo_recurso);
         $this->assertSame($process->id, $deliveredNotice->recurso_id);
-        $this->assertSame('Su sílabo volvió a borrador', $deliveredNotice->titulo);
-        $this->assertStringContainsString('se conservó lo que ya había escrito', $deliveredNotice->mensaje);
+        $this->assertSame('Sus sílabos volvieron a borrador', $deliveredNotice->titulo);
+        $this->assertStringContainsString('Se conservó lo que ya había escrito', $deliveredNotice->mensaje);
     }
 
     public function test_saving_the_whole_template_keeps_each_teacher_answer_that_still_fits_its_field(): void

@@ -479,6 +479,15 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   Se ajusta con `NOTIFICATION_DIGEST_TIME` y se apaga con `NOTIFICATION_DIGEST=false`.
   Administración y Biblioteca no reciben correo de avisos. Todo es provisional hasta
   resolver PV-15.
+- Textos de los correos (2026-11-03): ninguno repite la misma idea en el asunto, el título y el
+  cuerpo. En los avisos el título es el asunto y el correo no lo repite: saluda y dice qué sílabo
+  y revisión, el motivo, la fecha límite y qué hacer, con «Abrir el sistema». Los dos avisos a
+  Biblioteca se llaman «Sílabo aprobado por Coordinación» y «Sílabo corregido para revisar». Los
+  resúmenes diarios usan una sola vista (asunto «Resumen del día: sílabos pendientes», título
+  «Pendientes de hoy», una línea por carrera). La invitación dice «Le damos la bienvenida» y nombra
+  la acción solo en «Activar mi cuenta»; el restablecimiento y la verificación tienen título propio
+  («Restablezca su contraseña», «Verifique su correo») en lugar de «Hola:», y el enlace de respaldo
+  no repite el nombre del botón.
 - Administración edita la ayuda de cada pantalla.
 - Interfaz (2026-10-27): los campos y selects usan el borde de las tablas (el alto contraste
   lo refuerza); no hay tooltips nativos del navegador, solo el `Tooltip` del sistema; los

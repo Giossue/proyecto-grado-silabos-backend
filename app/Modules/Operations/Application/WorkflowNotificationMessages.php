@@ -9,13 +9,18 @@ final class WorkflowNotificationMessages
 {
     public const TEMPLATE_REDONE = 'proceso.plantilla_rehecho';
 
-    /** @return array{string, string} */
+    /**
+     * Título y mensaje del aviso, para la campana y el correo. El título dice qué pasó y es el asunto
+     * del correo; el mensaje no lo repite: solo agrega qué sílabo y revisión, el motivo y qué hacer.
+     *
+     * @return array{string, string}
+     */
     public static function for(string $eventType, ?Syllabus $syllabus, ?int $revision, ?string $reason = null): array
     {
         if ($eventType === self::TEMPLATE_REDONE) {
             return [
-                'Su sílabo volvió a borrador',
-                'El administrador cambió la plantilla. Sus sílabos de este proceso volvieron a borrador y se conservó lo que ya había escrito; revíselos y envíelos otra vez.',
+                'Sus sílabos volvieron a borrador',
+                'Administración cambió la plantilla de la convocatoria. Se conservó lo que ya había escrito; revíselos y envíelos otra vez.',
             ];
         }
         if ($syllabus === null) {
@@ -28,40 +33,40 @@ final class WorkflowNotificationMessages
 
         return match ($eventType) {
             'coordinacion.aprobado' => [
-                'Sílabo listo para revisión',
-                "Coordinación aprobó el sílabo {$subject}{$revisionLabel}. Falta que biblioteca apruebe la bibliografía.",
+                'Sílabo aprobado por Coordinación',
+                "Revise la bibliografía del sílabo de {$subject}{$revisionLabel}.",
             ],
             'silabo.reenviado_biblioteca' => [
-                'Sílabo listo para revisión',
-                "El docente corrigió el sílabo {$subject}{$revisionLabel} y lo reenvió a biblioteca.",
+                'Sílabo corregido para revisar',
+                "El docente atendió su pedido en el sílabo de {$subject}{$revisionLabel}. Revise de nuevo la bibliografía.",
             ],
             'silabo.correccion_solicitada' => [
                 'Corrección solicitada',
-                "Se solicitó corregir el sílabo {$subject}{$revisionLabel}. Corríjalo y reenvíelo.",
+                "Revise las observaciones del sílabo de {$subject}{$revisionLabel}, corríjalo y envíelo otra vez.",
             ],
             'biblioteca.aprobado' => [
                 'Biblioteca aprobó un sílabo',
-                "Biblioteca aprobó el sílabo {$subject}{$revisionLabel}. Quedó aprobado y firmado.",
+                "El sílabo de {$subject}{$revisionLabel} quedó aprobado y firmado.",
             ],
             'biblioteca.correccion_solicitada' => [
                 'Biblioteca pidió una corrección',
-                "Biblioteca pidió corregir la bibliografía del sílabo {$subject}{$revisionLabel}. El docente lo corrige y lo reenvía directo a biblioteca.",
+                "Es sobre la bibliografía del sílabo de {$subject}{$revisionLabel}. El docente la corrige y la reenvía directo a Biblioteca, sin pasar por Coordinación.",
             ],
             'silabo.aprobado' => [
                 'Sílabo aprobado',
-                "Biblioteca aprobó el sílabo {$subject}{$revisionLabel}. Ya puede descargar el PDF firmado.",
+                "Ya puede descargar el PDF firmado del sílabo de {$subject}{$revisionLabel}.",
             ],
             'silabo.eliminado' => [
                 'Su sílabo volvió a empezar',
-                "Coordinación eliminó su sílabo aprobado de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.{$reasonLabel}",
+                "Coordinación eliminó el sílabo aprobado de {$subject}; elabórelo con la malla y la plantilla actuales.{$reasonLabel}",
             ],
             'silabo.devuelto_borrador' => [
                 'Su sílabo volvió a borrador',
-                "Coordinación cambió la malla o el proyecto de carrera de {$subject}. Lo que escribió se conserva; revíselo, envíelo y fírmelo de nuevo.",
+                "Cambiaron datos de la carrera, la malla o el proyecto de carrera que usa el sílabo de {$subject}. Se conservó lo que había escrito; revíselo, envíelo y fírmelo de nuevo.",
             ],
             'documento.exportacion_fallida' => [
                 'No se pudieron generar los documentos',
-                "Falló la generación del PDF del sílabo {$subject}{$revisionLabel}. Revise el servicio de documentos y la cola; luego Coordinación puede generarlos de nuevo desde «Documentos».",
+                "Es el PDF del sílabo de {$subject}{$revisionLabel}. Revise el servicio de documentos y la cola; después, Coordinación puede generarlo de nuevo desde «Documentos».",
             ],
             default => throw new RuntimeException('Tipo de notificación interna no soportado.'),
         };

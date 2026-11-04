@@ -1,6 +1,5 @@
+{{-- El título del aviso ya es el asunto; el cuerpo no lo repite y solo agrega qué sílabo, el motivo y qué hacer. --}}
 <x-mail::message>
-# {{ $title }}
-
 Hola {{ $name }}:
 
 {{ $body }}

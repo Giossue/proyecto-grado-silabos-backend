@@ -1,19 +1,17 @@
 <x-mail::message>
-# Active su cuenta
+# Le damos la bienvenida
 
 Hola {{ $name }}:
 
 @if ($careerName)
-Tiene una cuenta nueva como **{{ $roleName }}** de la carrera **{{ $careerName }}**.
+Tiene una cuenta como **{{ $roleName }}** de la carrera **{{ $careerName }}**. Para ingresar, elija su contraseña.
 @else
-Tiene una cuenta nueva como **{{ $roleName }}**.
+Tiene una cuenta como **{{ $roleName }}**. Para ingresar, elija su contraseña.
 @endif
-Para ingresar, defina su contraseña desde este enlace:
 
 <x-mail::button :url="$activationUrl">
 Activar mi cuenta
 </x-mail::button>
 
-El enlace es personal, de un solo uso y caduca en 24 horas. Si no esperaba este
-correo, avise a la coordinación de su carrera.
+El enlace es personal, de un solo uso y caduca en 24 horas. Si no esperaba este correo, avise a {{ $careerName ? 'la coordinación de su carrera' : 'la administración del sistema' }}.
 </x-mail::message>

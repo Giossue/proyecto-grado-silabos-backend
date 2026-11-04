@@ -14,6 +14,9 @@ class DailySummaryMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
+    /** Asunto común de los resúmenes diarios; el de Coordinación usa el mismo asunto y la misma vista. */
+    public const SUBJECT = 'Resumen del día: sílabos pendientes';
+
     /** @param list<string> $lines */
     public function __construct(
         public readonly string $name,
@@ -24,7 +27,7 @@ class DailySummaryMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Tiene sílabos pendientes en el sistema');
+        return new Envelope(subject: self::SUBJECT);
     }
 
     public function content(): Content

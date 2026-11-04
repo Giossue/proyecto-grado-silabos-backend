@@ -264,12 +264,16 @@ envían. Cada persona firma una sola vez por sílabo.
 - **Avisos.** Solo llegan cuando hay algo que hacer o cambió el trabajo propio. Abrir un
   aviso lleva a la pantalla donde se actúa y, si hace falta, activa el rol que
   corresponde. Cada aviso pertenece a un período; al terminar el período deja de verse.
-  - Docente: «Tiene sílabos por elaborar», «Plazo extendido», «Corrección solicitada»,
-    «Sílabo aprobado» (cuando el PDF está listo) y «Su sílabo volvió a empezar»
-    (reinicio, eliminación, cambio de la base o de la plantilla).
-  - Coordinación de la carrera: «Sílabo listo para revisión».
-  - Biblioteca: «Sílabo listo para revisión» (también el reenvío corregido).
+  - Docente: «Tiene un sílabo por elaborar» o «Tiene N sílabos por elaborar», «Plazo extendido»,
+    «Corrección solicitada», «Sílabo aprobado» (cuando el PDF está listo), «Su sílabo volvió a
+    borrador» y «Su sílabo volvió a empezar» (reinicio, eliminación, cambio de la base o de la
+    plantilla).
+  - Coordinación de la carrera: «Biblioteca aprobó un sílabo» y «Biblioteca pidió una corrección».
+  - Biblioteca: «Sílabo aprobado por Coordinación» y «Sílabo corregido para revisar» (el reenvío
+    tras su corrección).
   - Administración: «No se pudieron generar los documentos».
+  - El título del aviso es el asunto del correo; el mensaje no lo repite y solo dice qué sílabo
+    y revisión, el motivo, la fecha límite y qué hacer (2026-11-03).
 - **Accesibilidad.** Botón flotante en escritorio (en móvil, en el menú de usuario):
   tamaño del texto, alto contraste, sin animaciones y texto más
   espaciado. Se guarda en la cuenta.

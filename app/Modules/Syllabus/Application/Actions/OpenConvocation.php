@@ -81,13 +81,12 @@ class OpenConvocation
         $due = "; la entrega vence el {$this->notifications->date($deadline)}";
 
         foreach ($this->recipients->teacherSyllabusCounts([$convocation->id]) as $teacherId => $count) {
-            $syllabi = $count === 1 ? '1 sílabo asignado' : "{$count} sílabos asignados";
             $this->notifications->execute(
                 eventType: 'convocatoria.abierta',
                 deduplicationKey: "convocatoria.abierta:{$convocation->id}:{$teacherId}",
                 recipientIds: [$teacherId],
-                title: 'Tiene sílabos por elaborar',
-                message: "Se abrió la convocatoria de {$convocation->career->nombre}. Tiene {$syllabi}{$due}.",
+                title: $count === 1 ? 'Tiene un sílabo por elaborar' : "Tiene {$count} sílabos por elaborar",
+                message: "Se abrió la convocatoria de {$convocation->career->nombre}{$due}.",
                 resourceType: 'convocatoria',
                 resourceId: $convocation->id,
             );

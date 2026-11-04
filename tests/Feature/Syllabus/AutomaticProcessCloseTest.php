@@ -231,7 +231,7 @@ class AutomaticProcessCloseTest extends TestCase
         foreach ([$this->teacher, $this->coordinator] as $person) {
             $notice = InternalNotification::query()->where('usuario_id', $person->id)->where('tipo', 'proceso.cierre_proximo')->sole();
             $this->assertSame('La convocatoria se cierra pronto', $notice->titulo);
-            $this->assertSame("La convocatoria {$process->nombre} se finaliza al terminar el {$closesOn}, último día de entrega. Lo que no esté aprobado quedará solo para consulta.", $notice->mensaje);
+            $this->assertSame("El {$closesOn} es el último día de entrega de {$process->nombre}. Lo que no esté aprobado al terminar ese día quedará solo para consulta.", $notice->mensaje);
             $this->assertSame('proceso_silabos', $notice->tipo_recurso);
             $this->assertSame($process->id, $notice->recurso_id);
             $this->assertSame($process->periodo_academico_id, $notice->periodo_academico_id);
@@ -281,7 +281,7 @@ class AutomaticProcessCloseTest extends TestCase
 
         $notices = InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo', 'proceso.cierre_proximo')->orderBy('notificado_en')->pluck('mensaje');
         $this->assertCount(2, $notices);
-        $this->assertStringContainsString("se finaliza al terminar el {$closesOn}, último día de entrega", (string) $notices->last());
+        $this->assertStringContainsString("El {$closesOn} es el último día de entrega", (string) $notices->last());
     }
 
     public function test_the_warning_email_follows_the_preference_and_a_coordinator_who_also_teaches_is_warned_once(): void

@@ -200,16 +200,16 @@ final class InProgressWork
         $names = count($subjects) > 1
             ? implode(', ', array_slice($subjects, 0, -1)).' y '.$subjects[array_key_last($subjects)]
             : ($subjects[0] ?? '');
-        [$title, $lead] = $count > 1
-            ? ['Sus sílabos volvieron a empezar', "Sus sílabos de {$names} volvieron a empezar"]
-            : ['Su sílabo volvió a empezar', "Su sílabo de {$names} volvió a empezar"];
+        [$title, $which, $complete] = $count > 1
+            ? ['Sus sílabos volvieron a empezar', "de los sílabos de {$names}", 'Complételos']
+            : ['Su sílabo volvió a empezar', "del sílabo de {$names}", 'Complételo'];
 
         $this->notifications->execute(
             eventType: 'silabo.regenerado',
             deduplicationKey: "silabo.regenerado:{$resourceId}:".Str::uuid(),
             recipientIds: $recipientIds,
             title: $title,
-            message: "{$lead} porque {$reason}. Se perdió el contenido anterior (borrador, revisiones, aprobación, firmas y análisis de IA); ".($count > 1 ? 'complételos' : 'complételo').' otra vez.',
+            message: "Se perdió el contenido anterior {$which} (borrador, revisiones, aprobación, firmas y análisis de IA) porque {$reason}. {$complete} otra vez.",
             resourceType: $resourceType,
             resourceId: $resourceId,
             periodId: $periodId,

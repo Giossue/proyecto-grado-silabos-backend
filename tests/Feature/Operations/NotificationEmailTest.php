@@ -119,13 +119,13 @@ class NotificationEmailTest extends TestCase
         }
     }
 
-    public function test_the_email_renders_with_the_notice_and_a_link_to_the_system(): void
+    public function test_the_email_renders_the_notice_under_its_subject_with_a_link_to_the_system(): void
     {
         config(['app.frontend_url' => 'https://silabos.ueb.test/']);
         $mail = new WorkflowNotificationMail('Ana', 'Sílabo aprobado: ya puede firmarlo', 'El PDF está listo.', 'https://silabos.ueb.test/');
 
         $html = $mail->render();
-        $this->assertStringContainsString('Sílabo aprobado: ya puede firmarlo', $html);
+        $this->assertStringNotContainsString('<h1', $html);
         $this->assertStringContainsString('El PDF está listo.', $html);
         $this->assertStringContainsString('href="https://silabos.ueb.test/"', $html);
         $this->assertSame('Sílabo aprobado: ya puede firmarlo', $mail->envelope()->subject);

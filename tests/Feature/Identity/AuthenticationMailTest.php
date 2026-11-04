@@ -21,11 +21,11 @@ class AuthenticationMailTest extends TestCase
         $verify = (new VerifyEmail)->toMail($user);
         $html = strip_tags((string) $reset->render());
 
-        $this->assertSame('Restablezca su contraseña', $reset->subject);
-        $this->assertSame('Verifique su correo electrónico', $verify->subject);
+        $this->assertSame('Solicitud de cambio de contraseña', $reset->subject);
+        $this->assertSame('Confirmación de su correo electrónico', $verify->subject);
         $this->assertStringNotContainsString('Atentamente,', $html);
         $this->assertStringNotContainsString('Todos los derechos reservados', $html);
-        $this->assertStringContainsString('copie y pegue este enlace', $html);
+        $this->assertStringContainsString('Si el botón no funciona, copie este enlace en su navegador:', $html);
         $this->assertStringNotContainsString('https://api.test', (string) $reset->render());
     }
 }

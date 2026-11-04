@@ -117,9 +117,9 @@ class LibraryReviewTest extends TestCase
         $this->assertDatabaseMissing('archivos', ['archivo_id' => $pdf->archivo_id]);
         Storage::disk($pdf->disco)->assertMissing($pdf->ruta_archivo);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'atendido']))->assertOk()->assertJsonPath('reviews.total', 0);
-        $this->assertNotified($this->people['librarian'][0]->id, 'proceso.eliminado', 'Mensaje: Se abrirá otra convocatoria.');
-        $this->assertNotified($this->people['coordinator'][0]->id, 'proceso.eliminado', 'Mensaje: Se abrirá otra convocatoria.');
-        $this->assertNotified($this->people['teacher'][0]->id, 'proceso.eliminado', 'Mensaje: Se abrirá otra convocatoria.');
+        $this->assertNotified($this->people['librarian'][0]->id, 'proceso.eliminado', 'Mensaje de Administración: Se abrirá otra convocatoria.');
+        $this->assertNotified($this->people['coordinator'][0]->id, 'proceso.eliminado', 'Mensaje de Administración: Se abrirá otra convocatoria.');
+        $this->assertNotified($this->people['teacher'][0]->id, 'proceso.eliminado', 'Mensaje de Administración: Se abrirá otra convocatoria.');
     }
 
     public function test_cada_bibliotecario_filtra_su_bandeja_por_facultad(): void
@@ -168,7 +168,7 @@ class LibraryReviewTest extends TestCase
             'reasons' => ['codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
         ])->assertForbidden();
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->people['coordinator'][0]), 'idempotency_key' => (string) Str::uuid()])->assertSuccessful();
-        $this->assertNotified($this->people['librarian'][0]->id, 'coordinacion.aprobado', 'Falta que biblioteca apruebe');
+        $this->assertNotified($this->people['librarian'][0]->id, 'coordinacion.aprobado', 'Revise la bibliografía del sílabo');
 
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'pendiente']))
             ->assertOk()
@@ -210,8 +210,8 @@ class LibraryReviewTest extends TestCase
             'reasons' => ['libro_no_disponible', 'codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
         ])->assertCreated();
         $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id, 'correccion_etapa' => 'biblioteca']);
-        $this->assertNotified($this->people['teacher'][0]->id, 'silabo.correccion_solicitada', 'Corríjalo y reenvíelo');
-        $notice = $this->assertNotified($this->people['coordinator'][0]->id, 'biblioteca.correccion_solicitada', 'Biblioteca pidió corregir la bibliografía');
+        $this->assertNotified($this->people['teacher'][0]->id, 'silabo.correccion_solicitada', 'corríjalo y envíelo otra vez');
+        $notice = $this->assertNotified($this->people['coordinator'][0]->id, 'biblioteca.correccion_solicitada', 'Es sobre la bibliografía del sílabo');
         $this->as('coordinator')->postJson(route('api.v1.notifications.open', $notice))
             ->assertOk()->assertJsonPath('path', "/coordinacion/revisiones/{$revision->id}");
         $this->assertSame('correccion_solicitada', $syllabus->fresh()->estado);
@@ -254,7 +254,7 @@ class LibraryReviewTest extends TestCase
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $corrected->id]);
         $this->assertDatabaseMissing('revisiones_coordinacion', ['revision_silabo_id' => $corrected->id]);
-        $this->assertNotified($this->people['librarian'][0]->id, 'silabo.reenviado_biblioteca', 'reenvió a biblioteca');
+        $this->assertNotified($this->people['librarian'][0]->id, 'silabo.reenviado_biblioteca', 'El docente atendió su pedido');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'pendiente']))
             ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $corrected->id);
         // Un sílabo aparece una sola vez, con su envío más reciente; el anterior ya no figura como «devuelto».
@@ -323,7 +323,7 @@ class LibraryReviewTest extends TestCase
         );
         $this->assertNotified($this->people['teacher'][0]->id, 'silabo.aprobado', 'Ya puede descargar el PDF firmado');
         $this->assertNotNotified($this->people['coordinator'][0]->id, 'silabo.aprobado');
-        $notice = $this->assertNotified($this->people['coordinator'][0]->id, 'biblioteca.aprobado', 'Biblioteca aprobó el sílabo');
+        $notice = $this->assertNotified($this->people['coordinator'][0]->id, 'biblioteca.aprobado', 'quedó aprobado y firmado');
         $this->as('coordinator')->postJson(route('api.v1.notifications.open', $notice))
             ->assertOk()->assertJsonPath('path', "/coordinacion/revisiones/{$revision->id}");
     }

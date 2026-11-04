@@ -24,7 +24,7 @@ class ManagedUserActivationMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Active su cuenta en '.config('app.name'),
+            subject: 'Su invitación a '.config('app.name'),
             using: [function (Email $message): void {
                 $message->getHeaders()->addTextHeader('Importance', 'high');
                 $message->getHeaders()->addTextHeader('X-Priority', '1');

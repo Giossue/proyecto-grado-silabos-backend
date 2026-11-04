@@ -1,9 +1,8 @@
+{{-- Resumen diario de Docente, Biblioteca y Coordinación: una línea por carrera y un botón. --}}
 <x-mail::message>
-# Sílabos pendientes
+# Pendientes de hoy
 
 Hola {{ $name }}:
-
-Esto espera su atención en el sistema.
 
 @foreach ($lines as $line)
 - {{ $line }}
