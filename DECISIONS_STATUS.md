@@ -175,8 +175,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   estado, y pide «finalizar convocatoria». Se puede finalizar abierta o pausada.
 - Franja de convocatoria finalizada (2026-11-04): sigue a la vista en todos los roles hasta que
   Administración abra otra convocatoria, con los colores existentes. La convocatoria institucional
-  manda sobre la de carrera. El aviso de Facultades y carreras distingue abierta de finalizada
-  vigente y desaparece al terminar las clases.
+  manda sobre la de carrera. El aviso de Facultades y carreras solo sale con una convocatoria
+  abierta o en pausa.
 - Finalización automática (2026-11-03, reemplaza el cierre automático del 2026-11-02, que
   finalizaba el día después del último día de clases): si Administración no la finaliza, el
   sistema finaliza la convocatoria abierta o pausada el día después de su fecha de entrega

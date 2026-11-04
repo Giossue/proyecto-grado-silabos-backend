@@ -189,16 +189,16 @@ class FinalizedProcessStaysCurrentTest extends TestCase
         $this->assertSame('cerrado', $process->fresh()?->estado);
     }
 
-    public function test_the_structure_notice_tells_an_open_convocation_from_a_finalized_one_until_classes_end(): void
+    public function test_the_structure_warning_only_shows_while_a_convocation_is_in_progress(): void
     {
-        $notice = fn () => $this->actingAsAdministrator()->getJson(route('api.v1.admin.academic.index'))->assertOk()->json('convocation_notice');
+        $warning = fn () => $this->actingAsAdministrator()->getJson(route('api.v1.admin.academic.index'))->assertOk()->json('convocation_in_progress');
 
-        $this->assertNull($notice());
-        $this->finalizedProcess();
-        $this->assertSame('finalized', $notice());
+        $this->assertFalse($warning());
+        [$process] = $this->finalizedProcess();
+        $this->assertFalse($warning());
 
-        $this->travelTo(CarbonImmutable::parse($this->institutionDay(61), 'America/Guayaquil')->setTime(12, 0));
-        $this->assertNull($notice());
+        $process->update(['estado' => SyllabusProcess::STATE_PAUSED, 'finalizada_en' => null]);
+        $this->assertTrue($warning());
     }
 
     public function test_the_coordinator_checklist_keeps_the_real_progress_after_finalizing(): void

@@ -49,12 +49,7 @@ class AcademicStructureViewData
 
         return [
             'lock_reason' => $lockedPeriods === [] ? null : reset($lockedPeriods),
-            // Qué aviso ve Administración: los cambios afectan sílabos si hay una en curso o una finalizada vigente.
-            'convocation_notice' => match (true) {
-                SyllabusProcess::query()->inProgress()->exists() => 'open',
-                SyllabusProcess::query()->finalizedButCurrent()->exists() => 'finalized',
-                default => null,
-            },
+            'convocation_in_progress' => SyllabusProcess::query()->inProgress()->exists(),
             'catalogs' => [
                 'faculties' => Faculty::query()
                     ->with('logoObject')
