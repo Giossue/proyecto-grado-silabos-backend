@@ -22,6 +22,11 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 - S11: «el punto 3 arreglalo como tu lo mencionas … si ves que hay un botón flotante? el que dice Todo Listo, por qué no usamos eso? y claro funcionado con lo que dices».
   - Si la plantilla no se puede usar (la misma comprobación que hace el servidor al abrir, reanudar o reabrir), `extension_block_reason` lo dice y remite a «Antes de empezar».
   - El paso «Armar la plantilla del sílabo» de la lista flotante «Antes de empezar» usa esa misma comprobación: si la plantilla no es usable, la lista deja de mostrar «Todo listo» y señala el paso pendiente.
+- S12 (reemplaza a S10, 2026-11-04): «todo está guardado en los periodo, si un admin hizo ese chiste, A MENOS que haga prorroga no habrá afectaciones, y se aplicará el siguiente periodo o convocatoria, pero claro, lo recomendable es avisarle de que no haga eso». Alcance: «Para todo».
+  - Con la convocatoria finalizada, los cambios de facultad, carrera, malla, proyecto de carrera, paralelos, docentes y coordinador no tocan sus sílabos: ni el estado, ni el contenido, ni `closed_document`. Cambiar un docente tampoco borra un sílabo aprobado.
+  - Al reabrir con una prórroga, todo se pone al día: identificación, proyecto de carrera, docentes, coordinador y paralelos nuevos. Si un sílabo enviado o aprobado debe volver a Borrador, pide confirmación antes de reabrir.
+  - Si no se reabre, los cambios valen para la próxima convocatoria.
+  - Al guardar uno de esos cambios con una convocatoria finalizada que aún podría reabrirse, sale este aviso: «La convocatoria {período} ya finalizó. Este cambio no afecta sus sílabos: conservan los datos que tenían. Se aplicará en la próxima convocatoria, o en esta si la reabre con una prórroga. Evite estos cambios hasta abrir la próxima convocatoria, salvo que sea necesario.» Con «Guardar de todos modos» y «Cancelar».
 
 ## Tasks
 
@@ -31,6 +36,8 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
 | T2 | S3, S4, S7, S9 (frontend) | delegada: escritor de frontend (en paralelo con T1) | hecha: 749 pruebas, typecheck, lint y contrato | frontend eed4757 |
 | T4 | S10 | delegada: escritor de backend (vigencia hasta el fin de clases; en paralelo con T5) | hecha: 721 pruebas; verificador PASS | 028b0533 |
 | T5 | S11 | delegada: escritor de backend y frontend (plantilla usable en el motivo y en «Antes de empezar»; en paralelo con T4) | hecha: verificador PASS | 586b59ae |
+| T6 | S12 | delegada: escritor de backend y frontend (respaldo de contexto) | pendiente | |
+| T7 | S12 | delegada: verificador independiente (ítems 1 y 4) | pendiente | |
 | T3 | todas | delegada: verificador independiente (ítems de alto riesgo 1 y 4) | hecha: PASS en S1–S9, sin bloqueos | — |
 
 ## Log
@@ -64,3 +71,4 @@ Rama: main, con commits por unidad y sin push. Entrega: backend y frontend. Prue
   - A4: con la convocatoria finalizada, un cambio de docente o un traspaso deja sílabos sin poder editarse hasta reabrir.
   - A5: la comprobación de la plantilla se hace en cada carga del panel.
   - Decisión del escritor: `skipIncomplete` al reabrir.
+- L9 (2026-11-04): «Es que a ver, todo está guardado en los periodo, si un admin hizo ese chiste, A MENOS que haga prorroga no habrá afectaciones, y se aplicará el siguiente periodo o convocatoria, pero claro, lo recomendable es avisarle de que no haga eso». Respuesta: «Para todo». Confirmado con el ejemplo del nombre de la carrera: «ok mejor».
