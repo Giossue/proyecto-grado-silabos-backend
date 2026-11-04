@@ -20,6 +20,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\InstitutionDate;
+use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -145,6 +146,59 @@ class FinalizedProcessStaysCurrentTest extends TestCase
         $this->updateSubject($subject, ['horas_aa' => (float) $subject->horas_aa + 32])->assertSuccessful();
         $this->assertSame($stored, $this->storedSyllabi());
         $this->assertSame(SyllabusProcess::STATE_CLOSED, $process->fresh()?->estado);
+    }
+
+    public function test_every_role_keeps_seeing_the_finalized_banner_until_a_new_convocation_exists(): void
+    {
+        [$process] = $this->finalizedProcess();
+        $deadline = fn (): TestResponse => $this->getJson(route('api.v1.dashboard.deadline'))->assertOk();
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+
+        $this->actingAsAdministrator();
+        $deadline()->assertJsonPath('deadline.state', 'closed')->assertJsonPath('deadline.classes_ended', false);
+        $this->actingAsCoordinator();
+        $deadline()->assertJsonPath('deadline.state', 'closed');
+        $this->actingAsTeacher();
+        $deadline()->assertJsonPath('deadline.state', 'closed');
+        $this->actingAs($librarian)->withSession(['active_role_assignment_id' => $librarian->roleAssignments()->firstOrFail()->id]);
+        $deadline()->assertJsonPath('deadline.state', 'closed');
+
+        $this->travelTo(CarbonImmutable::parse($this->institutionDay(61), 'America/Guayaquil')->setTime(12, 0));
+        $this->actingAsAdministrator();
+        $deadline()->assertJsonPath('deadline.state', 'closed')->assertJsonPath('deadline.classes_ended', true);
+        $this->actingAsTeacher();
+        $deadline()->assertJsonPath('deadline.state', 'closed');
+        $this->travelBack();
+
+        $period = AcademicPeriod::query()->create([
+            'codigo' => 'PERIODO-SIGUIENTE',
+            'fecha_inicio' => $this->institutionDay(70),
+            'fecha_fin' => $this->institutionDay(200),
+            'semanas_lectivas' => 16,
+        ]);
+        SyllabusProcess::query()->create([
+            'periodo_academico_id' => $period->id,
+            'inicia_en' => now()->addDays(70),
+            'entrega_en' => now()->addDays(100),
+            'estado' => SyllabusProcess::STATE_OPEN,
+        ]);
+        $this->actingAsAdministrator();
+        $deadline()->assertJsonPath('deadline', null);
+        $this->actingAsCoordinator();
+        $deadline()->assertJsonPath('deadline.state', 'upcoming')->assertJsonPath('deadline.career_pending', true);
+        $this->assertSame('cerrado', $process->fresh()?->estado);
+    }
+
+    public function test_the_structure_notice_tells_an_open_convocation_from_a_finalized_one_until_classes_end(): void
+    {
+        $notice = fn () => $this->actingAsAdministrator()->getJson(route('api.v1.admin.academic.index'))->assertOk()->json('convocation_notice');
+
+        $this->assertNull($notice());
+        $this->finalizedProcess();
+        $this->assertSame('finalized', $notice());
+
+        $this->travelTo(CarbonImmutable::parse($this->institutionDay(61), 'America/Guayaquil')->setTime(12, 0));
+        $this->assertNull($notice());
     }
 
     public function test_a_career_project_change_reaches_a_current_finalized_process(): void

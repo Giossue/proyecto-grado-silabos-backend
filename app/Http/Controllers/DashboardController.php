@@ -23,7 +23,7 @@ use Illuminate\Http\Request;
 /**
  * @phpstan-import-type CoordinatorReadiness from CoordinatorConvocationReadiness
  *
- * @phpstan-type DeadlinePayload array{period: string, starts_at: string, due_at: string, state: string, days_until_start: int, days_until_due: int, convocation_id: string|null, paused_by: string|null}
+ * @phpstan-type DeadlinePayload array{period: string, starts_at: string, due_at: string, state: string, days_until_start: int, days_until_due: int, convocation_id: string|null, paused_by: string|null, classes_ended: bool, career_pending: bool}
  * @phpstan-type CoordinationConvocationPayload array{process_id: string, period: string, convocation_id: string|null, can_open: bool, state: string|null, process_open: bool}
  */
 class DashboardController extends Controller
@@ -197,7 +197,7 @@ class DashboardController extends Controller
     /** @return DeadlinePayload|null */
     private function careerDeadline(?string $careerId, ConvocationSchedule $schedule): ?array
     {
-        $process = SyllabusProcess::query()->inProgress()->with('academicPeriod')->first();
+        $process = $this->latestProcess();
         if ($process === null || $careerId === null) {
             return null;
         }
@@ -226,7 +226,10 @@ class DashboardController extends Controller
             $dueAt = $process->entrega_en;
         }
 
-        return $this->deadlinePayload($process, $convocation, $startsAt, $dueAt);
+        return [
+            ...$this->deadlinePayload($process, $convocation, $startsAt, $dueAt),
+            'career_pending' => $convocation === null || $convocation->estado === Convocation::STATE_PREPARATION,
+        ];
     }
 
     /** @return DeadlinePayload|null */
@@ -243,7 +246,7 @@ class DashboardController extends Controller
             ->first();
 
         if (! $syllabus instanceof Syllabus) {
-            return null;
+            return $this->finalizedTeacherDeadline($user, $careerId);
         }
 
         $convocation = $syllabus->convocation;
@@ -258,21 +261,59 @@ class DashboardController extends Controller
     }
 
     /**
-     * Administración no tiene plazo propio: solo ve el aviso cuando ella pausó la convocatoria, por si lo olvida.
+     * El docente sigue viendo la franja de la convocatoria finalizada en la que tuvo sílabos, hasta que haya otra.
+     *
+     * @return DeadlinePayload|null
+     */
+    private function finalizedTeacherDeadline(User $user, ?string $careerId): ?array
+    {
+        $process = $this->latestProcess();
+        if ($process === null || $process->estado !== SyllabusProcess::STATE_CLOSED) {
+            return null;
+        }
+        $syllabus = Syllabus::query()
+            ->whereCurrentTeacher($user)
+            ->whereHas('convocation', fn (Builder $convocation) => $convocation
+                ->where('proceso_id', $process->id)
+                ->when($careerId !== null, fn (Builder $query) => $query->where('carrera_id', $careerId)))
+            ->with('convocation')
+            ->first();
+
+        return $syllabus instanceof Syllabus
+            ? $this->deadlinePayload($process, $syllabus->convocation, $process->inicia_en, $process->entrega_en)
+            : null;
+    }
+
+    /**
+     * La convocatoria que manda la franja: la que está en curso o, si no hay, la última finalizada,
+     * que sigue a la vista hasta que Administración abra otra.
+     */
+    private function latestProcess(): ?SyllabusProcess
+    {
+        return SyllabusProcess::query()->inProgress()->with('academicPeriod')->first()
+            ?? SyllabusProcess::query()->with('academicPeriod')->get()
+                ->sortByDesc(fn (SyllabusProcess $process): string => $process->academicPeriod->fecha_inicio->toDateString())
+                ->first();
+    }
+
+    /**
+     * Administración no tiene plazo propio: solo ve el aviso cuando la convocatoria está en pausa o finalizada.
      *
      * @return DeadlinePayload|null
      */
     private function administratorPause(): ?array
     {
-        $process = SyllabusProcess::query()->where('estado', SyllabusProcess::STATE_PAUSED)->with('academicPeriod')->first();
+        $process = $this->latestProcess();
 
-        return $process === null ? null : $this->deadlinePayload($process, null, $process->inicia_en, $process->entrega_en);
+        return $process === null || $process->estado === SyllabusProcess::STATE_OPEN
+            ? null
+            : $this->deadlinePayload($process, null, $process->inicia_en, $process->entrega_en);
     }
 
     /** @return DeadlinePayload|null */
     private function librarianDeadline(): ?array
     {
-        $process = SyllabusProcess::query()->inProgress()->with('academicPeriod')->first();
+        $process = $this->latestProcess();
 
         return $process === null ? null : $this->deadlinePayload($process, null, $process->inicia_en, $process->entrega_en);
     }
@@ -305,6 +346,8 @@ class DashboardController extends Controller
             'convocation_id' => $convocation?->id,
             // Quién pausó: Administración (convocatoria institucional) o Coordinación (la de la carrera).
             'paused_by' => $state !== 'paused' ? null : ($process->estado === SyllabusProcess::STATE_PAUSED ? 'administracion' : 'coordinacion'),
+            'classes_ended' => $today > $process->academicPeriod->fecha_fin->toDateString(),
+            'career_pending' => false,
         ];
     }
 
