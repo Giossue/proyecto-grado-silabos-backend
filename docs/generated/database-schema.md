@@ -2,11 +2,11 @@
 
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
-- Fecha: 2026-11-02.
-- Última migración aplicada: `2026_11_02_000256_create_support_documents_table`.
-- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 37 tablas.
+- Fecha: 2026-11-05.
+- Última migración aplicada: `2026_11_05_000266_drop_teacher_ai_chat_messages`.
+- Origen: base temporal creada solo para regenerar este documento, con todas las migraciones aplicadas (PostgreSQL 18), esquema `public`, 37 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
-  `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
+  `psql --dbname=<base temporal> -X -At -f <consulta>.sql`.
   - columnas: `pg_attribute` + `format_type()` + `pg_attrdef` (`pg_get_expr`);
   - PK, FK y CHECK: `pg_constraint` + `pg_get_constraintdef()`;
   - únicos: `pg_index` con `indisunique` y sin `indisprimary` + `pg_get_indexdef()`;
@@ -52,7 +52,6 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - `marcar_definicion_plantilla_modificada()`: triggers en `plantilla_silabo`
 - `proteger_archivo_registrado()`: triggers en `archivos`
 - `proteger_envio_biblioteca()`: triggers en `envios_biblioteca`
-- `proteger_mensaje_ia()`: triggers en `mensajes_ia`
 - `proteger_notificacion()`: triggers en `notificaciones`
 - `proteger_registro_append_only()`: triggers en `aprobaciones`, `eventos_auditoria`, `firmas_silabo`, `revisiones_coordinacion`
 - `proteger_registro_con_campos_unicos()`: triggers en `revisiones_silabo`
@@ -62,6 +61,19 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - `validar_relaciones_revision()`: triggers en `revisiones_silabo`
 
 ## Tablas
+
+### `ajustes_sistema`
+
+| Columna | Tipo | Nulo | Por defecto |
+|---|---|---|---|
+| `clave_ajuste` | character varying(60) | no |  |
+| `valor_ajuste` | jsonb | no |  |
+| `modificado_por` | uuid | sí |  |
+| `modificado_en` | timestamp(0) with time zone | no | `CURRENT_TIMESTAMP` |
+
+- PK: `PRIMARY KEY (clave_ajuste)`
+- FK:
+  - `ajustes_sistema_modificado_por_foreign`: `FOREIGN KEY (modificado_por) REFERENCES usuarios(usuario_id) ON DELETE SET NULL`
 
 ### `aprobaciones`
 
@@ -230,6 +242,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `carrera_id` | uuid | no |  |
 | `estado_convocatoria_carrera` | character varying(24) | no | `'preparacion'::character varying` |
 | `convocatoria_universidad_id` | uuid | no |  |
+| `estado_previo_cierre_convocatoria_carrera` | character varying(24) | sí |  |
 
 - PK: `PRIMARY KEY (convocatoria_carrera_id)`
 - FK:
@@ -239,6 +252,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `convocatorias_carreras_carrera_proceso_unico`: `(carrera_id, convocatoria_universidad_id)`
 - CHECK:
   - `convocatorias_carreras_estado_check`: `CHECK (((estado_convocatoria_carrera)::text = ANY ((ARRAY['preparacion'::character varying, 'abierta'::character varying, 'pausada'::character varying, 'cerrada'::character varying])::text[])))`
+  - `convocatorias_carreras_estado_previo_cierre_check`: `CHECK (((estado_previo_cierre_convocatoria_carrera IS NULL) OR (((estado_convocatoria_carrera)::text = 'cerrada'::text) AND ((estado_previo_cierre_convocatoria_carrera)::text = ANY ((ARRAY['abierta'::character varying, 'pausada'::character varying])::text[])))))`
 
 ### `convocatorias_universidad`
 
@@ -250,6 +264,8 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `estado_convocatoria_universidad` | character varying(20) | no | `'abierto'::character varying` |
 | `periodo_academico_id` | uuid | no |  |
 | `pausado_en` | timestamp(6) with time zone | sí |  |
+| `cantidad_prorrogas` | integer | no | `0` |
+| `finalizada_en` | timestamp(6) with time zone | sí |  |
 
 - PK: `PRIMARY KEY (convocatoria_universidad_id)`
 - FK:
@@ -258,8 +274,10 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `convocatorias_universidad_en_curso_unico`: `((1)) WHERE ((estado_convocatoria_universidad)::text = ANY ((ARRAY['abierto'::character varying, 'pausado'::character varying])::text[]))`
   - `convocatorias_universidad_periodo_unico`: `(periodo_academico_id)`
 - CHECK:
+  - `convocatorias_universidad_cantidad_prorrogas_check`: `CHECK ((cantidad_prorrogas >= 0))`
   - `convocatorias_universidad_estado_check`: `CHECK (((estado_convocatoria_universidad)::text = ANY ((ARRAY['abierto'::character varying, 'pausado'::character varying, 'cerrado'::character varying])::text[])))`
   - `convocatorias_universidad_fechas_check`: `CHECK ((fecha_entrega > fecha_inicio))`
+  - `convocatorias_universidad_finalizada_en_check`: `CHECK (((finalizada_en IS NULL) OR ((estado_convocatoria_universidad)::text = 'cerrado'::text)))`
 - Triggers:
   - `convocatorias_universidad_periodo_protegido`: BEFORE UPDATE OF periodo_academico_id FOR EACH ROW EXECUTE FUNCTION impedir_cambio_periodo_proceso_con_convocatorias()
 
@@ -444,27 +462,6 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `invitaciones_activacion_usuario_id_foreign`: `FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE CASCADE`
 - Únicos:
   - `invitaciones_activacion_hash_activacion_unique`: `(hash_activacion)`
-
-### `mensajes_ia`
-
-| Columna | Tipo | Nulo | Por defecto |
-|---|---|---|---|
-| `mensaje_ia_id` | uuid | no |  |
-| `contenido_mensaje` | jsonb | no |  |
-| `enviado_en` | timestamp with time zone | no | `clock_timestamp()` |
-| `silabo_id` | uuid | no |  |
-| `usuario_id` | uuid | no |  |
-
-- PK: `PRIMARY KEY (mensaje_ia_id)`
-- FK:
-  - `mensajes_ia_silabo_id_foreign`: `FOREIGN KEY (silabo_id) REFERENCES silabos(silabo_id) ON DELETE CASCADE`
-  - `mensajes_ia_usuario_id_foreign`: `FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
-- Únicos:
-  - `mensajes_ia_mensaje_idempotencia_unica`: `(silabo_id, usuario_id, (((contenido_mensaje -> 'entrada'::text) ->> 'clave_idempotencia'::text))) WHERE (((contenido_mensaje ->> 'tipo'::text) = 'mensaje'::text) AND ((contenido_mensaje ->> 'rol'::text) = 'usuario'::text))`
-- CHECK:
-  - `mensajes_ia_contenido_mensaje_check`: `CHECK (((jsonb_typeof(contenido_mensaje) = 'object'::text) AND (jsonb_typeof((contenido_mensaje -> 'entrada'::text)) = 'object'::text) AND ((contenido_mensaje ->> 'tipo'::text) = ANY (ARRAY['mensaje'::text, 'ocultamiento'::text])) AND ((contenido_mensaje ->> 'estado'::text) = ANY (ARRAY['pendiente'::text, 'en_ejecucion'::text, 'completado'::text, 'fallido'::text, 'registrada'::text]))))`
-- Triggers:
-  - `proteger_mensaje_ia`: BEFORE DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION proteger_mensaje_ia()
 
 ### `mensajes_ia_plantilla`
 
@@ -724,6 +721,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `dos_factores_confirmado_en` | timestamp(0) with time zone | sí |  |
 | `formacion_experiencia_usuario` | text | sí |  |
 | `preferencias_accesibilidad_usuario` | jsonb | sí |  |
+| `preferencias_correo_usuario` | jsonb | sí |  |
 
 - PK: `PRIMARY KEY (usuario_id)`
 - Únicos:
