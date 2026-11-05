@@ -5,7 +5,7 @@
 Solo lo lento o externo:
 
 - generar el PDF de una revisión aprobada (el Word es interno);
-- responder una pregunta del chat de IA;
+- responder un pedido del asistente de la plantilla (`AnswerTemplateAssistantJob`, ver [ai-service.md](ai-service.md));
 - enviar el correo de activación de cuenta;
 - el trabajo de humo de la plataforma.
 
@@ -22,7 +22,6 @@ petición web; no tiene trabajos de cola. Ver [ficha-excel.md](ficha-excel.md).
 |---|---|---|---:|---:|---|---|
 | `PlatformSmokeJob` | Operations | `critica` | 30 s | 3 | 1, 5, 15 s | clave del comando |
 | `GenerateSyllabusExportJob` | Documents | `documentos` | 120 s | 3 | 5, 30, 120 s | exportación |
-| `AnswerSyllabusChatJob` | AiAssistance | `ia` | 60 s | 3 | 5, 30, 120 s | mensaje |
 | `ManagedUserActivationMail` | Identity | `general` | por defecto | por defecto | — | — |
 | `WorkflowNotificationMail` | Operations | `general` | por defecto | por defecto | — | — |
 | `CoordinatorSummaryMail` | Operations | `general` | por defecto | por defecto | — | — |
@@ -45,9 +44,9 @@ método `failed()` de cada trabajo deja el registro de dominio en `fallido`/`fal
 | Petición | `idempotency_key` (UUID) + índice único + `lockForUpdate` en la transacción | Enviar, exportar y preguntar a la IA |
 | Petición | Un solo registro por revisión (índice único) + `lockForUpdate`; si ya existe, se devuelve | Aprobar en Coordinación y verificar en Biblioteca |
 | Cliente | `attemptKey`: misma clave al reintentar lo mismo; clave nueva si cambia lo enviado | SPA |
-| Despacho | `->afterCommit()`: si la transacción se revierte, el trabajo no se envía | Exportación y chat |
-| Cola | `ShouldBeUnique` con `uniqueId()` y `#[UniqueFor]`: se descarta un duplicado mientras el primero espera o corre | Los cinco trabajos de la tabla |
-| Ejecución | `RunsOnce`: `WithoutOverlapping(uniqueId)->dontRelease()->expireAfter(timeout + 30)`. Si la cola entrega una copia de un trabajo que sigue corriendo, la copia se descarta | Los cinco trabajos de la tabla |
+| Despacho | `->afterCommit()`: si la transacción se revierte, el trabajo no se envía | Exportación |
+| Cola | `ShouldBeUnique` con `uniqueId()` y `#[UniqueFor]`: se descarta un duplicado mientras el primero espera o corre | Los cuatro trabajos de la tabla |
+| Ejecución | `RunsOnce`: `WithoutOverlapping(uniqueId)->dontRelease()->expireAfter(timeout + 30)`. Si la cola entrega una copia de un trabajo que sigue corriendo, la copia se descarta | Los cuatro trabajos de la tabla |
 | Consumidor | Solo cambia el registro si sigue en el estado esperado | Todos |
 
 La verificación de Biblioteca pide la exportación con la clave de la aprobación, así
@@ -109,6 +108,3 @@ php artisan platform:smoke-job
   con los sellos de `firmas_silabo`, lo convierte en PDF, guarda solo el PDF en
   `archivos` y marca la exportación `completado`. Avisa al docente.
   Ver [files-and-documents.md](files-and-documents.md).
-- `AnswerSyllabusChatJob`: llama al `AiChatGateway` con la pregunta, el historial y la
-  evidencia fijada. Rechaza respuestas que citan evidencia ajena. Ver
-  [ai-service.md](ai-service.md).

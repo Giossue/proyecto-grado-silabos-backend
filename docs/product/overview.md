@@ -11,8 +11,7 @@ un cambio y si lo aprobado coincide con lo entregado.
 
 Aplicación web con inicio de sesión. Administración abre una convocatoria por período.
 Cada sílabo nace de una plantilla institucional única y trae ya los datos de la malla,
-del paralelo y del proyecto de carrera de la asignatura. El docente completa lo suyo, con ayuda
-opcional de un chat de IA, y lo envía. Coordinación revisa el contenido y Biblioteca
+del paralelo y del proyecto de carrera de la asignatura. El docente completa lo suyo y lo envía. Coordinación revisa el contenido y Biblioteca
 verifica la bibliografía. Cada uno firma con su firma electrónica al decidir: el docente
 al enviar, Coordinación y Biblioteca al aprobar. Al aprobarse, el sistema genera el PDF
 con los tres sellos.
@@ -45,7 +44,7 @@ está en `roles-and-permissions.md`.
 2. Plantilla del sílabo como datos (secciones, campos y bloques).
 3. Proyecto de carrera: datos por asignatura, con importación mediante plantilla Excel.
 4. Convocatoria por período y un sílabo por paralelo.
-5. Elaboración con autoguardado, validación y chat de IA opcional.
+5. Elaboración con autoguardado, validación.
 6. Revisión: coordinación y luego biblioteca; corrección y reenvío.
 7. Firma electrónica al decidir y PDF automático al aprobar.
 8. Avisos cuando hay que actuar, ayuda por pantalla, accesibilidad y auditoría.
@@ -67,7 +66,6 @@ Se medirán con línea base e instrumentos aprobados:
 - tiempo de elaboración, revisión y corrección;
 - devoluciones por sílabo;
 - éxito, tiempo y errores en pruebas de usabilidad;
-- utilidad percibida del chat de IA;
 - fidelidad del Word/PDF frente al formato oficial.
 
 Los umbrales dependen de `PV-03`, `PV-04`, `PV-17` y `PV-18`

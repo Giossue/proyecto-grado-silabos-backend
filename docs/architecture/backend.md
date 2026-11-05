@@ -28,7 +28,7 @@ Ruta /api/v1/…
 | `EnsureActiveUser` | Si la cuenta se desactivó, cierra la sesión y responde `403`. |
 | `AssignCorrelationId` | Lee o crea `X-Correlation-ID`, lo agrega al log y a la respuesta. |
 | `AddSecurityHeaders` | Agrega cabeceras de seguridad. |
-| `throttle:*` | Limita login, recuperación, 2FA, importaciones, firmas, exportaciones y chat de IA. |
+| `throttle:*` | Limita login, recuperación, 2FA, importaciones, firmas, exportaciones y catálogo de Biblioteca. |
 
 ## Responsabilidades
 

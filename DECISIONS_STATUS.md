@@ -459,11 +459,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## IA
 
-- El proveedor se elige con `AI_DRIVER` (`openai`, `claude` o `deepseek`) y está apagado
-  por defecto (I-73). En el piloto se usa DeepSeek (antes PV-14; confirmado el 2026-10-26).
-- El docente tiene un chat que usa los datos de la carrera, de la asignatura y lo que ya
-  escribió en el sílabo (contexto `free-text-v3`).
-- La IA se limita al chat del docente. El proyecto de carrera se importa exclusivamente por Excel
+- El proveedor se elige con `AI_DRIVER` y está apagado por defecto (I-73). Con el chat del
+  docente retirado, el asistente de la plantilla solo funciona con `deepseek`. En el piloto se usa DeepSeek (antes PV-14; confirmado el 2026-10-26).
+- El docente no usa IA: el chat «Asistente de unidades» se retiró el 2026-11-05 («ya no tiene
+  ningún tipo de utilidad»). La IA se limita al asistente de la plantilla de Administración.
+  Las filas viejas de `mensajes_ia` se conservan; la tabla no se borró. El proyecto de carrera se importa exclusivamente por Excel
   estructurado; se retiró su configuración de OCR y extracción por IA.
 - La IA nunca aprueba, bloquea ni escribe sola. Si falla, solo se pierde la ayuda de IA
   (ADR-0003).

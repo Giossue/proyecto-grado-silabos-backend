@@ -19,7 +19,7 @@
 1. navegador ↔ Laravel;
 2. Laravel ↔ PostgreSQL;
 3. aplicación ↔ almacenamiento privado;
-4. worker ↔ proveedor de IA alojado (chat del docente);
+4. worker ↔ proveedor de IA alojado (asistente de la plantilla);
 5. worker ↔ Gotenberg (DOCX a PDF);
 6. operadores ↔ despliegue y respaldos.
 
@@ -43,12 +43,12 @@
 | Trabajo repetido | Un job duplica efectos | `ShouldBeUnique`, `RunsOnce`, estado persistido |
 | Prompt injection | El contenido del sílabo o un mensaje ordena ignorar reglas | evidencia delimitada como datos no confiables, sin herramientas, salida JSON validada |
 | Referencia inventada | La IA cita evidencia inexistente | solo se aceptan citas de evidencias enviadas |
-| Decisión encubierta de IA | La IA intenta aprobar o cambiar estados | el chat solo devuelve texto; el docente decide qué usar |
+| Decisión encubierta de IA | La IA intenta aprobar o cambiar estados | el asistente solo propone; Administración decide qué aplicar |
 | SSRF / proveedor externo | Una URL manipulada desvía contenido o la clave | URL definida solo por operación, HTTPS, sin credenciales embebidas ni redirecciones; clave en secreto de despliegue |
-| Tratamiento por terceros | Borradores y preguntas del chat salen hacia la IA | desactivada por defecto, activación explícita, contexto mínimo; base legal pendiente (PV-12) |
+| Tratamiento por terceros | Pedidos y borradores de la plantilla salen hacia la IA | desactivada por defecto, activación explícita, contexto mínimo; base legal pendiente (PV-12) |
 | Exfiltración por logs | Prompts o documentos aparecen en logs | minimización, acceso y retención controlados |
 | Pérdida de datos | Base o archivos destruidos | respaldos aislados, restauración probada (PV-11), mínimo privilegio |
-| Denegación de servicio | Chat de IA y exportación agotan los workers | colas separadas, límites por actor, tamaño y tiempo, timeouts |
+| Denegación de servicio | Asistente de IA y exportación agotan los workers | colas separadas, límites por actor, tamaño y tiempo, timeouts |
 
 ## Casos de abuso obligatorios
 

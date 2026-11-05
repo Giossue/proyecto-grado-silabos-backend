@@ -12,7 +12,7 @@ El backend es un monolito modular. Cada módulo vive en `app/Modules/<Módulo>`.
 | `Syllabus` | Convocatorias institucionales y de carrera, sílabos, borrador, validación, envío, revisión de Coordinación, correcciones y regeneración. | `convocatorias_universidad`, `convocatorias_carreras`, `silabos`, `valores_campo`, `revisiones_silabo`, `revisiones_coordinacion`, `aprobaciones`; vista `docentes_vigentes_silabo` |
 | `Library` | Revisión de bibliografía: comentar con motivos o aprobar. Aprobar deja el sílabo `aprobado` y pide la exportación. | `envios_biblioteca` |
 | `Documents` | Word interno con PHPWord, PDF con Gotenberg, archivos privados, firmas al decidir (declaración y CMS) y descarga del PDF. | `exportaciones_silabo`, `archivos`, `firmas_silabo` |
-| `AiAssistance` | Chat del docente sobre su sílabo. | `mensajes_ia` |
+| `AiAssistance` | Asistente de IA de Administración para editar la plantilla. | `mensajes_ia_plantilla`, `propuestas_ia_plantilla` |
 | `Operations` | Auditoría, notificaciones internas, ayuda por pantalla (texto fijo en `ScreenHelpCatalog`), lista de preparación y trabajo de humo. | `eventos_auditoria`, `notificaciones` |
 
 Fuera de los módulos quedan el modelo `App\Models\User`, el `DashboardController`, los
@@ -39,9 +39,9 @@ La única regla automática está en `tests/Architecture/ModuleBoundariesTest.ph
 - Un módulo llama directamente a acciones o servicios de otro. Ejemplo: `Library`
   llama a `RequestSyllabusExport` de `Documents` al aprobar la bibliografía.
 - Las lecturas que otro módulo necesita se exponen en `Application/Queries`
-  (`SyllabusNavigationLookup`, `AiHistorySyllabusLookup`, `ExportArtifactLookup`).
+  (`SyllabusNavigationLookup`, `ExportArtifactLookup`).
 - Las integraciones externas van detrás de un contrato del dominio:
-  `AiChatGateway`, `DocumentRenderer` y `BibliographicCatalog`.
+  `AiAgentGateway`, `DocumentRenderer` y `BibliographicCatalog`.
   `AppServiceProvider` elige la implementación según la configuración.
 - No hay eventos de dominio ni listeners. Los efectos se resuelven así:
   - auditoría: `RecordAuditEvent` dentro de la misma transacción;

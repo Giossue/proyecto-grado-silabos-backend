@@ -42,21 +42,21 @@ Se auditan, entre otros:
 - sílabo: inicio, guardado, copia, envío, reenvío, corrección, aprobación, reinicio y
   eliminación;
 - revisión de Biblioteca, firmas, exportación y cada descarga;
-- solicitudes al chat de IA.
+- pedidos al asistente de la plantilla.
 
 No copies el contenido completo del sílabo en la auditoría.
 
 ## Trabajos en cola
 
 No hay tabla de trabajos fallidos; `cola_trabajos` solo es la cola técnica y se vacía al procesarse. Cada recurso guarda su propio estado:
-la exportación y el mensaje del chat. Si un trabajo falla,
+la exportación y el mensaje del asistente de la plantilla. Si un trabajo falla,
 el recurso queda en estado fallido con una causa segura que ve el usuario.
 
 | Cola | Trabajos |
 |---|---|
 | `critica` | `PlatformSmokeJob` (verificación de la plataforma) |
 | `documentos` | `GenerateSyllabusExportJob` (PDF) |
-| `ia` | `AnswerSyllabusChatJob` |
+| `ia` | `AnswerTemplateAssistantJob` |
 | `general` (cola por defecto) | Correo de activación de la cuenta |
 
 El worker del contenedor escucha todas estas colas. Si un worker escucha solo `general`,

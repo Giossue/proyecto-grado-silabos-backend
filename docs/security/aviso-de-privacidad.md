@@ -27,9 +27,8 @@ No se tratan datos sensibles ni se usan los datos para publicidad.
 ## Quién más recibe datos
 
 - **Correo electrónico:** en producción, el servidor de correo institucional de la UEB; envía invitaciones, recuperación de contraseña y avisos. Hasta la instalación en la UEB, el servidor de pruebas usa Resend.
-- **Proveedor de IA (OpenAI, Anthropic o DeepSeek, según configure la UEB):** en el chat
-  del docente recibe los datos de la carrera y la asignatura, lo que el docente ya escribió
-  en el sílabo y su pregunta. Está desactivado por defecto. Los proyectos de carrera se importan
+- **Proveedor de IA (OpenAI, Anthropic o DeepSeek, según configure la UEB):** en el asistente
+  de la plantilla recibe lo que Administración escribe y la plantilla del editor. Está desactivado por defecto. Los proyectos de carrera se importan
   por Excel dentro del servidor y no se envían a proveedores de IA ni OCR.
 
 Estos proveedores están fuera de Ecuador: la UEB debe confirmar la base legal de esa

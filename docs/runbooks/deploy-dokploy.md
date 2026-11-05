@@ -113,7 +113,7 @@ después bórrelas de Environment Settings.
 ### Proveedor de IA
 
 La IA parte apagada (`AI_DRIVER=disabled`) y su ausencia no bloquea el flujo del sílabo.
-El **asistente de unidades** del docente admite `openai`, `claude` y `deepseek`.
+El **asistente de la plantilla** de Administración solo funciona con `deepseek`.
 La importación de proyectos de carrera usa Excel estructurado y no utiliza este proveedor.
 
 Se configuran cuatro variables. La URL debe ser HTTPS y puede ser la base o el endpoint
@@ -134,8 +134,8 @@ usa `AI_TEMPLATE_MODEL` si está definida y, si no, `AI_MODEL`; solo funciona co
 `AI_DRIVER=deepseek`. `AI_TOOLS_STRICT` (por defecto `true`) activa el modo estricto de las
 funciones en la API beta de DeepSeek.
 
-Activar un proveedor envía datos a un tercero: la pregunta del chat con el contexto
-autorizado del sílabo. Antes de usarlo con
+Activar un proveedor envía datos a un tercero: el pedido de Administración con el borrador de la plantilla.
+Antes de usarlo con
 información institucional deben acordarse proveedor, región, retención y tratamiento de
 datos (`PV-12`, `PV-14`).
 

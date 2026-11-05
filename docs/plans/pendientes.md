@@ -34,7 +34,7 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 
 - **Variables de entorno:**
   - `TRUSTED_PROXIES` por defecto confía solo en localhost y redes privadas (2026-11-03, antes `*`);
-  - `AI_TIMEOUT` debe ser menor que los 60 s del trabajo `AnswerSyllabusChatJob` (el servidor de pruebas usa 50);
+  - `AI_TIMEOUT` debe ser menor que los 180 s del trabajo `AnswerTemplateAssistantJob` (el servidor de pruebas usa 50);
   - `DISPLAY_TIMEZONE` fija la fecha de hoy de la institución (por defecto `America/Guayaquil`). Cambiarla
     cambia los plazos de la convocatoria y las fechas ya guardadas.
 - **Reloj del servidor:** la fecha de hoy sale del reloj del servidor, así que debe estar sincronizado con NTP.

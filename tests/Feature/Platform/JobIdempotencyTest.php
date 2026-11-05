@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Platform;
 
-use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
 use App\Modules\Operations\Infrastructure\Jobs\PlatformSmokeJob;
 use Illuminate\Bus\UniqueLock;
@@ -21,7 +20,6 @@ class JobIdempotencyTest extends TestCase
     {
         return [
             'exportación' => [new GenerateSyllabusExportJob('artefacto-1')],
-            'respuesta del chat' => [new AnswerSyllabusChatJob('mensaje-1')],
             'verificación de plataforma' => [new PlatformSmokeJob('smoke-1')],
         ];
     }

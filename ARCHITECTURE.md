@@ -17,7 +17,7 @@ API Laravel 13 (este repositorio, monolito modular)
   ├─ PostgreSQL (también): colas critica, documentos, ia y general; caché y bloqueos
   ├─ Disco privado: logos y PDF de los sílabos
   ├─ Gotenberg: Word → PDF
-  ├─ Proveedor de IA (AI_DRIVER): chat del docente
+  ├─ Proveedor de IA (AI_DRIVER): asistente de la plantilla
   └─ Excel estructurado para proyectos de carrera
 ```
 
@@ -34,7 +34,7 @@ corre PHP-FPM, Nginx, el worker de colas y el scheduler.
 | `Syllabus` | Convocatorias, sílabos, validación, envío, revisión de Coordinación, reinicio y regeneración |
 | `Library` | Revisión de bibliografía |
 | `Documents` | PDF final (Word interno), firmas electrónicas al decidir y descarga |
-| `AiAssistance` | Chat de IA del docente |
+| `AiAssistance` | Asistente de IA de la plantilla (Administración) |
 | `Operations` | Auditoría, notificaciones y textos fijos de ayuda de pantalla |
 
 Cada módulo usa las capas que necesita: `Application` (acciones y consultas), `Domain`

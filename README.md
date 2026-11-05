@@ -41,7 +41,7 @@ php artisan queue:work --queue=critica,documentos,ia,general --tries=3
 
 - `critica`: verificación de plataforma.
 - `documentos`: PDF del sílabo.
-- `ia`: chat del docente. La carga de proyectos de carrera usa Excel estructurado sin cola.
+- `ia`: asistente de la plantilla (Administración). La carga de proyectos de carrera usa Excel estructurado sin cola.
 - `general`: correos de activación de cuenta.
 
 Para el día a día, `scripts/dev.sh` levanta todo con un solo comando: base de datos,

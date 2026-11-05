@@ -31,7 +31,7 @@
 | Pausa | Estado que detiene la edición y el envío. Permite corregir plantilla, malla o proyectos de carrera. |
 | Rehacer sílabos | Borrar y volver a crear sin iniciar los sílabos afectados por un cambio confirmado durante una pausa. |
 | Validación | Regla fija del sistema, como campos obligatorios u horas y semanas del bloque `unidades`. Siempre da el mismo resultado. |
-| Chat de IA | Ayuda opcional para redactar. No escribe en el sílabo ni decide nada. |
+| Asistente de IA | Ayuda de Administración para editar la plantilla. No guarda ni decide nada. |
 | Rol activo | Rol y carrera con los que se trabaja en la sesión. Solo hay uno a la vez. |
 | Ayuda de pantalla | Texto de ayuda de cada pantalla. Es fijo y está en el código del backend. |
 

@@ -38,7 +38,7 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 | Convocatoria de la carrera: iniciar, pausar, reanudar | No | Sí | No | No |
 | Elaborar, validar y enviar el sílabo | No | No | Sí, en sus paralelos, con la convocatoria en curso; firma en el primer envío | No |
 | Copiar el sílabo de otro paralelo propio | No | No | Sí | No |
-| Chat de IA | No | No | Sí, en su sílabo | No |
+| Asistente de IA de la plantilla | Sí | No | No | No |
 | Revisar: aprobar (firmando) o pedir corrección | No | Sí, etapa de coordinación de su carrera | No | Sí, etapa de biblioteca |
 | Comparar revisiones | No | Sí | No | No |
 | Reiniciar un sílabo («Reiniciar sílabo», con motivo; solo con el sílabo aprobado y la convocatoria abierta, no en pausa; borra todo) | No | Sí, en su carrera | No | No |

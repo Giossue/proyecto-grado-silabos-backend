@@ -9,7 +9,6 @@ use App\Modules\Academic\Presentation\Http\Controllers\CurriculumImportControlle
 use App\Modules\Academic\Presentation\Http\Controllers\FichaImportsController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
 use App\Modules\Academic\Presentation\Http\Controllers\SupportDocumentController;
-use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\TemplateAssistantController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateStructureController;
@@ -327,15 +326,6 @@ Route::prefix('v1')->group(function (): void {
             Route::get('teacher/library-catalog/search', [BibliographicCatalogController::class, 'search'])
                 ->middleware(['active-role', 'throttle:library-catalog'])
                 ->name('api.v1.teacher.library-catalog.search');
-            Route::get('teacher/syllabi/{syllabus}/ai-chat', [AiChatController::class, 'show'])
-                ->middleware('active-role')
-                ->name('api.v1.teacher.syllabi.ai-chat.show');
-            Route::post('teacher/syllabi/{syllabus}/ai-chat/messages', [AiChatController::class, 'store'])
-                ->middleware(['active-role', 'throttle:ai-analysis'])
-                ->name('api.v1.teacher.syllabi.ai-chat.messages.store');
-            Route::delete('teacher/syllabi/{syllabus}/ai-chat', [AiChatController::class, 'clear'])
-                ->middleware('active-role')
-                ->name('api.v1.teacher.syllabi.ai-chat.clear');
             Route::get('revisions/{revision}/documents', [DocumentController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.documents.show');
             Route::post('revisions/{revision}/documents', [DocumentController::class, 'store'])

@@ -20,7 +20,7 @@ proxy con TLS (Dokploy)
 - Un push a `main` dispara el despliegue y el arranque aplica las migraciones.
 - Frontend y backend son imágenes distintas. Se despliegan versiones compatibles de
   ambas.
-- El proveedor de IA del chat es un servicio externo por HTTPS.
+- El proveedor de IA del asistente de la plantilla es un servicio externo por HTTPS.
 
 ## Arranque del backend
 
@@ -67,7 +67,7 @@ docente y `general` el correo de activación.
 |---|---|---:|---:|
 | `PlatformSmokeJob` | `critica` | 30 s | 3 |
 | `GenerateSyllabusExportJob` | `documentos` | 120 s | 3 |
-| `AnswerSyllabusChatJob` | `ia` | 60 s | 3 |
+| `AnswerTemplateAssistantJob` | `ia` | 180 s | 1 |
 
 Detalle de cada trabajo: [queues-and-jobs.md](queues-and-jobs.md).
 
@@ -85,8 +85,8 @@ mientras sigue corriendo.
 
 ### Otros límites del worker
 
-- Un solo worker: mientras corre una exportación (hasta 120 s), el chat y los demás
-  trabajos esperan.
+- Un solo worker: mientras corre una exportación (hasta 120 s), el asistente de la
+  plantilla y los demás trabajos esperan.
 - `supervisord` espera 65 s (`stopwaitsecs`) al detener el worker. Un despliegue
   durante un trabajo largo lo corta; el trabajo se reintenta o queda `fallido` según
   sus intentos.

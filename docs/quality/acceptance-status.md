@@ -26,7 +26,7 @@ Estados:
 | Revisión y aprobación | RF-055..065; CU-10..CU-14; COR-05..10, BIB-02, BIB-03, DOC-08 | `ReviewWorkflowTest`, `LibraryReviewTest` | Verificado automático; motivos confirmados por Biblioteca |
 | Firmas al decidir y PDF | RF-066..069; CU-15; DOC-07, COR-09, BIB-03, DOC-10 | `DocumentSignatureTest`, `SignatureTrustTest`, `DocumentOperationsTest`, `WordRendererTest` | Verificado automático; entidades certificadoras pendientes (DT-16); revisión visual pendiente |
 | Panel, avisos, auditoría y ayuda | RF-070..074; CU-16, CU-17; UI-03, ADM-10 | `ApiDashboardTest`, `NotificationLinksTest`, `DocumentOperationsTest`, `ScreenHelpTest` | Verificado automático; correo real PV-15 |
-| Chat de IA | RF-046..054; CU-08; DOC-06; IA-NEG-01..09 | `AiAssistanceTest`, `HostedAiChatGatewayTest` | Verificado automático con proveedor simulado; evaluación experta con DeepSeek bloqueada PV-18 |
+| Chat de IA del docente (retirado el 2026-11-05) | RF-046..054; CU-08; DOC-06; IA-NEG-01..09 | `TeacherChatRemovedTest` | Verificado automático con proveedor simulado; evaluación experta con DeepSeek bloqueada PV-18 |
 | Interfaz (SPA) | UI-01..04 y pantallas de los cuatro roles | Pruebas Vitest del repositorio frontend (ver `traceability.md`) | Verificado automático; inspección visual y asistiva pendiente PV-19 |
 
 ## Evidencia no funcional
@@ -88,7 +88,7 @@ desplegar; falta comprobarla en el sitio, junto con la aceptación visual.
 |---|---|---|
 | CP-F01..CP-F35 | Las capacidades de CU-01..17 tienen pruebas agrupadas arriba. | Que cada CP-F esté aprobado, sin su enunciado oficial. |
 | CP-N01..CP-N16 | Hay evidencia técnica de seguridad, calidad, PostgreSQL, restauración y un script de carga. | Que cada CP-N y sus umbrales estén aceptados, sin enunciados, PV-05, PV-11 y pruebas manuales. |
-| IA-NEG-01..IA-NEG-09 | `AiAssistanceTest` y `HostedAiChatGatewayTest` cubren citas inventadas, servicio caído, límites, alcance y configuración insegura del chat. | Que sustituyan la evaluación experta del modelo. |
+| IA-NEG-01..IA-NEG-09 | Retirados con el chat del docente (2026-11-05). El asistente de la plantilla los cubre en `TemplateAssistantTest` y `HostedAiAgentGatewayTest`. | Que sustituyan la evaluación experta del modelo. |
 
 Para cerrar esto hay que incorporar la fuente maestra de CP sin renumerarla y agregar
 una fila `CP → requisito → prueba → resultado → evidencia → responsable` por caso.

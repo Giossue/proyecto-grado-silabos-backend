@@ -24,7 +24,7 @@ Stack:
 - Archivos en un disco privado.
 - Gotenberg convierte el Word del sílabo en PDF.
 - IA con un proveedor externo configurable (`AI_DRIVER`, apagado por defecto) para el
-  chat. El proyecto de carrera se importa exclusivamente con una plantilla Excel generada desde los
+  asistente de la plantilla de Administración. El proyecto de carrera se importa exclusivamente con una plantilla Excel generada desde los
   campos actuales de Coordinación, sin OCR ni extracción por IA.
 - Despliegue en Dokploy: un push a `main` despliega y ejecuta las migraciones.
 

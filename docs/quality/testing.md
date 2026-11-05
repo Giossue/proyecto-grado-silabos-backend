@@ -71,7 +71,7 @@ que la conexión use UTC y que el seeder de demostración sea idempotente.
   único y no se solape.
 - No uses `sleep` para esperar trabajos: observa el estado del recurso.
 - `JobDispatchTest` comprueba que `retry_after` supere el timeout de los trabajos de
-  plataforma, exportación, chat, lectura de documentos y extracción de proyectos de carrera.
+  plataforma, exportación, lectura de documentos y extracción de proyectos de carrera.
 
 ## Documentos y firmas
 
@@ -92,15 +92,11 @@ documento oficial sigue siendo manual (PV-07).
 
 ## IA
 
-La suite pasa sin proveedor real. `AiAssistanceTest` y `HostedAiChatGatewayTest` cubren:
-
-- alcance del docente y de la carrera, límite de preguntas y de chats;
-- contexto congelado de la carrera, la asignatura y el texto del sílabo, sin datos
-  personales;
-- el chat propone, pero nunca modifica el sílabo;
-- citas inventadas, servicio caído y salida inválida sin bloquear la edición;
-- configuración insegura del proveedor y errores sin exponer la clave;
-- formato de cada proveedor (OpenAI, Claude, DeepSeek).
+La suite pasa sin proveedor real. `TemplateAssistantTest`, `TemplateAssistantApiTest`,
+`HostedAiAgentGatewayTest` y `AdministrationDecidesAiTest` cubren el asistente de la plantilla:
+propuestas que solo Administración aplica o descarta, servicio caído sin bloquear la edición,
+configuración insegura del proveedor y errores sin exponer la clave.
+`TeacherChatRemovedTest` comprueba que el chat del docente ya no existe.
 
 `FichaImportTest` conserva los casos de vista previa Excel, aplicación parcial,
 comparación con valores actuales, permisos y tablas derivadas de la plantilla.

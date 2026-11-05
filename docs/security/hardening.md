@@ -9,8 +9,7 @@
 - Cookies `HttpOnly`, `SameSite=lax` y `Secure` en producción; CSRF y rotación de sesión
   al autenticar, al pasar los dos pasos y al cambiar de rol.
 - Límites por minuto: inicio de sesión (5), dos pasos (10), recuperación (3), importaciones
-  de Excel (10), importación de proyectos de carrera (20), firmas (20) y chat de IA (6 por persona y
-  sílabo).
+  de Excel (10), importación de proyectos de carrera (20), y firmas (20).
 - Una cuenta desactivada pierde la sesión en su siguiente petición (`EnsureActiveUser`).
   Cada persona puede cerrar sus otras sesiones; eso también rota el token de «Mantener la
   sesión iniciada», así que esos dispositivos dejan de entrar (el actual sigue).
@@ -138,11 +137,9 @@ un `POST` a la API con un cuerpo de 16 KB no debe devolver 500.
 - Desactivada por defecto (`AI_DRIVER=disabled`). El proveedor alojado se elige con
   `AI_DRIVER` (`openai`, `claude` o `deepseek`) y la clave vive en un secreto del despliegue.
 - La URL del proveedor debe ser HTTPS, sin credenciales embebidas y sin redirecciones.
-- El contenido del sílabo se envía como datos delimitados; el modelo no
-  tiene herramientas ni acciones.
-- La salida se valida: el chat solo cita evidencias autorizadas y sus propuestas las
-  usa el docente bajo su responsabilidad.
-- Límites de tokens, tamaño, tiempo, frecuencia y mensajes por sílabo (`config/ai.php`).
+- El modelo solo propone cambios sobre una copia del borrador; Administración los aplica o descarta.
+- La salida se valida con las mismas reglas que «Guardar».
+- Límites de tokens, tamaño, tiempo y pasos (`config/ai.php`).
 
 ## Cabeceras y transporte
 

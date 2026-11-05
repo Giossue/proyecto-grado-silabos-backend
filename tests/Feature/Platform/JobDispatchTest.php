@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Platform;
 
-use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
 use App\Modules\Operations\Infrastructure\Jobs\PlatformSmokeJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,7 +30,6 @@ class JobDispatchTest extends TestCase
         $jobs = [
             new PlatformSmokeJob('CP-N-timeout'),
             new GenerateSyllabusExportJob('00000000-0000-0000-0000-000000000003'),
-            new AnswerSyllabusChatJob('00000000-0000-0000-0000-000000000004'),
         ];
         $longestJobTimeout = max(array_map(
             static fn (object $job): int => $job->timeout,

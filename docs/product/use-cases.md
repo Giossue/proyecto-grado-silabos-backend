@@ -9,7 +9,7 @@
 | CU-05 | Mantener el Proyecto de carrera (campos e importación) | Coordinador | RF-027 a RF-033 en su alcance actual | COR-16 |
 | CU-06 | Abrir la convocatoria e iniciar la de la carrera | Administrador; Coordinador | RF-034 a RF-036 | ADM-12, COR-01, COR-04, COR-05 |
 | CU-07 | Elaborar el sílabo | Docente | RF-037 a RF-044 | DOC-02, DOC-04 |
-| CU-08 | Pedir ayuda al chat de IA | Docente | RF-046 a RF-054 en su alcance actual | DOC-06 |
+| CU-08 | ~~Pedir ayuda al chat de IA~~ (retirado el 2026-11-05) | — | RF-046 a RF-054 retirados | — |
 | CU-09 | Validar y enviar el sílabo | Docente | RF-043, RF-045, RF-047 | DOC-05, DOC-07 |
 | CU-10 | Revisar y solicitar corrección | Coordinador; Bibliotecario | RF-055 a RF-058 | COR-05, COR-06, COR-08, BIB-02, BIB-03 |
 | CU-11 | Corregir y reenviar | Docente | RF-058 a RF-060 | DOC-08 |

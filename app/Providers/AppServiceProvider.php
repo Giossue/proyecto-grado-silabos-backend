@@ -6,13 +6,9 @@ use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Access\AcademicRoleEligibility;
 use App\Modules\AiAssistance\Domain\Contracts\AiAgentGateway;
-use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiAgentGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAgentGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAgentGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiChatGateway;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Policies\ExportArtifactPolicy;
@@ -57,13 +53,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SystemSettings::class);
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
-        $this->app->bind(AiChatGateway::class, function (): AiChatGateway {
-            return match ((string) config('ai.driver')) {
-                'baseline' => app(BaselineAiChatGateway::class),
-                'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiChatGateway::class),
-                default => app(DisabledAiChatGateway::class),
-            };
-        });
         $this->app->bind(AiAgentGateway::class, function (): AiAgentGateway {
             return match ((string) config('ai.driver')) {
                 'baseline' => app(BaselineAiAgentGateway::class),
@@ -155,17 +144,6 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute((int) config('catalog.limits.requests_per_minute'))
                 ->by('library-catalog:'.($user instanceof User ? $user->id : (string) $request->ip()));
-        });
-        RateLimiter::for('ai-analysis', function (Request $request): Limit {
-            $user = $request->user();
-            $syllabus = $request->route('syllabus');
-            $actorKey = $user instanceof User ? $user->id : (string) $request->ip();
-            $syllabusKey = $syllabus instanceof Syllabus
-                ? $syllabus->id
-                : (is_string($syllabus) ? $syllabus : 'unknown');
-
-            return Limit::perMinute((int) config('ai.limits.requests_per_minute'))
-                ->by("ai-analysis:{$actorKey}:{$syllabusKey}");
         });
 
         DB::prohibitDestructiveCommands(

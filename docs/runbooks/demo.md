@@ -25,7 +25,7 @@ El segundo seeder carga la plantilla oficial (`resources/templates/silabo-oficia
 
 Opcional en `.env`, antes de levantar los procesos:
 
-- `AI_DRIVER=baseline`: el asistente de unidades usa un simulador que responde con texto
+- `AI_DRIVER=baseline`: el asistente de la plantilla usa un simulador que responde con texto
   fijo, sin proveedor externo.
 - El proyecto de carrera se importa con la plantilla Excel descargada desde el sitio. No requiere
   proveedor de IA, OCR ni cola.
@@ -108,8 +108,7 @@ con Docente Demo asignado.
 1. Ingrese con `docente@silabos.test` y abra **Mis sílabos** → `SW-601` paralelo `A`.
 2. Llene los campos; se guardan solos. Los campos del proyecto de carrera llegan llenos y solo se
    editan los marcados por Coordinación. Revise la **Vista previa**.
-3. Opcional: **Asistente de unidades** (requiere `AI_DRIVER`) y, en el paralelo `B`,
-   **Copiar desde paralelo**.
+3. Opcional: en el paralelo `B`, **Copiar desde paralelo**.
 4. Pulse **Firmar y enviar**, elija `docente.p12` (ver «Certificados de prueba») y
    escriba la clave. Si falta algún campo, el sistema lo señala y no envía.
 

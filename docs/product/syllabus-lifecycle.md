@@ -32,7 +32,7 @@ Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revi
 | En revisión · coordinación | Solicitar corrección | Coordinación | Corrección solicitada | Comentario general de 10 a 10 000 caracteres. |
 | En revisión · biblioteca | Firmar y aprobar | Biblioteca | Aprobado | Exige la firma de Biblioteca; crea la aprobación con huella y genera el PDF final; cuando está listo avisa al docente. |
 | En revisión · biblioteca | Devolver al docente | Biblioteca | Corrección solicitada | Uno o más motivos predefinidos, sin texto libre. Quien devuelve queda como responsable: cuando el docente reenvíe, los demás bibliotecarios ven quién lo atiende y deben confirmar antes de actuar; no hay bloqueo. |
-| Aprobado | Reiniciar | Coordinación | Sin iniciar (sílabo nuevo) | Pide un motivo y el nombre de la materia. Borra el sílabo con revisiones, aprobación, documentos, firmas y chat; crea uno nuevo para el paralelo. |
+| Aprobado | Reiniciar | Coordinación | Sin iniciar (sílabo nuevo) | Pide un motivo y el nombre de la materia. Borra el sílabo con revisiones, aprobación, documentos y firmas; crea uno nuevo para el paralelo. |
 
 Reiniciar solo se ofrece con el sílabo aprobado y exige la convocatoria de la carrera abierta; en pausa (de la carrera o de Administración) no se reinicia. Un sílabo en borrador, en revisión o en corrección no se reinicia. Lo mismo
 vale para aprobar y pedir corrección.
@@ -226,8 +226,8 @@ porque no tiene nada que perder.
 | Docente de un paralelo | Ninguno; se puede con la convocatoria abierta | El sílabo del paralelo en la convocatoria abierta o en pausa se borra con todo su historial y empieza de cero para el docente nuevo. Un paralelo nuevo recibe su sílabo al reanudar la convocatoria de la carrera o, si está finalizada vigente, al reabrirla con una prórroga (2026-11-03). Los sílabos de convocatorias finalizadas no se tocan. |
 | Código o jornada de un paralelo | Ninguno | Sin enviar: se actualiza la identificación. Enviado o aprobado: pide confirmación y lo rehace. |
 
-Rehacer un sílabo borra su contenido, revisiones, aprobación, firmas y chat, y avisa al
-docente. Volver a Borrador conserva el contenido y el chat, borra revisiones, aprobación,
+Rehacer un sílabo borra su contenido, revisiones, aprobación y firmas, y avisa al
+docente. Volver a Borrador conserva el contenido, borra revisiones, aprobación,
 PDF y firmas, y avisa al docente por correo: debe enviarlo y firmarlo de nuevo. Toda
 confirmación de estos cambios espera unos segundos antes de habilitar el botón. Con la pausa, los docentes no editan ni envían; los borradores se conservan.
 Prorrogar o reanudar sin cambios no rehace nada.
@@ -245,15 +245,12 @@ Prorrogar o reanudar sin cambios no rehace nada.
 
 ## IA
 
-- **Chat del docente** («Asistente de unidades»): disponible mientras el docente puede
-  editar. Usa los datos académicos del sílabo y el texto de sus campos. Responde sobre
-  unidades y planificación. No escribe en el sílabo, no aprueba ni bloquea. Límites: 20
-  preguntas por sílabo, 3 conversaciones, 6 por minuto y 4000 caracteres por mensaje.
+- **Docente:** no usa IA. El chat «Asistente de unidades» se retiró el 2026-11-05.
 - **Importación de proyecto de carrera**: Coordinación completa el Excel generado con los campos
   actuales, revisa la vista previa y elige qué aplicar. La revisión queda solo en el
   navegador mientras el diálogo esté abierto. Al aplicar, el servidor relee el mismo
   Excel y guarda la selección en `valores_campo`. No requiere IA ni OCR.
-- Se configura con `AI_DRIVER`. Sin proveedor, el chat se desactiva
+- Se configura con `AI_DRIVER`. Sin proveedor, el asistente de la plantilla se desactiva
   con un aviso; la importación Excel sigue disponible.
 
 ## Casos de borde

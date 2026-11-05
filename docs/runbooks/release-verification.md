@@ -52,7 +52,7 @@ Verifique al menos:
   `GenerateSyllabusExportJob`;
 - volumen persistente en `storage/app`; nada funcional bajo `public/`;
 - `GOTENBERG_URL` apuntando al servicio interno;
-- `AI_DRIVER=disabled` mientras no haya proveedor de chat aprobado;
+- `AI_DRIVER=disabled` mientras no haya proveedor de IA aprobado;
 - `SIGNATURE_REQUIRE_HOLDER_MATCH=true` y, si se exige, `SIGNATURE_TRUSTED_CA_BUNDLE`;
 - correo, respaldo, retención y observabilidad resueltos antes de producción.
 
