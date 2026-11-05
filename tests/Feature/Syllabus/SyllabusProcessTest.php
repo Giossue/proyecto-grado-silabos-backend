@@ -75,7 +75,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['convocatoria_carrera_id', 'carrera_id', 'convocatoria_universidad_id', 'estado_convocatoria_carrera']));
         $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['convocatoria_universidad_id', 'periodo_academico_id', 'fecha_inicio', 'fecha_entrega', 'estado_convocatoria_universidad']));
-        foreach (['silabos', 'convocatorias_universidad', 'exportaciones_silabo', 'mensajes_ia'] as $table) {
+        foreach (['silabos', 'convocatorias_universidad', 'exportaciones_silabo'] as $table) {
             $this->assertFalse(Schema::hasColumn($table, 'plantilla_id'));
         }
         $this->assertFalse(Schema::hasColumn('convocatorias_carreras', 'creado_en'));
@@ -949,7 +949,6 @@ class SyllabusProcessTest extends TestCase
         $answer('metodologia', 'Aprendizaje basado en proyectos.');
         $answer('tecnicas_ensenanza', 'Debates guiados.');
         $answer('ambientes_aprendizaje', 'Laboratorio de software.');
-        $chat = DB::table('mensajes_ia')->where('silabo_id', $syllabus->id)->count();
         $this->transition($process, 'pausar', 'Ajuste de la plantilla con expedientes abiertos.')->assertSuccessful();
 
         $json = $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.json.export', $template))->assertOk()->json();
@@ -982,7 +981,6 @@ class SyllabusProcessTest extends TestCase
         $this->assertArrayNotHasKey('ambientes_aprendizaje', $current->all());
         $profile = app(SubjectProfileFields::class)->values((string) $syllabus->parallel->asignatura_id);
         $this->assertEquals($profile[$current['descripcion']->id], $values[$current['descripcion']->id]->valor);
-        $this->assertSame($chat, DB::table('mensajes_ia')->where('silabo_id', $syllabus->id)->count());
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()
             ->assertJsonPath('syllabus.state', 'borrador');
     }

@@ -463,7 +463,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   docente retirado, el asistente de la plantilla solo funciona con `deepseek`. En el piloto se usa DeepSeek (antes PV-14; confirmado el 2026-10-26).
 - El docente no usa IA: el chat «Asistente de unidades» se retiró el 2026-11-05 («ya no tiene
   ningún tipo de utilidad»). La IA se limita al asistente de la plantilla de Administración.
-  Las filas viejas de `mensajes_ia` se conservan; la tabla no se borró. El proyecto de carrera se importa exclusivamente por Excel
+  La tabla `mensajes_ia` y sus mensajes se borraron con la migración `000266`. El proyecto de carrera se importa exclusivamente por Excel
   estructurado; se retiró su configuración de OCR y extracción por IA.
 - La IA nunca aprueba, bloquea ni escribe sola. Si falla, solo se pierde la ayuda de IA
   (ADR-0003).

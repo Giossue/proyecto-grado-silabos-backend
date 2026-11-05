@@ -104,8 +104,9 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 
 ## IA (`AiAssistance`)
 
-- **Mensaje de IA** (`mensajes_ia`): sílabo, usuario y contenido JSON con tipo
-  (`mensaje` u `ocultamiento`), estado y entrada con clave de idempotencia.
+- **Mensaje y propuesta del asistente de la plantilla** (`mensajes_ia_plantilla`,
+  `propuestas_ia_plantilla`): solo Administración. El chat del docente y su tabla
+  `mensajes_ia` se retiraron el 2026-11-05.
 
 ## Operación (`Operations`)
 

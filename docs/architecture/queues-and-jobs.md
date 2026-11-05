@@ -32,7 +32,6 @@ El estado de cada trabajo vive en su registro de dominio, no en una tabla de tra
 | Registro | Estados |
 |---|---|
 | `exportaciones_silabo.estado_exportacion` | `pendiente`, `en_ejecucion`, `completado`, `fallido` |
-| `mensajes_ia.contenido_mensaje->estado` | `pendiente`, `en_ejecucion`, `completado`, `fallido` |
 
 Los trabajos fallidos no se guardan en otra tabla (`queue.failed.driver = null`). El
 método `failed()` de cada trabajo deja el registro de dominio en `fallido`/`fallida`.

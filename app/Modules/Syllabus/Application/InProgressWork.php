@@ -349,7 +349,6 @@ final class InProgressWork
     private function deleteAggregates(array $syllabusIds): void
     {
         $revisionIds = $this->clearHistory($syllabusIds);
-        DB::table('mensajes_ia')->whereIn('silabo_id', $syllabusIds)->delete();
         DB::table('notificaciones')->whereIn('recurso_id', [...$syllabusIds, ...$revisionIds])->delete();
 
         Syllabus::query()->whereKey($syllabusIds)->delete();

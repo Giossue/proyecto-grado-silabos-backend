@@ -247,22 +247,20 @@ it('I-176 nombra con claridad notificaciones, auditoría y mensajes de IA; I-221
         ->and(Schema::hasTable('ejecuciones_trabajo'))->toBeFalse()
         ->and(Schema::hasTable('notificaciones'))->toBeTrue()
         ->and(Schema::hasTable('notificaciones_internas'))->toBeFalse()
-        ->and(Schema::hasTable('mensajes_ia'))->toBeTrue()
+        ->and(Schema::hasTable('mensajes_ia'))->toBeFalse()
         ->and(Schema::hasTable('historial_ia'))->toBeFalse()
         ->and(Schema::hasColumns('notificaciones', ['tipo_notificacion', 'titulo_notificacion', 'mensaje_notificacion', 'clave_unica']))->toBeTrue()
-        ->and(Schema::hasColumns('eventos_auditoria', ['usuario_id', 'actor_nombre', 'actor_rol', 'actor_carrera', 'accion', 'resultado', 'detalles']))->toBeTrue()
-        ->and(Schema::hasColumns('mensajes_ia', ['silabo_id', 'usuario_id', 'contenido_mensaje']))->toBeTrue();
+        ->and(Schema::hasColumns('eventos_auditoria', ['usuario_id', 'actor_nombre', 'actor_rol', 'actor_carrera', 'accion', 'resultado', 'detalles']))->toBeTrue();
 
     $restricciones = collect(DB::select(
         "SELECT conname FROM pg_constraint
-         WHERE conrelid IN ('notificaciones'::regclass, 'eventos_auditoria'::regclass, 'mensajes_ia'::regclass)",
+         WHERE conrelid IN ('notificaciones'::regclass, 'eventos_auditoria'::regclass)",
     ))->pluck('conname');
 
     expect($restricciones)
         ->toContain('notificaciones_usuario_id_foreign')
         ->not->toContain('eventos_auditoria_usuario_id_foreign')
         ->not->toContain('eventos_auditoria_asignacion_rol_id_foreign')
-        ->toContain('mensajes_ia_contenido_mensaje_check')
         ->and($restricciones->filter(fn (string $nombre): bool => str_starts_with($nombre, 'ejecuciones_trabajo_')
             || str_starts_with($nombre, 'notificaciones_internas_')
             || str_starts_with($nombre, 'historial_ia_'))->all())->toBe([]);
