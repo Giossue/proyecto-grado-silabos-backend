@@ -104,6 +104,15 @@ class SystemSettingsTest extends TestCase
         $this->assertNull(config('ai.hosted.api_key'));
     }
 
+    public function test_only_deepseek_can_be_chosen_as_the_ai_provider(): void
+    {
+        foreach (['openai', 'anthropic', 'claude'] as $driver) {
+            $this->as('admin@silabos.test')->putJson(route('api.v1.admin.system-settings.update', 'ia'), [
+                'driver' => $driver, 'base_url' => 'https://api.example.com', 'model' => 'modelo', 'connect_timeout' => 2, 'timeout' => 50, 'current_password' => 'Demo-2026!',
+            ])->assertUnprocessable()->assertJsonValidationErrors('driver');
+        }
+    }
+
     public function test_the_library_needs_the_password_and_a_url_when_koha_is_on(): void
     {
         $this->as('admin@silabos.test')->putJson(route('api.v1.admin.system-settings.update', 'biblioteca'), ['driver' => 'koha', 'base_url' => ''])

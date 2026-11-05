@@ -135,7 +135,7 @@ un `POST` a la API con un cuerpo de 16 KB no debe devolver 500.
 ## IA
 
 - Desactivada por defecto (`AI_DRIVER=disabled`). El proveedor alojado se elige con
-  `AI_DRIVER` (`openai`, `claude` o `deepseek`) y la clave vive en un secreto del despliegue.
+  `AI_DRIVER` (`deepseek`) y la clave vive en un secreto del despliegue.
 - La URL del proveedor debe ser HTTPS, sin credenciales embebidas y sin redirecciones.
 - El modelo solo propone cambios sobre una copia del borrador; Administración los aplica o descarta.
 - La salida se valida con las mismas reglas que «Guardar».

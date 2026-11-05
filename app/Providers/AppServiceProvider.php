@@ -56,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AiAgentGateway::class, function (): AiAgentGateway {
             return match ((string) config('ai.driver')) {
                 'baseline' => app(BaselineAiAgentGateway::class),
-                'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiAgentGateway::class),
+                'deepseek' => app(HostedAiAgentGateway::class),
                 default => app(DisabledAiAgentGateway::class),
             };
         });

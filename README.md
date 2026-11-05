@@ -63,7 +63,7 @@ Las más importantes (ver `.env.example`):
 | `DB_*` | Conexión a PostgreSQL |
 | `QUEUE_CONNECTION`, `CACHE_STORE`, `QUEUE_RETRY_AFTER` | Cola y caché en PostgreSQL (`database`); `QUEUE_RETRY_AFTER` en segundos (960 por defecto) |
 | `DISPLAY_TIMEZONE` | Zona horaria de la institución (por defecto `America/Guayaquil`); fija la fecha de hoy que usa el sistema |
-| `AI_DRIVER`, `AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY` | Proveedor de IA: `disabled` (por defecto), `openai`, `claude`, `deepseek` o `baseline` (pruebas) |
+| `AI_DRIVER`, `AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY` | Proveedor de IA: `disabled` (por defecto), `deepseek` o `baseline` (pruebas) |
 | `GOTENBERG_URL`, `GOTENBERG_TIMEOUT` | Conversión de Word a PDF; sin ella el PDF sale como texto simple |
 | `SIGNATURE_TRUSTED_CA_BUNDLE`, `SIGNATURE_REQUIRE_HOLDER_MATCH` | Validación de la firma electrónica |
 | `MAIL_MAILER`, `RESEND_API_KEY` | Correo (por defecto `log`) |

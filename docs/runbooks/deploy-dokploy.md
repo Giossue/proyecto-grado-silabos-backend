@@ -121,8 +121,6 @@ completo.
 
 | Proveedor | `AI_DRIVER` | `AI_BASE_URL`                  |
 | --------- | ----------- | ------------------------------ |
-| OpenAI    | `openai`    | `https://api.openai.com/v1`    |
-| Claude    | `claude`    | `https://api.anthropic.com/v1` |
 | DeepSeek  | `deepseek`  | `https://api.deepseek.com`     |
 
 `AI_MODEL` es el modelo elegido y `AI_API_KEY` su clave. `AI_CONNECT_TIMEOUT` (2 s) y

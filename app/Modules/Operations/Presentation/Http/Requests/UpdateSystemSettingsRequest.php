@@ -26,7 +26,7 @@ class UpdateSystemSettingsRequest extends FormRequest
             ],
             'ia' => [
                 'current_password' => $password,
-                'driver' => ['required', Rule::in(['disabled', 'deepseek', 'openai', 'anthropic'])],
+                'driver' => ['required', Rule::in(['disabled', 'deepseek'])],
                 'base_url' => ['nullable', 'required_unless:driver,disabled', 'string', 'max:255', 'url:https'],
                 'model' => ['nullable', 'required_unless:driver,disabled', 'string', 'max:64', 'regex:/^[A-Za-z0-9._:\/-]+$/'],
                 'api_key' => ['nullable', 'string', 'max:500', 'regex:/^\S+$/'],

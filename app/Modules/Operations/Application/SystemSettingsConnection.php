@@ -14,7 +14,7 @@ final class SystemSettingsConnection
     public function ai(): array
     {
         $driver = strtolower(trim((string) config('ai.driver')));
-        if (! in_array($driver, ['deepseek', 'openai', 'anthropic', 'claude'], true)) {
+        if (! in_array($driver, ['deepseek'], true)) {
             return ['ok' => false, 'message' => 'El asistente de IA está desactivado'];
         }
         $key = trim((string) config('ai.hosted.api_key'));
@@ -25,9 +25,7 @@ final class SystemSettingsConnection
         if (! str_starts_with($base, 'https://')) {
             return ['ok' => false, 'message' => 'La dirección del proveedor debe empezar con https://'];
         }
-        $headers = in_array($driver, ['anthropic', 'claude'], true)
-            ? ['x-api-key' => $key, 'anthropic-version' => '2023-06-01']
-            : ['Authorization' => 'Bearer '.$key];
+        $headers = ['Authorization' => 'Bearer '.$key];
 
         try {
             $response = Http::acceptJson()->withHeaders($headers)->withoutRedirecting()
