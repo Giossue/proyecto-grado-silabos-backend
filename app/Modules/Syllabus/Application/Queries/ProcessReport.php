@@ -34,7 +34,7 @@ final class ProcessReport
             ->with(['convocation.career', 'teachers:id,nombre', 'revisions' => fn ($query) => $query->orderBy('numero_revision')->with('approval')])
             ->get();
         $timezone = InstitutionDate::timezone();
-        $dueAt = CarbonImmutable::parse($process->entrega_en->toDateString(), $timezone)->endOfDay();
+        $dueAt = CarbonImmutable::parse(InstitutionDate::dateOf($process->entrega_en), $timezone)->endOfDay();
         $now = CarbonImmutable::now($timezone);
 
         $careers = [];
@@ -97,8 +97,8 @@ final class ProcessReport
             'process' => [
                 'id' => $process->id,
                 'period' => $process->academicPeriod?->codigo,
-                'starts_at' => $process->inicia_en->toDateString(),
-                'due_at' => $process->entrega_en->toDateString(),
+                'starts_at' => InstitutionDate::dateOf($process->inicia_en),
+                'due_at' => InstitutionDate::dateOf($process->entrega_en),
                 'state' => $process->estado,
             ],
             'kpis' => [

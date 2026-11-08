@@ -22,6 +22,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\InstitutionDate;
+use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -143,6 +144,15 @@ class LibraryReviewTest extends TestCase
         unlink($file);
         $this->assertSame(['Resumen', 'Por carrera', 'Envíos por día', 'Pendientes'], $book->getSheetNames());
         $this->assertSame($career, $book->getSheetByName('Por carrera')->getCell('A2')->getValue());
+
+        // La entrega vence al final del día en Ecuador, que en UTC ya es el día siguiente.
+        $timezone = InstitutionDate::timezone();
+        $syllabus->convocation->process()->firstOrFail()->update([
+            'inicia_en' => CarbonImmutable::parse('2026-11-08', $timezone)->startOfDay()->utc(),
+            'entrega_en' => CarbonImmutable::parse('2026-12-18', $timezone)->endOfDay()->utc(),
+        ]);
+        $process = $this->as('admin')->getJson(route('api.v1.admin.reports.show'))->assertOk()->json('report.process');
+        $this->assertSame(['2026-11-08', '2026-12-18'], [$process['starts_at'], $process['due_at']]);
 
         $this->as('coordinator')->getJson(route('api.v1.admin.reports.show'))->assertForbidden();
         $this->as('librarian')->get(route('api.v1.admin.reports.export'))->assertForbidden();
