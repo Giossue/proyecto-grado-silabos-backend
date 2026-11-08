@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -110,4 +112,10 @@ it('muestra mensajes de validación sin nombres técnicos ni inglés', function 
 
     expect($revisadas)->toBeGreaterThan(30)
         ->and(array_values(array_unique($problemas)))->toBe([]);
+});
+
+it('responde en español cuando una acción no está permitida', function () {
+    Route::middleware('api')->get('/api/prueba-no-autorizado', fn () => throw new AuthorizationException);
+
+    $this->getJson('/api/prueba-no-autorizado')->assertForbidden()->assertExactJson(['message' => 'No tiene permiso para hacer esto.']);
 });

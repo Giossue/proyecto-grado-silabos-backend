@@ -10,6 +10,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -56,6 +57,12 @@ return Application::configure(basePath: dirname(__DIR__))
         );
         $exceptions->render(
             fn (PostTooLargeException $exception) => response()->json(['message' => 'El archivo es demasiado grande.'], 413),
+        );
+        // Laravel crea el «no autorizado» por defecto en inglés y sin traducir: aquí pasa por lang/es.json.
+        $exceptions->render(
+            fn (AccessDeniedHttpException $exception, Request $request) => $request->is('api/*') || $request->expectsJson()
+                ? response()->json(['message' => __($exception->getMessage() ?: 'This action is unauthorized.')], 403)
+                : null,
         );
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
