@@ -180,6 +180,13 @@ class ParallelTeacherChangeTest extends TestCase
             ->assertSuccessful();
         $this->assertSame('nocturna', $syllabus->fresh()->academicParallelShift());
         $this->assertSame('borrador', $syllabus->fresh()->estado);
+
+        // La pantalla marca los paralelos con sílabo enviado para preguntar una sola vez antes de un cambio masivo.
+        $flag = fn (): ?bool => collect($this->actingAsCoordinator()->getJson(route('api.v1.coordination.academic.scheduled-subjects.index'))->assertOk()->json('scheduledSubjects'))
+            ->flatMap(fn (array $row): array => $row['parallels'])->firstWhere('id', $parallel->id)['sent_syllabus'] ?? null;
+        $this->assertFalse($flag());
+        $syllabus->forceFill(['estado' => 'en_revision'])->save();
+        $this->assertTrue($flag());
     }
 
     public function test_a_parallel_without_teacher_is_deleted_with_its_untouched_syllabus_but_not_with_a_started_one(): void

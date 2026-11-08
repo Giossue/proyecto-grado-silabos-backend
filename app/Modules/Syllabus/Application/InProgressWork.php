@@ -427,7 +427,26 @@ final class InProgressWork
 
     public function parallelHasSentSyllabus(string $parallelId): bool
     {
-        return $this->inProgress(null)->where('paralelo_id', $parallelId)->whereIn('estado', ['en_revision', 'aprobado'])->exists();
+        return $this->parallelsWithSentSyllabus([$parallelId]) !== [];
+    }
+
+    /**
+     * Paralelos cuyo sílabo en curso ya se envió o aprobó: cambiar su código o jornada lo reinicia (pide confirmación).
+     * La pantalla los marca para preguntar una sola vez antes de un cambio masivo.
+     *
+     * @param  array<int, string>  $parallelIds
+     * @return list<string>
+     */
+    public function parallelsWithSentSyllabus(array $parallelIds): array
+    {
+        if ($parallelIds === []) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (mixed $id): string => is_string($id) ? $id : '',
+            $this->inProgress(null)->whereIn('paralelo_id', $parallelIds)->whereIn('estado', ['en_revision', 'aprobado'])->pluck('paralelo_id')->all(),
+        )));
     }
 
     private function applyIdentification(Syllabus $syllabus): void

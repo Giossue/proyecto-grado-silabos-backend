@@ -21,6 +21,7 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\Actions\IssueActivationInvitation;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -253,6 +254,7 @@ class AcademicStructureViewData
         $parallelsWithSyllabus = Syllabus::query()->whereIn('paralelo_id', $parallelIds)->where(fn (Builder $query) => $query->where('estado', '!=', 'sin_iniciar')->orWhereNotNull('iniciado_en')
             ->orWhereHas('convocation', fn (Builder $convocation) => $convocation->where('estado', Convocation::STATE_CLOSED)))->pluck('paralelo_id')->flip();
         $parallelsWithTeacher = TeacherAssignment::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
+        $parallelsWithSentSyllabus = array_flip(app(InProgressWork::class)->parallelsWithSentSyllabus($parallelIds->map(fn (mixed $id): string => (string) $id)->values()->all()));
 
         $careerSubjects = Subject::query()
             ->where('carrera_id', $careerId)
@@ -286,6 +288,7 @@ class AcademicStructureViewData
                         'shift' => $this->parallelShift($parallel),
                         'editable' => true,
                         'deletable' => ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
+                        'sent_syllabus' => isset($parallelsWithSentSyllabus[$parallel->id]),
                     ])
                     ->values()
                     ->all(),
