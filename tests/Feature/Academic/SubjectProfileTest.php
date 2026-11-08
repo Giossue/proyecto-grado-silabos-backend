@@ -89,11 +89,29 @@ class SubjectProfileTest extends TestCase
 
         $this->asRole('coordinador@silabos.test');
         $this->getJson(route('api.v1.academic.subjects.profile.show', $foreign))->assertForbidden();
+        $this->getJson(route('api.v1.academic.subjects.profile.preview', $foreign))->assertForbidden();
         $this->putJson(route('api.v1.academic.subjects.profile.update', $foreign), ['values' => []])->assertForbidden();
 
         $this->asRole('docente@silabos.test');
         $this->getJson(route('api.v1.academic.subjects.profile.show', $subject))->assertForbidden();
+        $this->getJson(route('api.v1.academic.subjects.profile.preview', $subject))->assertForbidden();
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => []])->assertForbidden();
+    }
+
+    public function test_the_preview_shows_the_syllabus_with_curriculum_data_and_the_saved_profile_only(): void
+    {
+        $subject = Subject::query()->firstOrFail();
+        $description = FieldDefinition::query()->where('quien_llena', 'coordinacion')->where('clave', 'descripcion')->firstOrFail();
+        $teacherField = FieldDefinition::query()->where('quien_llena', 'docente')->firstOrFail();
+        $this->asRole('coordinador@silabos.test');
+        $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$description->id => $this->filledTemplateValue($description, 'Descripción del proyecto de carrera')]])->assertOk();
+
+        $response = $this->getJson(route('api.v1.academic.subjects.profile.preview', $subject))->assertOk()
+            ->assertJsonStructure(['presentation' => ['document', 'appearance', 'title', 'logos' => ['institution', 'faculty']], 'sections' => [['id', 'title', 'fields' => [['id', 'label', 'value', 'document']]]]]);
+        $fields = collect($response->json('sections'))->flatMap(fn (array $section): array => $section['fields'])->keyBy('id');
+        $this->assertStringContainsString('Descripción del proyecto de carrera', json_encode($fields[$description->id]['document'], JSON_UNESCAPED_UNICODE) ?: '');
+        $this->assertStringContainsString($subject->nombre, json_encode($response->json('sections'), JSON_UNESCAPED_UNICODE) ?: '');
+        $this->assertEquals(json_decode(json_encode($teacherField->contenido) ?: 'null', true), $fields[$teacherField->id]['value']);
     }
 
     public function test_only_profile_fields_and_valid_documents_are_accepted(): void

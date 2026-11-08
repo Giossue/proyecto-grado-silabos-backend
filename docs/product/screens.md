@@ -195,6 +195,11 @@ y el botón «Documentos» (DOC-10).
   «Incompleta». Filtros por materia, ciclo y estado.
 - Un clic abre «Proyecto de carrera de {materia}»: pestañas por sección, un editor por campo y
   «Guardar proyecto de carrera». Un campo vacío muestra «Sin llenar».
+- Arriba del modal, «Editar | Vista previa». «Vista previa» muestra el sílabo de la materia como lo
+  recibirán sus docentes antes de llenarlo: los datos de la malla (carrera, facultad, materia, código,
+  horas, créditos, prerrequisitos), lo escrito en el proyecto de carrera (aunque aún no se haya guardado) y
+  el resto como en la plantilla. Lo que depende del período o del paralelo (modalidad, campus, paralelo,
+  docente) queda vacío.
 - «Importar desde Excel», con la misma variante verde de las otras importaciones,
   abre «Importar el proyecto de carrera»:
   1. «Descargar plantilla Excel» genera las materias y los campos de Coordinación;

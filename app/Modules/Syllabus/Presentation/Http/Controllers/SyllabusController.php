@@ -12,7 +12,6 @@ use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Documents\Application\SignedDocumentVariables;
 use App\Modules\Documents\Application\SyllabusSignatures;
@@ -29,6 +28,7 @@ use App\Modules\Syllabus\Application\ReviewComments;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\SnapshotDocuments;
 use App\Modules\Syllabus\Application\SyllabusDocumentFields;
+use App\Modules\Syllabus\Application\SyllabusSectionPayload;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -316,7 +316,7 @@ class SyllabusController extends Controller
             'template_variables' => $variables,
             'definition' => TemplatePresentation::definition($definition),
             'sections' => $frozen['sections'] ?? $archivedView['sections'] ?? $template->sections
-                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, ['identification' => $identification]))
+                ->map(fn (TemplateSection $section): array => SyllabusSectionPayload::build($section, fn (FieldDefinition $field): mixed => $values->get($field->id) instanceof FieldValue ? $values->get($field->id)->valor : $field->contenido, ['identification' => $identification]))
                 ->values(),
             'revisions' => $syllabus->revisions->sortBy('numero_revision')->map(fn (SyllabusRevision $revision): array => [
                 'id' => $revision->id,
@@ -379,39 +379,6 @@ class SyllabusController extends Controller
         };
 
         return ['editable' => false, 'edit_block_reason' => $reason, 'edit_blocked_by_convocation' => $byConvocation];
-    }
-
-    /**
-     * @param  Collection<string, FieldValue>  $values
-     * @param  array<string, mixed>  $context
-     * @return array<string, mixed>
-     */
-    private function sectionPayload(TemplateSection $section, $values, array $context): array
-    {
-        $variables = TemplateVariables::resolve($context);
-
-        return [
-            'id' => $section->id,
-            'key' => $section->clave,
-            'title' => $section->titulo,
-            'orientation' => $section->orientacion,
-            'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($values, $variables): array {
-                $stored = ($values->get($field->id) instanceof FieldValue ? $values->get($field->id)->valor : $field->contenido);
-                $document = FieldDocument::normalize($field->quien_llena === FieldDefinition::INSTITUTIONAL ? $field->contenido : $stored);
-
-                return [
-                    'id' => $field->id,
-                    'key' => $field->clave,
-                    'label' => $field->etiqueta,
-                    'quien_llena' => $field->quien_llena,
-                    ...(FieldResponse::enabled() && $field->quien_llena !== FieldDefinition::INSTITUTIONAL ? ['template' => FieldResponse::template(FieldDocument::normalize($field->contenido))] : []),
-                    'teacher_editable' => $field->teacherEditable(),
-                    'required' => $field->quien_llena !== FieldDefinition::INSTITUTIONAL,
-                    'value' => $document,
-                    'document' => FieldDocument::resolve($document, $variables),
-                ];
-            })->all())->values()->all(),
-        ];
     }
 
     /**

@@ -234,6 +234,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.show');
             Route::put('academic/asignaturas/{asignatura}/ficha', [SubjectProfileController::class, 'update'])
                 ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.update');
+            Route::get('academic/asignaturas/{asignatura}/ficha/vista-previa', [SubjectProfileController::class, 'preview'])
+                ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.preview');
             Route::get('coordination/ficha-imports/template', [FichaImportsController::class, 'template'])
                 ->middleware('active-role')->name('api.v1.coordination.ficha-imports.template');
             Route::post('coordination/ficha-imports/spreadsheet', [FichaImportsController::class, 'spreadsheet'])

@@ -110,6 +110,51 @@
                 ]
             }
         },
+        "/api/v1/academic/asignaturas/{asignatura}/ficha/vista-previa": {
+            "get": {
+                "tags": [
+                    "Operación"
+                ],
+                "operationId": "api_v1_academic_subjects_profile_preview",
+                "summary": "api.v1.academic.subjects.profile.preview",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubjectProfile"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "asignatura",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/active-role": {
             "delete": {
                 "tags": [

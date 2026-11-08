@@ -8,10 +8,18 @@ use App\Modules\Academic\Application\Actions\SaveSubjectProfile;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Presentation\Http\Requests\SaveSubjectProfileRequest;
+use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplatePresentation;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
+use App\Modules\Syllabus\Application\AcademicContextSnapshot;
+use App\Modules\Syllabus\Application\IdentificationCard;
+use App\Modules\Syllabus\Application\SyllabusSectionPayload;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -34,6 +42,34 @@ class SubjectProfileController extends Controller
         $values = $request->validated('values');
 
         return response()->json($this->payload($asignatura->id, $action->execute($asignatura, $values, $actor, $request), $profile));
+    }
+
+    /**
+     * Cómo se verá el sílabo de la materia antes de que el docente lo llene: datos de la malla y lo guardado en el
+     * proyecto de carrera; el resto queda como en la plantilla. Mismo criterio que InheritMasterValues al generar el sílabo.
+     */
+    public function preview(Subject $asignatura, Request $request, SaveSubjectProfile $action, SubjectProfileFields $profile, AcademicContextSnapshot $context, InstitutionalLogos $logos): JsonResponse
+    {
+        $action->authorize($asignatura, $request);
+        $values = $profile->values($asignatura->id);
+        $academic = $context->forSubject($asignatura);
+        $identification = IdentificationCard::build($academic, [], [], []);
+        $template = SyllabusTemplate::institutional();
+        $stored = function (FieldDefinition $field) use ($values): mixed {
+            $inherited = $field->fromProfile() ? ($values[$field->id] ?? null) : null;
+
+            return $inherited === null || FieldDocument::isEmpty($inherited) ? $field->contenido : $inherited;
+        };
+
+        return response()->json([
+            'presentation' => TemplatePresentation::presentation($template->definition(), [
+                'institution' => route('logos.institution', ['v' => $logos->version($logos->institutionPath())]),
+                'faculty' => $logos->facultyUrl(data_get($academic, 'career.faculty_id')),
+            ]),
+            'sections' => $template->sections
+                ->map(fn (TemplateSection $section): array => SyllabusSectionPayload::build($section, $stored, ['identification' => $identification]))
+                ->values(),
+        ]);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 
 class AcademicContextSnapshot
@@ -11,11 +12,35 @@ class AcademicContextSnapshot
     /** @return array<string, mixed> */
     public function build(Parallel $parallel, AcademicPeriod $period): array
     {
-        $parallel->loadMissing([
-            'subject.career.faculty.logoObject',
-            'subject.requirements.requirement',
+        $parallel->loadMissing('subject');
+
+        return [
+            ...$this->forSubject($parallel->subject),
+            'parallel' => [
+                'id' => $parallel->id,
+                'code' => $parallel->codigo,
+                'shift' => $parallel->jornada,
+            ],
+            'scheduled_subject' => [
+                'period' => $period->codigo,
+                'teaching_weeks' => $period->semanas_lectivas,
+                'campus' => $parallel->campus_programacion,
+                'modality' => $parallel->modalidad->label(),
+            ],
+        ];
+    }
+
+    /**
+     * Lo que depende solo de la materia y su carrera (sin paralelo ni período): sirve también para la vista previa del proyecto de carrera.
+     *
+     * @return array<string, mixed>
+     */
+    public function forSubject(Subject $subject): array
+    {
+        $subject->loadMissing([
+            'career.faculty.logoObject',
+            'requirements.requirement',
         ]);
-        $subject = $parallel->subject;
         $career = $subject->career;
         $requirementCodes = fn (string $type): array => $subject->requirements
             ->where('tipo', $type)
@@ -52,17 +77,6 @@ class AcademicContextSnapshot
                 'hours_aa' => $subject->horas_aa,
                 'prerequisites' => $requirementCodes('prerrequisito'),
                 'corequisites' => $requirementCodes('correquisito'),
-            ],
-            'parallel' => [
-                'id' => $parallel->id,
-                'code' => $parallel->codigo,
-                'shift' => $parallel->jornada,
-            ],
-            'scheduled_subject' => [
-                'period' => $period->codigo,
-                'teaching_weeks' => $period->semanas_lectivas,
-                'campus' => $parallel->campus_programacion,
-                'modality' => $parallel->modalidad->label(),
             ],
         ];
     }
