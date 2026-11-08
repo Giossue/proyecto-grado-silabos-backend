@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
@@ -120,6 +121,31 @@ class LibraryReviewTest extends TestCase
         $this->assertNotified($this->people['librarian'][0]->id, 'proceso.eliminado', 'Mensaje de Administración: Se abrirá otra convocatoria.');
         $this->assertNotified($this->people['coordinator'][0]->id, 'proceso.eliminado', 'Mensaje de Administración: Se abrirá otra convocatoria.');
         $this->assertNotified($this->people['teacher'][0]->id, 'proceso.eliminado', 'Mensaje de Administración: Se abrirá otra convocatoria.');
+    }
+
+    public function test_el_reporte_de_la_convocatoria_resume_el_avance_por_carrera_y_se_exporta_a_excel(): void
+    {
+        [$syllabus] = $this->submittedRevision();
+        $career = $syllabus->convocation->career()->firstOrFail()->nombre;
+
+        $report = $this->as('admin')->getJson(route('api.v1.admin.reports.show'))->assertOk()->json('report');
+        $this->assertSame(1, $report['kpis']['total']);
+        $this->assertEquals(100, $report['kpis']['on_time_percent']);
+        $this->assertSame($career, $report['careers'][0]['career']);
+        $this->assertSame(1, $report['careers'][0]['states']['en_revision']);
+        $this->assertSame(1, $report['daily'][0]['first']);
+        $this->assertSame('en_revision', $report['pending'][0]['state']);
+
+        $response = $this->as('admin')->get(route('api.v1.admin.reports.export'))->assertOk();
+        $file = tempnam(sys_get_temp_dir(), 'report').'.xlsx';
+        file_put_contents($file, $response->streamedContent());
+        $book = IOFactory::load($file);
+        unlink($file);
+        $this->assertSame(['Resumen', 'Por carrera', 'Envíos por día', 'Pendientes'], $book->getSheetNames());
+        $this->assertSame($career, $book->getSheetByName('Por carrera')->getCell('A2')->getValue());
+
+        $this->as('coordinator')->getJson(route('api.v1.admin.reports.show'))->assertForbidden();
+        $this->as('librarian')->get(route('api.v1.admin.reports.export'))->assertForbidden();
     }
 
     public function test_cada_bibliotecario_filtra_su_bandeja_por_facultad(): void

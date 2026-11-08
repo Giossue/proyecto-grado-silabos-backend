@@ -288,6 +288,8 @@ return [
         'status' => 'estado',
         'result' => 'resultado',
         'period' => 'período',
+        'technical' => 'actividad técnica',
+        'process' => 'convocatoria',
         'stage' => 'etapa',
         'starts_at' => 'fecha de inicio',
         'due_at' => 'fecha límite',

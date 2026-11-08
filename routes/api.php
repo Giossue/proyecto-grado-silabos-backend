@@ -30,6 +30,7 @@ use App\Modules\Operations\Presentation\Http\Controllers\ScreenHelpController;
 use App\Modules\Operations\Presentation\Http\Controllers\SystemSettingsController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ConvocationController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\CoordinationHistoryController;
+use App\Modules\Syllabus\Presentation\Http\Controllers\ProcessReportController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ReviewController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusProcessController;
@@ -138,6 +139,10 @@ Route::prefix('v1')->group(function (): void {
             Route::post('admin/system-settings/{section}/test', [SystemSettingsController::class, 'test'])
                 ->middleware(['active-role', 'throttle:10,1'])->whereIn('section', ['ia', 'biblioteca'])
                 ->name('api.v1.admin.system-settings.test');
+            Route::get('admin/reports', [ProcessReportController::class, 'show'])
+                ->middleware('active-role')->name('api.v1.admin.reports.show');
+            Route::get('admin/reports/export', [ProcessReportController::class, 'export'])
+                ->middleware(['active-role', 'throttle:10,1'])->name('api.v1.admin.reports.export');
             Route::get('admin/audit-events/export', [AuditEventController::class, 'export'])
                 ->middleware(['active-role', 'throttle:10,1'])->name('api.v1.admin.audit-events.export');
             Route::get('admin/audit-events', [AuditEventController::class, 'index'])
