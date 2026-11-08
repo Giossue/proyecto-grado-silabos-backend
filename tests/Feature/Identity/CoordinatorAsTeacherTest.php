@@ -71,10 +71,8 @@ class CoordinatorAsTeacherTest extends TestCase
         $this->actingAs($other)
             ->withSession(['active_role_assignment_id' => $otherRole->id])
             ->postJson(route('api.v1.coordination.academic.teachers.store'), [
-                'primer_nombre' => 'Ignorado',
-                'segundo_nombre' => 'Ignorado',
-                'primer_apellido' => 'Ignorado',
-                'segundo_apellido' => 'Ignorado',
+                'nombres' => 'Ignorado',
+                'apellidos' => 'Ignorado',
                 'correo_electronico' => $this->coordinator->correo_electronico,
             ])
             ->assertOk();

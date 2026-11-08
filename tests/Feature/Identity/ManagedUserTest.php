@@ -108,7 +108,7 @@ class ManagedUserTest extends TestCase
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.store'), [
-                'primer_nombre' => 'Docente', 'segundo_nombre' => 'Luz', 'primer_apellido' => 'Estrenar', 'segundo_apellido' => 'Prueba',
+                'nombres' => 'Docente Luz', 'apellidos' => 'Estrenar Prueba',
                 'correo_electronico' => 'sin.estrenar@silabos.test',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
@@ -173,7 +173,7 @@ class ManagedUserTest extends TestCase
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.store'), [
-                'primer_nombre' => 'Nueva', 'segundo_nombre' => 'Luz', 'primer_apellido' => 'Docente', 'segundo_apellido' => 'Prueba',
+                'nombres' => 'Nueva Luz', 'apellidos' => 'Docente Prueba',
                 'correo_electronico' => 'nueva.docente@silabos.test',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
@@ -201,7 +201,7 @@ class ManagedUserTest extends TestCase
     {
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.store'), [
-                'primer_nombre' => 'Docente', 'segundo_nombre' => 'Luz', 'primer_apellido' => 'Carrera', 'segundo_apellido' => 'Prueba',
+                'nombres' => 'Docente Luz', 'apellidos' => 'Carrera Prueba',
                 'correo_electronico' => 'sin.carrera@silabos.test',
                 'role_code' => RoleCode::Teacher->value,
             ])
@@ -522,6 +522,24 @@ class ManagedUserTest extends TestCase
         Mail::assertQueuedCount(2);
     }
 
+    public function test_editing_a_name_accepts_one_name_and_one_surname_but_only_letters(): void
+    {
+        $pending = $this->pendingTeacher();
+
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.users.update', $pending), ['nombre' => 'ana  pérez', 'correo_electronico' => $pending->correo_electronico])
+            ->assertSuccessful();
+        $this->assertSame('ANA PÉREZ', $pending->fresh()->nombre);
+
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.users.update', $pending), ['nombre' => 'Ana', 'correo_electronico' => $pending->correo_electronico])
+            ->assertUnprocessable()->assertJsonValidationErrors(['nombre' => 'Escriba los nombres y los apellidos, solo con letras.']);
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.users.update', $pending), ['nombre' => 'Ana P3rez', 'correo_electronico' => $pending->correo_electronico])
+            ->assertUnprocessable()->assertJsonValidationErrors('nombre');
+        $this->assertSame('ANA PÉREZ', $pending->fresh()->nombre);
+    }
+
     public function test_a_pending_account_without_activity_can_be_deleted_but_a_used_one_is_archived(): void
     {
         $pending = $this->pendingTeacher();
@@ -562,7 +580,7 @@ class ManagedUserTest extends TestCase
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.store'), [
-                'primer_nombre' => 'Docente', 'segundo_nombre' => 'Luz', 'primer_apellido' => 'Pendiente', 'segundo_apellido' => 'Prueba',
+                'nombres' => 'Docente Luz', 'apellidos' => 'Pendiente Prueba',
                 'correo_electronico' => $email,
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,

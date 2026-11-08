@@ -17,6 +17,11 @@ class CreateCareerTeacherRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        foreach (array_keys(PersonNameColumns::COLUMNS) as $key) {
+            if (is_string($this->input($key))) {
+                $this->merge([$key => PersonName::collapse($this->input($key))]);
+            }
+        }
         if (is_string($this->input('correo_electronico'))) {
             $this->merge(['correo_electronico' => mb_strtolower(trim($this->input('correo_electronico')))]);
         }
@@ -26,10 +31,8 @@ class CreateCareerTeacherRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'primer_nombre' => ['required', 'string', 'max:45'],
-            'segundo_nombre' => ['required', 'string', 'max:45'],
-            'primer_apellido' => ['required', 'string', 'max:45'],
-            'segundo_apellido' => ['required', 'string', 'max:45'],
+            'nombres' => ['required', 'string', 'max:'.PersonNameColumns::MAX_LENGTH, 'regex:'.PersonName::PART_PATTERN],
+            'apellidos' => ['required', 'string', 'max:'.PersonNameColumns::MAX_LENGTH, 'regex:'.PersonName::PART_PATTERN],
             'nombre' => ['prohibited'],
             'correo_electronico' => ['required', 'string', 'email', 'max:255'],
             'password' => ['prohibited'],
@@ -45,21 +48,15 @@ class CreateCareerTeacherRequest extends FormRequest
     public function messages(): array
     {
         $messages = [];
-        foreach (PersonNameColumns::COLUMNS as $key => $label) {
-            $messages["{$key}.required"] = 'El '.mb_strtolower($label).' es obligatorio.';
-        }
 
-        return $messages;
+        return [...$messages, ...PersonNameColumns::messages()];
     }
 
     /** @return array{nombre: string, correo_electronico: string} */
     public function teacherData(): array
     {
         return [
-            'nombre' => PersonName::normalize(implode(' ', array_map(
-                fn (string $key): string => $this->string($key)->toString(),
-                array_keys(PersonNameColumns::COLUMNS),
-            ))),
+            'nombre' => PersonNameColumns::fullName($this->string('nombres')->toString(), $this->string('apellidos')->toString()),
             'correo_electronico' => $this->string('correo_electronico')->toString(),
         ];
     }

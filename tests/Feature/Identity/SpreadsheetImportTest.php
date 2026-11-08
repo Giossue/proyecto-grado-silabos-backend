@@ -57,9 +57,9 @@ class SpreadsheetImportTest extends TestCase
         $this->actingAsRole('admin@silabos.test');
         $career = Career::query()->where('activo', true)->firstOrFail();
         $file = fn () => $this->workbook([
-            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo', 'Rol', 'Carrera'],
-            ['Ana', 'Luz', 'Uno', 'Cinco', 'ana.uno@silabos.test', 'Docente', $career->nombre],
-            ['Luis', 'Pedro', 'Dos', 'Tres', 'luis.dos@silabos.test', 'Bibliotecario', ''],
+            ['Nombres', 'Apellidos', 'Correo', 'Rol', 'Carrera'],
+            ['Ana Luz', 'Uno Cinco', 'ana.uno@silabos.test', 'Docente', $career->nombre],
+            ['Luis Pedro', 'Dos Tres', 'luis.dos@silabos.test', 'Bibliotecario', ''],
         ]);
 
         $this->postJson(route('api.v1.admin.users.import'), ['file' => $file()])
@@ -76,34 +76,34 @@ class SpreadsheetImportTest extends TestCase
     {
         $this->actingAsRole('admin@silabos.test');
         $file = $this->workbook([
-            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo', 'Rol', 'Carrera'],
-            ['Ana', '', 'Uno', '', 'ana.uno@silabos.test', 'Docente', 'Carrera inexistente'],
-            ['Luis', 'Pedro', 'Dos', 'Tres', 'luis.dos@silabos.test', 'Bibliotecario', ''],
-            ['Eva', 'Pedro', 'Dos', '', 'eva.dos@silabos.test', 'Bibliotecario', ''],
+            ['Nombres', 'Apellidos', 'Correo', 'Rol', 'Carrera'],
+            ['Ana', 'Uno', 'ana.uno@silabos.test', 'Docente', 'Carrera inexistente'],
+            ['Luis Pedro', 'Dos Tres', 'luis.dos@silabos.test', 'Bibliotecario', ''],
+            ['Eva Pedro', '', 'eva.dos@silabos.test', 'Bibliotecario', ''],
         ]);
 
         $this->postJson(route('api.v1.admin.users.import'), ['file' => $file, 'confirm' => true])
             ->assertOk()->assertJsonPath('valid', false)->assertJsonPath('created', 0)
             ->assertJsonPath('rows.1.errors', [])
-            ->assertJsonPath('rows.2.errors', ['El segundo apellido es obligatorio.']);
+            ->assertJsonPath('rows.2.errors', ['Los apellidos son obligatorios.']);
         $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'luis.dos@silabos.test']);
     }
 
     public function test_coordinator_imports_teachers_and_others_cannot(): void
     {
         $this->actingAsRole('coordinador@silabos.test');
-        $file = $this->workbook([['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'], ['Doc', 'Ana', 'Uno', 'Mía', 'doc.uno@silabos.test'], ['Doc', 'Ana', 'Dos', 'Mía', 'doc.uno@silabos.test']]);
+        $file = $this->workbook([['Nombres', 'Apellidos', 'Correo'], ['Doc Ana', 'Uno Mía', 'doc.uno@silabos.test'], ['Doc Ana', 'Dos Mía', 'doc.uno@silabos.test']]);
         $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $file, 'confirm' => true])
             ->assertOk()->assertJsonPath('valid', false)->assertJsonPath('created', 0);
 
-        $file = $this->workbook([['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'], ['Doc', 'Ana', 'Uno', 'Mía', 'doc.uno@silabos.test']]);
+        $file = $this->workbook([['Nombres', 'Apellidos', 'Correo'], ['Doc Ana', 'Uno Mía', 'doc.uno@silabos.test']]);
         $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $file, 'confirm' => true])
             ->assertOk()->assertJsonPath('created', 1);
         $this->assertDatabaseHas('usuarios', ['correo_electronico' => 'doc.uno@silabos.test']);
 
         $this->getJson(route('api.v1.admin.users.import-template'))->assertForbidden();
         $this->actingAsRole('docente@silabos.test');
-        $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $this->workbook([['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'], ['X', '', 'Y', '', 'x@silabos.test']])])->assertForbidden();
+        $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $this->workbook([['Nombres', 'Apellidos', 'Correo'], ['X', 'Y', 'x@silabos.test']])])->assertForbidden();
     }
 
     public function test_coordinator_imports_the_curriculum_with_its_requirements_all_or_nothing(): void
@@ -177,42 +177,45 @@ class SpreadsheetImportTest extends TestCase
             ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $book = IOFactory::load($this->templateFile(route('api.v1.admin.users.import-template')));
         $sheet = $book->getSheetByName('Datos');
-        $this->assertSame('Segundo apellido', $sheet->getCell('D1')->getValue());
-        $this->assertSame('Rol', $sheet->getCell('F1')->getValue());
-        $this->assertSame('list', $sheet->getCell('F2')->getDataValidation()->getType());
-        $this->assertSame('list', $sheet->getCell('G2')->getDataValidation()->getType());
-        $this->assertSame('Indicaciones', $sheet->getCell('I1')->getValue());
-        $this->assertStringContainsString('Primer nombre', (string) $sheet->getCell('I2')->getValue());
+        $this->assertSame('Nombres', $sheet->getCell('A1')->getValue());
+        $this->assertSame('Apellidos', $sheet->getCell('B1')->getValue());
+        $this->assertSame('Rol', $sheet->getCell('D1')->getValue());
+        $this->assertSame('list', $sheet->getCell('D2')->getDataValidation()->getType());
+        $this->assertSame('list', $sheet->getCell('E2')->getDataValidation()->getType());
+        $this->assertSame('Indicaciones', $sheet->getCell('G1')->getValue());
+        $this->assertStringContainsString('Nombres', (string) $sheet->getCell('G2')->getValue());
     }
 
-    public function test_teacher_import_requires_both_names_and_both_surnames(): void
+    public function test_teacher_import_requires_names_and_surnames_written_with_letters(): void
     {
         $this->actingAsRole('coordinador@silabos.test');
         $file = $this->workbook([
-            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'],
-            ['Ana', '', 'Uno', 'Dos', 'sin.segundo.nombre@silabos.test'],
-            ['Ana', 'Luz', 'Uno', '', 'sin.segundo.apellido@silabos.test'],
-            ['', 'Luz', 'Uno', 'Dos', 'sin.primer.nombre@silabos.test'],
-            ['Ana', 'Luz', 'Uno', 'Dos', 'completo@silabos.test'],
+            ['Nombres', 'Apellidos', 'Correo'],
+            ['', 'Uno Dos', 'sin.nombres@silabos.test'],
+            ['Ana', '', 'sin.apellidos@silabos.test'],
+            ['Ana2', 'Uno', 'con.numero@silabos.test'],
+            ['María José', "De la Cruz-O'Neil", 'compuesto@silabos.test'],
+            ['Ana', 'Uno', 'un.nombre.un.apellido@silabos.test'],
         ]);
 
         $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $file, 'confirm' => true])
             ->assertOk()
             ->assertJsonPath('valid', false)
             ->assertJsonPath('created', 0)
-            ->assertJsonPath('rows.0.errors', ['El segundo nombre es obligatorio.'])
-            ->assertJsonPath('rows.1.errors', ['El segundo apellido es obligatorio.'])
-            ->assertJsonPath('rows.2.errors', ['El primer nombre es obligatorio.'])
-            ->assertJsonPath('rows.3.errors', []);
-        $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'completo@silabos.test']);
+            ->assertJsonPath('rows.0.errors', ['Los nombres son obligatorios.'])
+            ->assertJsonPath('rows.1.errors', ['Los apellidos son obligatorios.'])
+            ->assertJsonPath('rows.2.errors', ['Los nombres solo admiten letras, espacios, apóstrofo y guion.'])
+            ->assertJsonPath('rows.3.errors', [])
+            ->assertJsonPath('rows.4.errors', []);
+        $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'compuesto@silabos.test']);
     }
 
     public function test_coordinator_teacher_template_downloads_with_names(): void
     {
         $this->actingAsRole('coordinador@silabos.test');
         $teachers = IOFactory::load($this->templateFile(route('api.v1.coordination.academic.teachers.import-template')))->getSheetByName('Datos');
-        $this->assertSame('Primer apellido', $teachers->getCell('C1')->getValue());
-        $this->assertStringContainsString('Todas las columnas son obligatorias', (string) $teachers->getCell('G2')->getValue());
+        $this->assertSame('Apellidos', $teachers->getCell('B1')->getValue());
+        $this->assertStringContainsString('Todas las columnas son obligatorias', (string) $teachers->getCell('E2')->getValue());
     }
 
     public function test_admin_imports_careers_all_or_nothing(): void
@@ -238,8 +241,8 @@ class SpreadsheetImportTest extends TestCase
     public function test_every_template_locks_all_but_the_data_rows(): void
     {
         $templates = [
-            'admin@silabos.test' => [route('api.v1.admin.users.import-template'), 7],
-            'coordinador@silabos.test' => [route('api.v1.coordination.academic.teachers.import-template'), 5],
+            'admin@silabos.test' => [route('api.v1.admin.users.import-template'), 5],
+            'coordinador@silabos.test' => [route('api.v1.coordination.academic.teachers.import-template'), 3],
         ];
         foreach ([
             'admin@silabos.test' => [route('api.v1.admin.academic.careers.import-template'), 5],
@@ -310,25 +313,25 @@ class SpreadsheetImportTest extends TestCase
 
     public function test_names_over_the_form_limit_are_rejected_in_user_and_teacher_imports(): void
     {
-        $long = str_repeat('A', 46);
+        $long = str_repeat('A', 91);
         $teachers = $this->workbook([
-            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'],
-            [$long, 'Luz', 'Uno', 'Dos', 'largo@silabos.test'],
-            [str_repeat('A', 45), 'Luz', 'Uno', 'Dos', 'justo@silabos.test'],
+            ['Nombres', 'Apellidos', 'Correo'],
+            [$long, 'Uno Dos', 'largo@silabos.test'],
+            [str_repeat('A', 90), 'Uno Dos', 'justo@silabos.test'],
         ]);
         $this->actingAsRole('coordinador@silabos.test');
         $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $teachers, 'confirm' => true])->assertOk()
             ->assertJsonPath('valid', false)
-            ->assertJsonPath('rows.0.errors', ['El primer nombre admite hasta 45 caracteres.'])
+            ->assertJsonPath('rows.0.errors', ['Los nombres admiten hasta 90 caracteres.'])
             ->assertJsonPath('rows.1.errors', []);
 
         $users = $this->workbook([
-            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo', 'Rol', 'Carrera'],
-            ['Ana', 'Luz', $long, 'Dos', 'largo2@silabos.test', 'Administrador', ''],
+            ['Nombres', 'Apellidos', 'Correo', 'Rol', 'Carrera'],
+            ['Ana Luz', $long, 'largo2@silabos.test', 'Administrador', ''],
         ]);
         $this->actingAsRole('admin@silabos.test');
         $this->postJson(route('api.v1.admin.users.import'), ['file' => $users, 'confirm' => true])->assertOk()
-            ->assertJsonPath('rows.0.errors', ['El primer apellido admite hasta 45 caracteres.'])
+            ->assertJsonPath('rows.0.errors', ['Los apellidos admiten hasta 90 caracteres.'])
             ->assertJsonPath('created', 0);
     }
 
@@ -337,10 +340,10 @@ class SpreadsheetImportTest extends TestCase
         $this->actingAsRole('coordinador@silabos.test');
         User::query()->where('correo_electronico', 'docente@silabos.test')->update(['activo' => false]);
         $file = $this->workbook([
-            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'],
-            ['Ana', 'Luz', 'Uno', 'Dos', 'docente@silabos.test'],
-            ['Ada', 'Luz', 'Uno', 'Dos', 'admin@silabos.test'],
-            ['Eva', 'Luz', 'Uno', 'Dos', 'nuevo.docente@silabos.test'],
+            ['Nombres', 'Apellidos', 'Correo'],
+            ['Ana Luz', 'Uno Dos', 'docente@silabos.test'],
+            ['Ada Luz', 'Uno Dos', 'admin@silabos.test'],
+            ['Eva Luz', 'Uno Dos', 'nuevo.docente@silabos.test'],
         ]);
 
         $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $file, 'confirm' => true])->assertOk()

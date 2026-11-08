@@ -17,14 +17,21 @@ class CreateManagedUserRequest extends FormRequest
         return Gate::allows('create', User::class);
     }
 
+    protected function prepareForValidation(): void
+    {
+        foreach (array_keys(PersonNameColumns::COLUMNS) as $key) {
+            if (is_string($this->input($key))) {
+                $this->merge([$key => PersonName::collapse($this->input($key))]);
+            }
+        }
+    }
+
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
         return [
-            'primer_nombre' => ['required', 'string', 'max:45'],
-            'segundo_nombre' => ['required', 'string', 'max:45'],
-            'primer_apellido' => ['required', 'string', 'max:45'],
-            'segundo_apellido' => ['required', 'string', 'max:45'],
+            'nombres' => ['required', 'string', 'max:'.PersonNameColumns::MAX_LENGTH, 'regex:'.PersonName::PART_PATTERN],
+            'apellidos' => ['required', 'string', 'max:'.PersonNameColumns::MAX_LENGTH, 'regex:'.PersonName::PART_PATTERN],
             'nombre' => ['prohibited'],
             'correo_electronico' => ['required', 'string', 'email', 'max:255', Rule::unique('usuarios', 'correo_electronico')],
             'password' => ['prohibited'],
@@ -47,18 +54,12 @@ class CreateManagedUserRequest extends FormRequest
             'correo_electronico.unique' => 'Ya existe una cuenta con este correo.',
             'career_id.required_unless' => 'Seleccione la carrera que limita este rol.',
         ];
-        foreach (PersonNameColumns::COLUMNS as $key => $label) {
-            $messages["{$key}.required"] = 'El '.mb_strtolower($label).' es obligatorio.';
-        }
 
-        return $messages;
+        return [...$messages, ...PersonNameColumns::messages()];
     }
 
     public function fullName(): string
     {
-        return PersonName::normalize(implode(' ', array_map(
-            fn (string $key): string => $this->string($key)->toString(),
-            array_keys(PersonNameColumns::COLUMNS),
-        )));
+        return PersonNameColumns::fullName($this->string('nombres')->toString(), $this->string('apellidos')->toString());
     }
 }

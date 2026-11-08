@@ -31,10 +31,10 @@ class UpdateManagedUserRequest extends FormRequest
 
         return [
             'nombre' => ['required', 'string', 'max:180', fn (string $attribute, mixed $value, Closure $fail) => ! is_string($value)
-                || PersonName::hasFourParts($value)
+                || PersonName::isValidFullName($value)
                 || ($target instanceof User && PersonName::normalize($value) === PersonName::normalize($target->nombre))
                 ? null
-                : $fail('Escriba el primer y segundo nombre y el primer y segundo apellido.')],
+                : $fail('Escriba los nombres y los apellidos, solo con letras.')],
             'correo_electronico' => [
                 'required',
                 'string',
