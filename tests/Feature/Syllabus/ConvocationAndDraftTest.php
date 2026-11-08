@@ -782,7 +782,7 @@ class ConvocationAndDraftTest extends TestCase
         $short = $this->plannedUnits()['units'];
         $short[3]['semanas'] = [];
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block($short)])->assertOk();
-        $this->assertSame(['semanas_unidades_incompletas'], $codes());
+        $this->assertSame(['unidades_sin_semanas', 'semanas_unidades_incompletas'], $codes());
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block($this->plannedUnits()['units'])])->assertOk();
         $this->assertSame([], $codes());

@@ -451,6 +451,21 @@
                     ]
                 },
                 {
+                    "code": "unidades_sin_semanas",
+                    "on": "submit",
+                    "message": "Cada unidad necesita al menos una semana: {detail}.",
+                    "hint": "Cada unidad necesita al menos una semana para poder enviar",
+                    "checks": [
+                        {
+                            "label": "Unidades con semanas",
+                            "filled": "units.*.semanas",
+                            "equals": {
+                                "count": "units"
+                            }
+                        }
+                    ]
+                },
+                {
                     "code": "semanas_unidades_incompletas",
                     "on": "submit",
                     "message": "Las unidades deben repartir las {expected} semanas del período: tienen {actual}.",

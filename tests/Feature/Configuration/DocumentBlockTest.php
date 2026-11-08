@@ -141,6 +141,18 @@ class DocumentBlockTest extends TestCase
         DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => [['semanas' => [['acd_h' => 'tres']]]]]]);
     }
 
+    public function test_every_unit_needs_at_least_one_week_to_submit(): void
+    {
+        $unit = fn (array $weeks): array => ['nombre' => 'U', 'resultado' => 'R', 'semanas' => $weeks];
+        $block = DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => [$unit([['acd_h' => '2'], ['acd_h' => '2']]), $unit([])]]]);
+        $variables = ['horas_docencia' => '4', 'horas_practicas' => '0', 'horas_autonomas' => '0', 'semanas_periodo' => '2'];
+
+        $failures = DocumentBlock::failures(['attrs' => $block], $variables);
+        $this->assertSame(['unidades_sin_semanas'], array_column($failures, 'code'));
+        $this->assertSame('Cada unidad necesita al menos una semana: Unidades con semanas 1 de 2.', $failures[0]['message']);
+        $this->assertSame([], DocumentBlock::failures(['attrs' => $block], $variables, 'save'));
+    }
+
     public function test_the_unit_hours_are_added_per_component_and_compared_with_the_subject(): void
     {
         $block = DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => [['semanas' => [['acd_h' => '3', 'ape_h' => '1,5', 'aa_h' => ''], ['acd_h' => '2']]], ['semanas' => [['aa_h' => '4']]]]]]);

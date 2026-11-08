@@ -328,7 +328,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - El docente declara de 1 a 8 unidades (empieza con 4) y escribe el nombre y el
   resultado de aprendizaje de cada una dentro de su tabla del formato oficial, y
   completa la planificación semanal. Para enviar, cada unidad debe tener nombre y
-  resultado, y las unidades suman las semanas de clase del período (2026-10-27: el
+  resultado y al menos una semana (2026-11-08), y las unidades suman las semanas de clase del período (2026-10-27: el
   Reglamento de Régimen Académico del CES no fija unidades ni semanas fuera de Salud,
   arts. 10 y 113; el período guarda sus semanas de clase, calculadas con las fechas y
   corregibles al crearlo). El proyecto de carrera ya no tiene «Unidades y resultados de aprendizaje»

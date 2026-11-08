@@ -129,7 +129,8 @@ final class BlockRules
         return array_values(array_map(function (array $check) use ($scope, $variables): array {
             $actual = match (true) {
                 isset($check['count']) => BlockLayout::count($scope->collect($check['count'])),
-                isset($check['filled']) => count(array_filter($scope->collect($check['filled']), fn (mixed $item): bool => (is_string($item) || is_int($item) || is_float($item)) && trim((string) $item) !== '')),
+                // «filled» cuenta textos o números escritos y listas con algo (una unidad con semanas).
+                isset($check['filled']) => count(array_filter($scope->collect($check['filled']), fn (mixed $item): bool => is_array($item) ? $item !== [] : (is_string($item) || is_int($item) || is_float($item)) && trim((string) $item) !== '')),
                 default => array_sum(array_map(Numbers::parse(...), $scope->collect($check['sum']))),
             };
             $comparison = isset($check['equals']) ? 'equals' : (isset($check['max']) ? 'max' : 'min');
