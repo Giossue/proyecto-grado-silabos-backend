@@ -74,7 +74,16 @@ class SyllabusController extends Controller
             ))
             ->when($state, fn ($query, string $value) => $query->where('estado', $value))
             ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.subject'])
-            ->orderByRaw('guardado_en DESC NULLS LAST')
+            // Por ciclo y luego por asignatura; se usa la foto académica del sílabo y, si falta, la malla.
+            ->orderByRaw(<<<'SQL'
+                COALESCE((datos_academicos_silabo->'subject'->>'cycle')::int,
+                    (SELECT a.ciclo_asignatura FROM paralelos p JOIN asignaturas a ON a.asignatura_id = p.asignatura_id WHERE p.paralelo_id = silabos.paralelo_id)) NULLS LAST
+                SQL)
+            ->orderByRaw(<<<'SQL'
+                COALESCE(datos_academicos_silabo->'subject'->>'name',
+                    (SELECT a.nombre_asignatura FROM paralelos p JOIN asignaturas a ON a.asignatura_id = p.asignatura_id WHERE p.paralelo_id = silabos.paralelo_id))
+                SQL)
+            ->orderBy('silabo_id')
             ->paginate(20)
             ->withQueryString()
             ->through(fn (Syllabus $syllabus) => [
@@ -92,6 +101,11 @@ class SyllabusController extends Controller
         $payload = [
             'filters' => ['q' => $search ?: null, 'state' => $state],
             'syllabi' => $syllabi,
+            // Sin convocatoria abierta (o en pausa) en la carrera, la lista vacía lo explica.
+            'convocation_open' => Convocation::query()
+                ->where('carrera_id', $activeRole?->carrera_id)
+                ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
+                ->exists(),
         ];
 
         return response()->json($payload);
@@ -330,6 +344,11 @@ class SyllabusController extends Controller
             'signatures' => $this->signatures->summary($syllabus->id),
             'teacher_signature_required' => ! $this->signatures->signed($syllabus->id, SyllabusSignature::ROLE_TEACHER),
             'teacher_formation_required' => ValidateDraft::formationRequired(),
+            // El envío y la solicitud de corrección suben la versión una vez cada uno; cualquier cambio del docente la vuelve a subir.
+            'unchanged_since_correction' => $syllabus->estado === 'correccion_solicitada'
+                && $revision instanceof SyllabusRevision
+                && $revision->hasCorrectionRequest()
+                && $syllabus->version_bloqueo === $revision->version_bloqueo_origen + 2,
         ];
     }
 
