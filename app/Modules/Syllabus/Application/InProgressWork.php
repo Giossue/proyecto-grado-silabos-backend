@@ -35,13 +35,14 @@ final class InProgressWork
     public const SENT_STATES = ['en_revision', 'correccion_solicitada', 'aprobado'];
 
     public const DOCUMENT_PATHS = [
-        'career.name', 'career.code', 'career.faculty', 'career.faculty_logo', 'scheduled_subject.campus',
+        'career.name', 'career.faculty', 'career.faculty_logo', 'scheduled_subject.campus',
         'subject.name', 'subject.code', 'subject.cycle', 'subject.organization_unit', 'subject.credits',
         'subject.total_hours', 'subject.hours_ac', 'subject.hours_pae', 'subject.hours_aa',
         'subject.prerequisites', 'subject.corequisites', 'scheduled_subject.modality',
     ];
 
-    private const SILENT_PATHS = ['subject.position', 'curriculum.cycle_count'];
+    // Se guardan en el sílabo pero no salen en el documento: cambiarlos no lo devuelve a borrador.
+    private const SILENT_PATHS = ['subject.position', 'curriculum.cycle_count', 'career.code'];
 
     public function __construct(
         private readonly GenerateConvocationSyllabi $generator,
