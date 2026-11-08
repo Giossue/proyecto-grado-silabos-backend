@@ -133,6 +133,7 @@ class LibraryReviewTest extends TestCase
 
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['faculty' => $own]))
             ->assertOk()->assertJsonPath('reviews.total', 1)->assertJsonPath('filters.faculty', $own)
+            ->assertJsonPath('reviews.data.0.faculty', Faculty::query()->findOrFail($own)->nombre)
             ->assertJsonFragment(['id' => $other->id, 'name' => 'Facultad de Ciencias de la Salud']);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['faculty' => $other->id]))->assertOk()->assertJsonPath('reviews.total', 0);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['faculty' => (string) Str::uuid()]))->assertUnprocessable()->assertJsonValidationErrors(['faculty']);
