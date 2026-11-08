@@ -21,6 +21,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditEventController extends Controller
 {
+    /** Estados y roles guardados como código, en palabras: «en_revision» → «En revisión». */
+    private const VALUE_LABELS = [
+        'sin_iniciar' => 'Sin iniciar', 'borrador' => 'Borrador', 'en_revision' => 'En revisión',
+        'correccion_solicitada' => 'Corrección solicitada', 'aprobado' => 'Aprobado',
+        'docente' => 'Docente', 'coordinacion' => 'Coordinación', 'biblioteca' => 'Biblioteca',
+    ];
+
     public function index(ViewAuditEventsRequest $request, AuditTargets $targets): JsonResponse
     {
         $query = $this->filtered($request);
@@ -267,6 +274,34 @@ class AuditEventController extends Controller
             'ia.analisis_solicitado' => 'Análisis de IA solicitado',
             'ia.analisis_completado' => 'Análisis de IA completado',
             'ia.analisis_fallido' => 'Análisis de IA fallido',
+            'academico.coordinacion.reemplazada' => 'Coordinación reemplazada',
+            'academico.ficha_asignatura.guardada' => 'Proyecto de carrera de la materia guardado',
+            'academico.paralelo.eliminacion' => 'Paralelo eliminado',
+            'convocatoria.iniciada' => 'Convocatoria de carrera preparada',
+            'plantilla.bloque_eliminado' => 'Bloque de la plantilla eliminado',
+            'plantilla.bloques_reordenados' => 'Bloques de la plantilla reordenados',
+            'plantilla.importada' => 'Plantilla importada',
+            'plantilla.respuestas_protegidas_activadas' => 'Respuestas de la plantilla protegidas',
+            'plantilla.seccion_actualizada' => 'Sección de la plantilla actualizada',
+            'plantilla.seccion_creada' => 'Sección de la plantilla creada',
+            'plantilla.seccion_eliminada' => 'Sección de la plantilla eliminada',
+            'plantilla.secciones_reordenadas' => 'Secciones de la plantilla reordenadas',
+            'plantilla.vaciada' => 'Plantilla vaciada',
+            'proceso.plantilla_rehecho' => 'Sílabos rehechos con la plantilla nueva',
+            'proceso_silabos.creado' => 'Convocatoria institucional creada',
+            'proceso_silabos.abierto' => 'Convocatoria institucional abierta',
+            'proceso_silabos.cerrado' => 'Convocatoria institucional cerrada',
+            'proceso_silabos.eliminado' => 'Convocatoria institucional eliminada',
+            'proceso_silabos.plazo_extendido' => 'Plazo de la convocatoria extendido',
+            'proceso_silabos.reabierto' => 'Convocatoria institucional reabierta',
+            'rol_activo.cerrado' => 'Rol activo cerrado',
+            'sesion.iniciada' => 'Sesión iniciada',
+            'sesion.cerrada' => 'Sesión cerrada',
+            'silabo.contenido_copiado' => 'Contenido del sílabo copiado',
+            'usuario.docente_incorporado' => 'Docente incorporado a la carrera',
+            'usuario.docente_retirado' => 'Docente retirado de la carrera',
+            'usuario.eliminado' => 'Usuario eliminado',
+            'usuario.formacion_actualizada' => 'Formación del docente actualizada',
             default => 'Acción registrada',
         };
     }
@@ -397,14 +432,14 @@ class AuditEventController extends Controller
             $before = $metadata[$beforeKey] ?? null;
             $after = $metadata[$afterKey] ?? null;
             if ($before != $after && ($before === null || $scalar($before)) && ($after === null || $scalar($after))) {
-                $text = fn (mixed $value): string => $value === null || $value === '' ? '—' : (is_bool($value) ? ($value ? 'Sí' : 'No') : (string) $value);
+                $text = fn (mixed $value): string => $value === null || $value === '' ? '—' : (is_bool($value) ? ($value ? 'Sí' : 'No') : self::VALUE_LABELS[(string) $value] ?? (string) $value);
                 $details[] = ['label' => $label, 'value' => "{$text($before)} → {$text($after)}"];
             }
         }
         foreach ($metadata as $key => $value) {
             if (! in_array($key, $paired, true) && isset($labels[$key]) && $scalar($value)) {
                 /** @var bool|float|int|string $value */
-                $details[] = ['label' => $labels[$key], 'value' => $value];
+                $details[] = ['label' => $labels[$key], 'value' => is_string($value) ? (self::VALUE_LABELS[$value] ?? $value) : $value];
             }
         }
 

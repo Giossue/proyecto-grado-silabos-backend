@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SupportDocument;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
@@ -79,6 +80,8 @@ final class AuditTargets
             'silabo' => $this->syllabusNames(array_combine($ids, $ids)),
             'paralelo' => Parallel::query()->with('subject')->whereKey($ids)->get()
                 ->mapWithKeys(fn (Parallel $parallel): array => [$parallel->id => "{$parallel->subject->codigo_asignatura} {$parallel->subject->nombre} · Paralelo {$parallel->codigo}"])->all(),
+            'asignatura' => Subject::query()->whereKey($ids)->get()
+                ->mapWithKeys(fn (Subject $subject): array => [$subject->getKey() => "{$subject->codigo_asignatura} {$subject->nombre}"])->all(),
             'usuario' => User::query()->whereKey($ids)->get()
                 ->mapWithKeys(fn (User $user): array => [$user->id => "{$user->nombre} ({$user->correo_electronico})"])->all(),
             'asignacion_rol' => RoleAssignment::query()->with(['user', 'career'])->whereKey($ids)->get()
