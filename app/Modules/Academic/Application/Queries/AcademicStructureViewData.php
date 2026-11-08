@@ -254,7 +254,9 @@ class AcademicStructureViewData
         $parallelsWithSyllabus = Syllabus::query()->whereIn('paralelo_id', $parallelIds)->where(fn (Builder $query) => $query->where('estado', '!=', 'sin_iniciar')->orWhereNotNull('iniciado_en')
             ->orWhereHas('convocation', fn (Builder $convocation) => $convocation->where('estado', Convocation::STATE_CLOSED)))->pluck('paralelo_id')->flip();
         $parallelsWithTeacher = TeacherAssignment::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
-        $parallelsWithSentSyllabus = array_flip(app(InProgressWork::class)->parallelsWithSentSyllabus($parallelIds->map(fn (mixed $id): string => (string) $id)->values()->all()));
+        $ids = $parallelIds->map(fn (mixed $id): string => (string) $id)->values()->all();
+        $parallelsWithSentSyllabus = array_flip(app(InProgressWork::class)->parallelsWithSentSyllabus($ids));
+        $parallelsWithStartedSyllabus = array_flip(app(InProgressWork::class)->parallelsWithStartedSyllabus($ids));
 
         $careerSubjects = Subject::query()
             ->where('carrera_id', $careerId)
@@ -289,6 +291,7 @@ class AcademicStructureViewData
                         'editable' => true,
                         'deletable' => ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
                         'sent_syllabus' => isset($parallelsWithSentSyllabus[$parallel->id]),
+                        'started_syllabus' => isset($parallelsWithStartedSyllabus[$parallel->id]),
                     ])
                     ->values()
                     ->all(),

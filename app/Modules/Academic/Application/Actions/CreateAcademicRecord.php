@@ -55,6 +55,15 @@ class CreateAcademicRecord
             $this->locks->assertCareerEditable($activeRole->carrera_id);
         }
 
+        // Cambiar el docente elimina el sílabo ya empezado del paralelo: se confirma antes de tocar nada.
+        if ($entity === 'asignacion_docente' && ! $request->boolean(InProgressWork::CONFIRMATION_FIELD)
+            && $this->work->parallelsWithStartedSyllabus([$this->stringValue($data, 'parallel_id')]) !== []) {
+            throw ValidationException::withMessages([
+                'purge_required' => 'El sílabo de este paralelo ya tiene trabajo del docente. Cambiar el docente lo elimina con todo su contenido (borrador, revisiones, aprobación, firmas y análisis de IA) y el nuevo docente lo empieza de cero.',
+                'purge_count' => '1',
+            ]);
+        }
+
         $create = fn (): Model => $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity): Model {
             $record = $this->create($entity, $data, $activeRole);
 

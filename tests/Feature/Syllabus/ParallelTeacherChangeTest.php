@@ -73,6 +73,9 @@ class ParallelTeacherChangeTest extends TestCase
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertForbidden();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
 
+        $this->assignTeacher($this->replacement, $assignment->paralelo_id, confirm: false)
+            ->assertUnprocessable()->assertJsonValidationErrors('purge_required');
+        $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertSuccessful();
 
         $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
@@ -133,7 +136,13 @@ class ParallelTeacherChangeTest extends TestCase
         $syllabus = $this->submittedSyllabus();
         $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->where('paralelo_id', $syllabus->paralelo_id)->firstOrFail();
 
+        // Sin confirmar no cambia nada: el docente y su sílabo enviado siguen igual.
         $this->actingAsCoordinator()->putJson(route('api.v1.coordination.academic.parallels.teacher.update', $assignment->paralelo_id), ['user_id' => $this->replacement->id])
+            ->assertUnprocessable()->assertJsonValidationErrors('purge_required');
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertDatabaseHas('asignaciones_paralelo', ['asignacion_paralelo_id' => $assignment->id]);
+
+        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.academic.parallels.teacher.update', $assignment->paralelo_id), ['user_id' => $this->replacement->id, 'confirm_purge' => true])
             ->assertSuccessful()->assertJsonPath('message', 'Registro académico creado dentro de su carrera.');
 
         $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
@@ -184,7 +193,10 @@ class ParallelTeacherChangeTest extends TestCase
         // La pantalla marca los paralelos con sílabo enviado para preguntar una sola vez antes de un cambio masivo.
         $flag = fn (): ?bool => collect($this->actingAsCoordinator()->getJson(route('api.v1.coordination.academic.scheduled-subjects.index'))->assertOk()->json('scheduledSubjects'))
             ->flatMap(fn (array $row): array => $row['parallels'])->firstWhere('id', $parallel->id)['sent_syllabus'] ?? null;
+        $started = fn (): ?bool => collect($this->actingAsCoordinator()->getJson(route('api.v1.coordination.academic.scheduled-subjects.index'))->json('scheduledSubjects'))
+            ->flatMap(fn (array $row): array => $row['parallels'])->firstWhere('id', $parallel->id)['started_syllabus'] ?? null;
         $this->assertFalse($flag());
+        $this->assertTrue($started());
         $syllabus->forceFill(['estado' => 'en_revision'])->save();
         $this->assertTrue($flag());
     }
@@ -301,12 +313,14 @@ class ParallelTeacherChangeTest extends TestCase
             ->deleteJson(route('api.v1.coordination.academic.destroy', ['asignacion_docente', $assignment->id]));
     }
 
-    private function assignTeacher(User $user, string $parallelId): TestResponse
+    /** Por defecto confirma: si el sílabo del paralelo ya tiene trabajo, cambiar el docente pide confirmación. */
+    private function assignTeacher(User $user, string $parallelId, bool $confirm = true): TestResponse
     {
         return $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.store', 'asignacion_docente'), [
                 'user_id' => $user->id,
                 'parallel_id' => $parallelId,
+                ...($confirm ? ['confirm_purge' => true] : []),
             ]);
     }
 

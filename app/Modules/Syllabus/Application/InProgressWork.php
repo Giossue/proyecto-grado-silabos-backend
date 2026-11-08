@@ -431,6 +431,27 @@ final class InProgressWork
     }
 
     /**
+     * Paralelos cuyo sílabo en curso ya tiene trabajo del docente (abierto, en borrador, enviado o aprobado):
+     * cambiar su docente lo elimina y el nuevo empieza de cero, así que se pide confirmación.
+     *
+     * @param  array<int, string>  $parallelIds
+     * @return list<string>
+     */
+    public function parallelsWithStartedSyllabus(array $parallelIds): array
+    {
+        if ($parallelIds === []) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (mixed $id): string => is_string($id) ? $id : '',
+            $this->inProgress(null)->whereIn('paralelo_id', $parallelIds)
+                ->where(fn (Builder $query) => $query->where('estado', '!=', 'sin_iniciar')->orWhereNotNull('iniciado_en'))
+                ->pluck('paralelo_id')->all(),
+        )));
+    }
+
+    /**
      * Paralelos cuyo sílabo en curso ya se envió o aprobó: cambiar su código o jornada lo reinicia (pide confirmación).
      * La pantalla los marca para preguntar una sola vez antes de un cambio masivo.
      *
