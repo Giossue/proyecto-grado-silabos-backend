@@ -13,7 +13,8 @@ return [
     // Por defecto solo localhost y redes privadas (donde está el proxy de Dokploy); nunca «*».
     'trusted_proxies' => env('TRUSTED_PROXIES', '127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16'),
 
-    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+    // FRONTEND_URL puede listar varios orígenes separados por coma (CORS); los enlaces de los correos usan el primero.
+    'frontend_url' => trim(explode(',', (string) env('FRONTEND_URL', 'http://localhost:5173'))[0]),
 
     'timezone' => env('APP_TIMEZONE', 'UTC'),
 
