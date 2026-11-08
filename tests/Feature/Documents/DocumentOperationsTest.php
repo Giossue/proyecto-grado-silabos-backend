@@ -5,6 +5,7 @@ namespace Tests\Feature\Documents;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
@@ -37,6 +38,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use LogicException;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use RuntimeException;
 use Tests\Support\BuildsTypedSnapshot;
 use Tests\Support\CreatesSyllabusProcess;
@@ -561,6 +563,47 @@ class DocumentOperationsTest extends TestCase
         $audit(['career' => (string) Str::uuid()])->assertJsonPath('events.total', 0);
         $audit(['period' => (string) Str::uuid()])->assertJsonPath('events.total', 0);
         $audit(['period' => $period->id, 'role' => 'coordinador'])->assertJsonPath('events.total', 1);
+    }
+
+    public function test_audit_shows_what_changed_on_which_record_hides_technical_activity_and_exports_the_period_to_excel(): void
+    {
+        $period = AcademicPeriod::query()->create([
+            'codigo' => 'ENERO-2020-JUNIO-2020', 'nombre' => 'Enero 2020 - Junio 2020', 'fecha_inicio' => '2020-01-06', 'fecha_fin' => '2020-06-30',
+        ]);
+        $parallel = Parallel::query()->with('subject')->firstOrFail();
+        $record = fn (string $action, string $type, string $id, string $when, array $details = []): AuditEvent => AuditEvent::query()->create([
+            'actor_usuario_id' => $this->coordinator->id, 'asignacion_rol_id' => $this->coordinatorContext->id,
+            'accion' => $action, 'tipo_recurso' => $type, 'recurso_id' => $id, 'resultado' => 'exito', 'metadatos' => $details, 'ocurrido_en' => $when,
+        ]);
+        $record('academico.paralelo.actualizacion', 'paralelo', $parallel->id, '2020-03-11 15:00:00', ['before_shift' => 'vespertina', 'after_shift' => 'matutina']);
+        $record('sesion.iniciada', 'usuario', $this->coordinator->id, '2020-03-10 15:00:00');
+        $audit = fn (array $filters) => $this->actingAsAdministrator()->getJson(route('api.v1.admin.audit-events.index', $filters))->assertOk();
+
+        $audit(['period' => $period->id])
+            ->assertJsonPath('events.total', 1)
+            ->assertJsonPath('events.data.0.action', 'Paralelo actualizado')
+            ->assertJsonPath('events.data.0.target', "{$parallel->subject->codigo_asignatura} {$parallel->subject->nombre} · Paralelo {$parallel->codigo}")
+            ->assertJsonFragment(['label' => 'Jornada nueva', 'value' => 'matutina']);
+        $audit(['period' => $period->id, 'technical' => 1])->assertJsonPath('events.total', 2)->assertJsonPath('filters.technical', true);
+
+        $response = $this->actingAsAdministrator()->get(route('api.v1.admin.audit-events.export', ['period' => $period->id]))->assertOk();
+        $this->assertStringContainsString('auditoria-enero-2020-junio-2020.xlsx', (string) $response->headers->get('content-disposition'));
+        $file = tempnam(sys_get_temp_dir(), 'audit').'.xlsx';
+        file_put_contents($file, $response->streamedContent());
+        $book = IOFactory::load($file);
+        unlink($file);
+        $this->assertSame(['Eventos', 'Resumen'], $book->getSheetNames());
+        $events = $book->getSheetByName('Eventos')->toArray(null, true, false);
+        $this->assertSame(['Fecha y hora', 'Usuario', 'Rol', 'Carrera', 'Acción', 'Sobre qué', 'Detalle', 'Resultado'], $events[0]);
+        $this->assertCount(2, $events);
+        $this->assertSame('Paralelo actualizado', $events[1][4]);
+        $this->assertStringContainsString('Jornada nueva: matutina', (string) $events[1][6]);
+        $this->assertSame('Éxito', $events[1][7]);
+        $summary = $book->getSheetByName('Resumen')->toArray(null, true, false);
+        $this->assertSame('Paralelo actualizado', $summary[1][0]);
+        $this->assertEquals(1, end($summary[1]));
+
+        $this->actingAsCoordinator()->get(route('api.v1.admin.audit-events.export'))->assertForbidden();
     }
 
     /** @return array{Syllabus, SyllabusRevision} */

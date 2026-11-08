@@ -7,15 +7,94 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Operations\Application\AuditTargets;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
+use App\Modules\Operations\Infrastructure\Spreadsheets\AuditWorkbook;
 use App\Modules\Operations\Presentation\Http\Requests\ViewAuditEventsRequest;
 use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditEventController extends Controller
 {
-    public function index(ViewAuditEventsRequest $request): JsonResponse
+    public function index(ViewAuditEventsRequest $request, AuditTargets $targets): JsonResponse
+    {
+        $query = $this->filtered($request);
+        $page = $query->latest('ocurrido_en')->paginate(20)->withQueryString();
+        $described = $targets->describe($page->getCollection());
+
+        $payload = [
+            'filters' => [
+                'technical' => $request->boolean('technical'),
+                'action' => $request->string('action')->toString(),
+                'result' => $request->string('result')->toString(),
+                'from' => $request->string('from')->toString(),
+                'to' => $request->string('to')->toString(),
+                'period' => $request->string('period')->toString(),
+                'role' => $request->string('role')->toString(),
+                'career' => $request->string('career')->toString(),
+            ],
+            'action_options' => $this->actionOptions(),
+            'period_options' => AcademicPeriod::query()->orderByDesc('fecha_inicio')->get(['id', 'codigo'])
+                ->map(fn (AcademicPeriod $item): array => ['value' => $item->id, 'label' => $item->codigo])->values()->all(),
+            'role_options' => array_map(fn (RoleCode $item): array => ['value' => $item->value, 'label' => $item->label()], RoleCode::cases()),
+            'career_options' => Career::query()->orderBy('nombre')->get(['id', 'nombre'])
+                ->map(fn (Career $item): array => ['value' => $item->id, 'label' => $item->nombre])->values()->all(),
+            'events' => $page
+                ->through(fn (AuditEvent $event): array => [
+                    'id' => $event->id,
+                    'action' => $this->actionLabel($event->accion),
+                    'resource' => $this->resourceLabel($event->tipo_recurso),
+                    'target' => $described[$event->id] ?? '',
+                    'result' => $event->resultado,
+                    'actor' => $this->actorName($event),
+                    'role' => $event->actor_rol ?? $event->roleAssignment?->role->nombre_rol,
+                    'career' => $event->actor_carrera ?? $event->roleAssignment?->career?->nombre,
+                    'details' => $this->safeDetails($event->metadatos),
+                    'occurred_at' => $event->ocurrido_en->toIso8601String(),
+                ]),
+        ];
+
+        return response()->json($payload);
+    }
+
+    /**
+     * Excel con los eventos de los filtros elegidos (normalmente un período): hoja «Eventos», ordenada por fecha,
+     * y hoja «Resumen» con cuántas veces se hizo cada acción en cada carrera.
+     */
+    public function export(ViewAuditEventsRequest $request, AuditTargets $targets, AuditWorkbook $workbook): StreamedResponse
+    {
+        $rows = [];
+        $this->filtered($request)->orderBy('ocurrido_en')->chunk(500, function ($events) use (&$rows, $targets): void {
+            $described = $targets->describe($events);
+            foreach ($events as $event) {
+                $rows[] = [
+                    'occurred_at' => $event->ocurrido_en->setTimezone(InstitutionDate::timezone()),
+                    'actor' => $this->actorName($event),
+                    'role' => $event->actor_rol ?? $event->roleAssignment?->role->nombre_rol ?? '',
+                    'career' => $event->actor_carrera ?? $event->roleAssignment?->career->nombre ?? '',
+                    'action' => $this->actionLabel($event->accion),
+                    'target' => ($described[$event->id] ?? '') !== '' ? $described[$event->id] : $this->resourceLabel($event->tipo_recurso),
+                    'details' => implode('; ', array_map(fn (array $detail): string => "{$detail['label']}: ".$this->detailText($detail['value']), $this->safeDetails($event->metadatos))),
+                    'result' => $event->resultado === 'exito' ? 'Éxito' : 'Fallido',
+                ];
+            }
+        });
+        $period = AcademicPeriod::query()->find($request->string('period')->toString());
+        $name = 'auditoria-'.($period instanceof AcademicPeriod ? Str::slug($period->codigo) : InstitutionDate::today()->toDateString()).'.xlsx';
+        $book = $workbook->build($rows, $period instanceof AcademicPeriod ? $period->codigo : null);
+
+        return response()->streamDownload(function () use ($book): void {
+            (new Xlsx($book))->setPreCalculateFormulas(false)->save('php://output');
+        }, $name, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+    }
+
+    /** @return Builder<AuditEvent> */
+    private function filtered(ViewAuditEventsRequest $request): Builder
     {
         $action = $request->string('action')->toString();
         $result = $request->string('result')->toString();
@@ -31,6 +110,9 @@ class AuditEventController extends Controller
         ]);
         if ($action !== '') {
             $query->where('accion', $action);
+        } elseif (! $request->boolean('technical')) {
+            // Por defecto, solo lo que cambia datos: sin inicios de sesión, guardados automáticos ni descargas.
+            $query->whereNotIn('accion', AuditTargets::TECHNICAL_ACTIONS);
         }
         if ($result !== '') {
             $query->where('resultado', $result);
@@ -69,37 +151,12 @@ class AuditEventController extends Controller
                 ->endOfDay()->utc());
         }
 
-        $payload = [
-            'filters' => [
-                'action' => $action,
-                'result' => $result,
-                'from' => $from,
-                'to' => $to,
-                'period' => $periodId,
-                'role' => $roleCode,
-                'career' => $careerId,
-            ],
-            'action_options' => $this->actionOptions(),
-            'period_options' => AcademicPeriod::query()->orderByDesc('fecha_inicio')->get(['id', 'codigo'])
-                ->map(fn (AcademicPeriod $item): array => ['value' => $item->id, 'label' => $item->codigo])->values()->all(),
-            'role_options' => array_map(fn (RoleCode $item): array => ['value' => $item->value, 'label' => $item->label()], RoleCode::cases()),
-            'career_options' => Career::query()->orderBy('nombre')->get(['id', 'nombre'])
-                ->map(fn (Career $item): array => ['value' => $item->id, 'label' => $item->nombre])->values()->all(),
-            'events' => $query->latest('ocurrido_en')->paginate(20)->withQueryString()
-                ->through(fn (AuditEvent $event): array => [
-                    'id' => $event->id,
-                    'action' => $this->actionLabel($event->accion),
-                    'resource' => $this->resourceLabel($event->tipo_recurso),
-                    'result' => $event->resultado,
-                    'actor' => $this->actorName($event),
-                    'role' => $event->actor_rol ?? $event->roleAssignment?->role->nombre_rol,
-                    'career' => $event->actor_carrera ?? $event->roleAssignment?->career?->nombre,
-                    'details' => $this->safeDetails($event->metadatos),
-                    'occurred_at' => $event->ocurrido_en->toIso8601String(),
-                ]),
-        ];
+        return $query;
+    }
 
-        return response()->json($payload);
+    private function detailText(bool|float|int|string $value): string
+    {
+        return is_bool($value) ? ($value ? 'Sí' : 'No') : (string) $value;
     }
 
     /** @return list<array{value: string, label: string}> */
@@ -275,6 +332,10 @@ class AuditEventController extends Controller
         $labels = [
             'active' => 'Activo',
             'after_code' => 'Código nuevo',
+            'after_shift' => 'Jornada nueva',
+            'before_shift' => 'Jornada anterior',
+            'from_state' => 'Estado anterior',
+            'to_state' => 'Estado nuevo',
             'after_ends_on' => 'Fecha de fin nueva',
             'after_faculty' => 'Facultad nueva',
             'after_name' => 'Nombre nuevo',

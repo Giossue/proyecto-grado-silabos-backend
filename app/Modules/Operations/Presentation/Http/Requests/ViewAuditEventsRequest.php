@@ -15,6 +15,7 @@ class ViewAuditEventsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'technical' => ['nullable', 'boolean'],
             'action' => ['nullable', 'string', 'max:120'],
             'result' => ['nullable', 'string', 'in:exito,fallido'],
             'period' => ['nullable', 'uuid'],

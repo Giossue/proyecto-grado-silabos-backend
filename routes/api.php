@@ -138,6 +138,8 @@ Route::prefix('v1')->group(function (): void {
             Route::post('admin/system-settings/{section}/test', [SystemSettingsController::class, 'test'])
                 ->middleware(['active-role', 'throttle:10,1'])->whereIn('section', ['ia', 'biblioteca'])
                 ->name('api.v1.admin.system-settings.test');
+            Route::get('admin/audit-events/export', [AuditEventController::class, 'export'])
+                ->middleware(['active-role', 'throttle:10,1'])->name('api.v1.admin.audit-events.export');
             Route::get('admin/audit-events', [AuditEventController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.admin.audit-events.index');
             Route::get('admin/library-catalog/libraries', [BibliographicCatalogController::class, 'libraries'])
