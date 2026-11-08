@@ -84,7 +84,9 @@ class AuditEventController extends Controller
                 ];
             }
         });
-        $period = AcademicPeriod::query()->find($request->string('period')->toString());
+        $periodId = $request->string('period')->toString();
+        // Sin período elegido se exporta todo lo filtrado (el nombre del archivo lleva la fecha de hoy).
+        $period = $periodId !== '' ? AcademicPeriod::query()->find($periodId) : null;
         $name = 'auditoria-'.($period instanceof AcademicPeriod ? Str::slug($period->codigo) : InstitutionDate::today()->toDateString()).'.xlsx';
         $book = $workbook->build($rows, $period instanceof AcademicPeriod ? $period->codigo : null);
 
@@ -375,9 +377,33 @@ class AuditEventController extends Controller
             'source_count' => 'Fuentes vinculadas',
             'type' => 'Tipo de relación',
         ];
+        // Un cambio se lee como «Jornada: nocturna → matutina»; si el valor no cambió, no se muestra.
+        $pairs = [
+            'code' => 'Código', 'shift' => 'Jornada', 'name' => 'Nombre', 'faculty' => 'Facultad', 'starts_on' => 'Fecha de inicio',
+            'ends_on' => 'Fecha de fin', 'version_number' => 'Número de versión', 'cycle' => 'Ciclo', 'cycle_count' => 'Cantidad de ciclos',
+            'credits' => 'Créditos', 'total_hours' => 'Horas totales', 'state' => 'Estado',
+        ];
+        $scalar = fn (mixed $value): bool => is_bool($value) || is_float($value) || is_int($value) || is_string($value);
+        $metadata = $activeRole ?? [];
+        $paired = [];
         $details = [];
-        foreach ($activeRole ?? [] as $key => $value) {
-            if (isset($labels[$key]) && (is_bool($value) || is_float($value) || is_int($value) || is_string($value))) {
+        foreach ($pairs as $field => $label) {
+            [$beforeKey, $afterKey] = $field === 'state' ? ['from_state', 'to_state'] : ["before_{$field}", "after_{$field}"];
+            if (! array_key_exists($beforeKey, $metadata) && ! array_key_exists($afterKey, $metadata)) {
+                continue;
+            }
+            $paired[] = $beforeKey;
+            $paired[] = $afterKey;
+            $before = $metadata[$beforeKey] ?? null;
+            $after = $metadata[$afterKey] ?? null;
+            if ($before != $after && ($before === null || $scalar($before)) && ($after === null || $scalar($after))) {
+                $text = fn (mixed $value): string => $value === null || $value === '' ? '—' : (is_bool($value) ? ($value ? 'Sí' : 'No') : (string) $value);
+                $details[] = ['label' => $label, 'value' => "{$text($before)} → {$text($after)}"];
+            }
+        }
+        foreach ($metadata as $key => $value) {
+            if (! in_array($key, $paired, true) && isset($labels[$key]) && $scalar($value)) {
+                /** @var bool|float|int|string $value */
                 $details[] = ['label' => $labels[$key], 'value' => $value];
             }
         }

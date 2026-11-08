@@ -575,7 +575,7 @@ class DocumentOperationsTest extends TestCase
             'actor_usuario_id' => $this->coordinator->id, 'asignacion_rol_id' => $this->coordinatorContext->id,
             'accion' => $action, 'tipo_recurso' => $type, 'recurso_id' => $id, 'resultado' => 'exito', 'metadatos' => $details, 'ocurrido_en' => $when,
         ]);
-        $record('academico.paralelo.actualizacion', 'paralelo', $parallel->id, '2020-03-11 15:00:00', ['before_shift' => 'vespertina', 'after_shift' => 'matutina']);
+        $record('academico.paralelo.actualizacion', 'paralelo', $parallel->id, '2020-03-11 15:00:00', ['before_code' => 'A', 'after_code' => 'A', 'before_shift' => 'vespertina', 'after_shift' => 'matutina']);
         $record('sesion.iniciada', 'usuario', $this->coordinator->id, '2020-03-10 15:00:00');
         $audit = fn (array $filters) => $this->actingAsAdministrator()->getJson(route('api.v1.admin.audit-events.index', $filters))->assertOk();
 
@@ -583,7 +583,7 @@ class DocumentOperationsTest extends TestCase
             ->assertJsonPath('events.total', 1)
             ->assertJsonPath('events.data.0.action', 'Paralelo actualizado')
             ->assertJsonPath('events.data.0.target', "{$parallel->subject->codigo_asignatura} {$parallel->subject->nombre} · Paralelo {$parallel->codigo}")
-            ->assertJsonFragment(['label' => 'Jornada nueva', 'value' => 'matutina']);
+            ->assertJsonPath('events.data.0.details', [['label' => 'Jornada', 'value' => 'vespertina → matutina']]);
         $audit(['period' => $period->id, 'technical' => 1])->assertJsonPath('events.total', 2)->assertJsonPath('filters.technical', true);
 
         $response = $this->actingAsAdministrator()->get(route('api.v1.admin.audit-events.export', ['period' => $period->id]))->assertOk();
@@ -597,11 +597,15 @@ class DocumentOperationsTest extends TestCase
         $this->assertSame(['Fecha y hora', 'Usuario', 'Rol', 'Carrera', 'Acción', 'Sobre qué', 'Detalle', 'Resultado'], $events[0]);
         $this->assertCount(2, $events);
         $this->assertSame('Paralelo actualizado', $events[1][4]);
-        $this->assertStringContainsString('Jornada nueva: matutina', (string) $events[1][6]);
+        $this->assertSame('Jornada: vespertina → matutina', $events[1][6]);
         $this->assertSame('Éxito', $events[1][7]);
         $summary = $book->getSheetByName('Resumen')->toArray(null, true, false);
         $this->assertSame('Paralelo actualizado', $summary[1][0]);
         $this->assertEquals(1, end($summary[1]));
+
+        // Sin período: exporta todo lo filtrado.
+        $all = $this->actingAsAdministrator()->get(route('api.v1.admin.audit-events.export'))->assertOk();
+        $this->assertStringContainsString('auditoria-', (string) $all->headers->get('content-disposition'));
 
         $this->actingAsCoordinator()->get(route('api.v1.admin.audit-events.export'))->assertForbidden();
     }
