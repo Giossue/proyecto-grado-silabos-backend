@@ -22,7 +22,9 @@ use App\Modules\Configuration\Presentation\Http\Requests\CreateTemplateRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ImportTemplateStructureRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ManageTemplatesRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\UploadInstitutionLogoRequest;
+use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\ProcessLocks;
+use App\Modules\Syllabus\Application\SyllabusSectionPayload;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\JsonResponse;
 
@@ -73,6 +75,21 @@ class TemplateController extends Controller
         $action->execute($template, $actor, $request);
 
         return response()->json(['message' => 'Plantilla vaciada.']);
+    }
+
+    /**
+     * El formulario que verá el docente con la plantilla guardada: cada campo con su contenido inicial y datos de muestra
+     * en la identificación. Solo lectura; lo que el administrador escriba para probar no se guarda.
+     */
+    public function teacherPreview(SyllabusTemplate $template, ManageTemplatesRequest $request): JsonResponse
+    {
+        $context = ['identification' => IdentificationCard::sample()];
+
+        return response()->json([
+            'sections' => $template->sections
+                ->map(fn (TemplateSection $section): array => SyllabusSectionPayload::build($section, fn (FieldDefinition $field): mixed => $field->contenido, $context))
+                ->values(),
+        ]);
     }
 
     public function exportJson(SyllabusTemplate $template, ManageTemplatesRequest $request): JsonResponse

@@ -96,6 +96,22 @@ class OfficialTemplateTest extends TestCase
         $this->assertFalse(app(ProtectTemplateResponses::class)->execute($template->fresh())['updated']);
     }
 
+    public function test_the_administrator_sees_the_teacher_form_of_the_saved_template_and_nobody_else_does(): void
+    {
+        $this->format()->assertSuccessful();
+
+        $sections = $this->getJson(route('api.v1.admin.template.teacher-preview', $this->template))->assertOk()
+            ->assertJsonStructure(['sections' => [['id', 'title', 'fields' => [['id', 'label', 'quien_llena', 'teacher_editable', 'required', 'value', 'document']]]]])
+            ->json('sections');
+        $this->assertCount($this->template->sections()->count(), $sections);
+        $fields = collect($sections)->flatMap(fn (array $section): array => $section['fields']);
+        $this->assertSame(FieldDefinition::query()->count(), $fields->count());
+        $this->assertTrue($fields->contains(fn (array $field): bool => $field['quien_llena'] === 'docente' && $field['teacher_editable'] === true));
+
+        $this->actingAsRole('docente@silabos.test');
+        $this->getJson(route('api.v1.admin.template.teacher-preview', $this->template))->assertForbidden();
+    }
+
     public function test_the_template_can_be_reset_to_the_official_format_after_editing_it(): void
     {
         $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['key' => 'libre', 'title' => 'Mi sección'])->assertCreated();

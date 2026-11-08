@@ -180,6 +180,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.assistant.proposals.apply');
             Route::post('admin/template/assistant/proposals/{proposal}/discard', [TemplateAssistantController::class, 'discard'])
                 ->middleware('active-role')->name('api.v1.admin.template.assistant.proposals.discard');
+            Route::get('admin/template/{template}/teacher-preview', [TemplateController::class, 'teacherPreview'])
+                ->middleware('active-role')->name('api.v1.admin.template.teacher-preview');
             Route::get('admin/template/{template}/json', [TemplateController::class, 'exportJson'])
                 ->middleware('active-role')->name('api.v1.admin.template.json.export');
             Route::put('admin/template/{template}/json', [TemplateController::class, 'importJson'])

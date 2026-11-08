@@ -81,6 +81,11 @@ y el botón «Documentos» (DOC-10).
   datos del sistema vacíos (sin valores de muestra). Arriba: «Opciones avanzadas» y la acción principal «Editar»,
   alineadas con el borde derecho de la primera hoja. La barra respeta su papel,
   orientación y el ancho disponible de pantalla, también durante la edición.
+- Junto a «Editar», un botón de ícono «Ver como docente» cambia las hojas por el formulario que
+  llenará el docente con la plantilla guardada: pestañas por sección, un desplegable por campo,
+  obligatorios con «*» y los de Coordinación o Institucionales con su etiqueta. La identificación
+  usa datos de muestra. Aviso «Vista de prueba: así verá el formulario el docente. Lo que escriba
+  aquí no se guarda». Mientras está activo no aparece «Editar»; al pulsarlo otra vez vuelven las hojas.
 - En las plantillas protegidas, los párrafos y celdas vacíos son espacios de respuesta.
   El editor no muestra un aviso sobre esto. No hay controles por celda.
 - «Editar» pasa a pantalla completa, sin menú lateral: arriba, «Volver a la vista», el
