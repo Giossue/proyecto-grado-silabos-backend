@@ -6,7 +6,6 @@ use App\Modules\Academic\Application\AcademicPeriodWeeks;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\StudyModality;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Foundation\Http\FormRequest;
@@ -49,9 +48,9 @@ class UpdateAcademicRecordRequest extends FormRequest
                 'catalog_libraries' => ['sometimes', 'array', 'max:20'],
                 'catalog_libraries.*' => ['string', 'distinct', 'regex:/^[A-Za-z0-9_-]{1,20}$/'],
                 'logo' => [
-                    $this->facultyRequiresLogo() ? 'required' : 'nullable',
+                    // Sin logo se conserva el actual (o sigue sin logo); la convocatoria no se abre sin él.
+                    'nullable',
                     ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY),
-
                 ],
             ],
             'carrera' => [
@@ -74,6 +73,12 @@ class UpdateAcademicRecordRequest extends FormRequest
         };
 
         return [...$rules, 'confirm_purge' => ['nullable', 'boolean']];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['code.unique' => 'Ya existe una carrera con ese código.'];
     }
 
     /** @return array<callable(Validator): void> */
@@ -104,13 +109,5 @@ class UpdateAcademicRecordRequest extends FormRequest
         $record = $this->route('record');
 
         return is_string($record) ? $record : '';
-    }
-
-    private function facultyRequiresLogo(): bool
-    {
-        $faculty = Faculty::query()->with('logoObject')->find($this->recordId());
-
-        return $faculty instanceof Faculty
-            && ! app(InstitutionalLogos::class)->facultyIsConfigured($faculty);
     }
 }

@@ -184,23 +184,13 @@ class AcademicStructureTest extends TestCase
             ->assertJsonValidationErrors(['teaching_weeks' => 'Las semanas de clase no pueden superar las 14 semanas entre las fechas.']);
     }
 
-    public function test_period_start_date_must_be_today_or_later(): void
+    public function test_a_period_that_already_started_can_be_registered(): void
     {
         $this->travelTo(CarbonImmutable::parse('2026-09-24 03:00:00', 'UTC'));
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
-                'starts_on' => '2026-09-22',
-                'ends_on' => '2026-12-18',
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors([
-                'starts_on' => 'La fecha de inicio debe ser hoy o una fecha posterior.',
-            ]);
-
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
-                'starts_on' => '2026-09-23',
+                'starts_on' => '2026-09-01',
                 'ends_on' => '2026-12-18',
             ])
             ->assertCreated()

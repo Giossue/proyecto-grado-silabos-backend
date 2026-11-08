@@ -56,7 +56,8 @@ class StoreAcademicRecordRequest extends FormRequest
                 'campus' => ['required', Rule::enum(CampusLocation::class)],
                 'catalog_libraries' => ['sometimes', 'array', 'max:20'],
                 'catalog_libraries.*' => ['string', 'distinct', 'regex:/^[A-Za-z0-9_-]{1,20}$/'],
-                'logo' => ['required', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
+                // El logo puede cargarse después; la convocatoria no se abre sin él.
+                'logo' => ['nullable', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
             ],
             'carrera' => [
                 'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'facultad_id')->where('facultad_activa', true)],
@@ -97,8 +98,10 @@ class StoreAcademicRecordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'starts_on.after_or_equal' => 'La fecha de inicio debe ser hoy o una fecha posterior.',
             'ends_on.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+            'code.unique' => $this->route('entity') === 'asignatura'
+                ? 'Ya existe una materia con ese código.'
+                : 'Ya existe una carrera con ese código.',
         ];
     }
 
@@ -110,13 +113,9 @@ class StoreAcademicRecordRequest extends FormRequest
                 return;
             }
 
-            $today = InstitutionDate::todayOn();
             $startsOn = InstitutionDate::dateOfValue($this->input('starts_on'));
             $endsOn = InstitutionDate::dateOfValue($this->input('ends_on'));
 
-            if ($startsOn !== null && $startsOn < $today) {
-                $validator->errors()->add('starts_on', 'La fecha de inicio debe ser hoy o una fecha posterior.');
-            }
             if ($endsOn !== null && $startsOn !== null && $endsOn < $startsOn) {
                 $validator->errors()->add('ends_on', 'La fecha de fin debe ser igual o posterior a la fecha de inicio.');
             }

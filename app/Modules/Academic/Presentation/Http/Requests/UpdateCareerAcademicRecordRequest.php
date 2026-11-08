@@ -46,6 +46,12 @@ class UpdateCareerAcademicRecordRequest extends FormRequest
         };
     }
 
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['code.unique' => 'Ya existe una materia con ese código.'];
+    }
+
     private function recordBelongsToCareer(string $entity, string $recordId, ?string $careerId): bool
     {
         if ($careerId === null) {

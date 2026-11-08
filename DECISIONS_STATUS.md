@@ -48,7 +48,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 ## Estructura académica
 
 - La jerarquía es Facultad → Carrera (I-48).
-- Cada facultad elige un campus de una lista fija y tiene un logo. Se sube como esté (PNG, JPG o WebP): el navegador lo recorta, lo deja en 600 × 180 px y, si hace falta, quita el fondo blanco (el blanco encerrado por el logo se conserva), con vista previa; el servidor sigue pidiendo un PNG con transparencia (2026-11-01). Es obligatorio. Solo Administración lo carga (I-106, I-123, I-125).
+- Cada facultad elige un campus de una lista fija y tiene un logo. Se sube como esté (PNG, JPG o WebP): el navegador lo recorta, lo deja en 600 × 180 px y, si hace falta, quita el fondo blanco (el blanco encerrado por el logo se conserva), con vista previa; el servidor sigue pidiendo un PNG con transparencia (2026-11-01). Es opcional al crear la facultad; Coordinación no abre la convocatoria sin él (2026-11-08). Solo Administración lo carga (I-106, I-123, I-125).
 - El código de carrera es obligatorio y único (I-107).
 - Una carrera tiene un solo coordinador. Se asigna en «Usuarios y roles»; si ya tiene uno, se
   confirma el reemplazo (2026-11-01). En la convocatoria en curso no queda firma del saliente: lo que

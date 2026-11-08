@@ -60,12 +60,13 @@ class InstitutionalLogosTest extends TestCase
         $this->assertStringStartsWith('https://', route('logos.institution'));
     }
 
-    public function test_administrator_must_create_a_faculty_with_a_transparent_logo(): void
+    public function test_administrator_creates_a_faculty_with_an_optional_transparent_logo(): void
     {
+        // El logo puede cargarse después; sin él Coordinación no abre la convocatoria.
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), ['nombre' => 'Sin logo', 'campus' => CampusLocation::Matriz->value])
-            ->assertJsonValidationErrors('logo');
-        $this->assertDatabaseMissing('facultades', ['nombre_facultad' => 'Sin logo']);
+            ->assertSuccessful();
+        $this->assertDatabaseHas('facultades', ['nombre_facultad' => 'Sin logo']);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
@@ -123,7 +124,7 @@ class InstitutionalLogosTest extends TestCase
                 'nombre' => $faculty->nombre,
                 'campus' => $faculty->campus->value,
             ])
-            ->assertJsonValidationErrors('logo');
+            ->assertSuccessful();
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [

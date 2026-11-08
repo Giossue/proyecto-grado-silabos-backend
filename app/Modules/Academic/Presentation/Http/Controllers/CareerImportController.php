@@ -29,7 +29,7 @@ class CareerImportController extends Controller
             'Facultad y Modalidad: elija una opción de la lista.',
             'Código de carrera: único en el sistema, por ejemplo SW.',
             'Número de ciclos: un entero entre 1 y 30.',
-            'Las facultades no se importan: requieren su logo y se crean una por una.',
+            'Las facultades no se importan: se crean una por una.',
         ]);
     }
 
