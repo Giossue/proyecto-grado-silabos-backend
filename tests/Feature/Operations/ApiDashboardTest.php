@@ -57,7 +57,7 @@ class ApiDashboardTest extends TestCase
             ->assertJsonMissingPath('faculty_logo')
             ->assertJsonMissing(['key' => 'faculty_logo'])
             ->assertJsonMissing(['key' => 'sources'])
-            ->assertJsonCount(5, 'setup.steps');
+            ->assertJsonCount(6, 'setup.steps');
     }
 
     public function test_coordinator_dashboard_uses_the_current_period_and_requires_every_parallel_to_have_a_teacher(): void
@@ -92,10 +92,10 @@ class ApiDashboardTest extends TestCase
             ->assertJsonPath('deadline.convocation_id', null)
             ->assertJsonPath('coordination_convocation.process_id', $process->id)
             ->assertJsonPath('coordination_convocation.can_open', false)
-            ->assertJsonPath('setup.steps.3.key', 'teachers')
+            ->assertJsonPath('setup.steps.3.key', 'parallels')
             ->assertJsonPath('setup.steps.3.done', false)
             ->assertJsonPath('setup.steps.3.hint', '1 de 2 paralelos tienen un docente vigente.')
-            ->assertJsonPath('setup.steps.4.action', null);
+            ->assertJsonPath('setup.steps.5.action', null);
     }
 
     public function test_library_receives_the_institutional_deadline_to_review_before_it_ends(): void

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Operations;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Database\Seeders\DatabaseSeeder;
@@ -43,6 +44,27 @@ class AdministratorSetupChecklistTest extends TestCase
             ->assertJsonPath('done', false)
             ->assertJsonPath('hint', "La plantilla no tiene las áreas obligatorias: {$required}.");
         $this->dashboard()->assertJsonPath('setup.done', 4);
+    }
+
+    public function test_without_careers_the_coordinator_step_does_not_claim_an_active_coordination(): void
+    {
+        Career::query()->update(['activo' => false]);
+
+        $step = collect($this->dashboard()->json('setup.steps'))->firstWhere('key', 'coordinators');
+
+        $this->assertIsArray($step);
+        $this->assertFalse($step['done']);
+        $this->assertSame('Primero registre las carreras.', $step['hint']);
+    }
+
+    public function test_the_institutional_convocation_can_be_opened_only_once_every_previous_step_is_done(): void
+    {
+        $processStep = fn (): array => collect($this->dashboard()->json('setup.steps'))->firstWhere('key', 'process');
+        $this->assertNull($processStep()['action']);
+
+        app(SyllabusTemplateProvisioner::class)->createWithOfficialFormat();
+
+        $this->assertSame('open_process', $processStep()['action']);
     }
 
     private function templateStep(): TestResponse

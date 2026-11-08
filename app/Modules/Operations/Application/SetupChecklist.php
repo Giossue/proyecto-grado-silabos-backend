@@ -67,10 +67,15 @@ class SetupChecklist
                 $this->step('faculties', 'Registrar las facultades', 'Elija el campus de cada facultad. El logo puede cargarse ahora o después, pero Coordinación lo necesita para abrir su convocatoria.', Faculty::query()->where('activo', true)->exists()),
                 $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada. Puede importarlas desde Excel.', $careerCount > 0),
                 $this->step('accounts', 'Crear las cuentas de coordinación y de biblioteca', 'Al menos una de cada una, también por importación desde Excel. Los docentes los crea cada Coordinación.', $accountsReady),
-                $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0),
+                $this->step('coordinators', 'Asignar un coordinador a cada carrera', match (true) {
+                    $careerCount === 0 => 'Primero registre las carreras.',
+                    $careersWithoutCoordinator > 0 => "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras.",
+                    default => 'Todas las carreras tienen coordinador.',
+                }, $careerCount > 0 && $careersWithoutCoordinator === 0),
                 $this->step('template', 'Armar la plantilla del sílabo', $templateHint, $templateProblem === null),
-                $this->step('process', 'Abrir la convocatoria institucional', 'Desde Convocatorias, indique las fechas del periodo lectivo y de elaboración y entrega; cada Coordinación abrirá después la de su carrera.', SyllabusProcess::query()->exists()),
             ],
+            $this->step('process', 'Abrir la convocatoria institucional', 'Desde Convocatorias, indique las fechas del periodo lectivo y de elaboración y entrega; cada Coordinación abrirá después la de su carrera.', SyllabusProcess::query()->exists()),
+            'open_process',
         );
     }
 
@@ -103,27 +108,52 @@ class SetupChecklist
                     $period === null ? 'Espera a que Administración abra la convocatoria institucional para conocer el período.' : "Registre las materias que se impartirán en {$period}.",
                     $scheduledTotal > 0,
                 ),
-                $this->step(
-                    'parallels',
-                    'Crear los paralelos',
-                    $scheduledTotal === 0 ? 'Primero programe las materias del período.' : "{$scheduledWithParallels} de {$scheduledTotal} materias programadas tienen paralelos.",
-                    $scheduledTotal > 0 && $scheduledWithParallels === $scheduledTotal,
-                ),
+                // Cada paralelo se crea con su docente: primero hay que registrar a los docentes.
                 $this->step(
                     'teachers',
-                    'Asignar un docente a cada paralelo',
-                    $parallelTotal === 0 ? 'Primero cree los paralelos del período.' : "{$parallelsWithTeacher} de {$parallelTotal} paralelos tienen un docente vigente.",
-                    $parallelTotal > 0 && $parallelsWithTeacher === $parallelTotal,
+                    'Registrar a los docentes',
+                    'Cree sus cuentas. Cada docente debe activar la suya antes de poder asignarlo a un paralelo.',
+                    $this->careerHasActiveTeacher($careerId),
                 ),
                 $this->step(
-                    'convocation',
-                    'Abrir la convocatoria de la carrera',
-                    $this->coordinatorConvocationHint($readiness),
-                    $readiness['convocation'] !== null,
-                    $readiness['can_open'] ? 'open_convocation' : null,
+                    'parallels',
+                    'Crear los paralelos con su docente',
+                    match (true) {
+                        $scheduledTotal === 0 => 'Primero programe las materias del período.',
+                        $scheduledWithParallels < $scheduledTotal => "{$scheduledWithParallels} de {$scheduledTotal} materias programadas tienen paralelos.",
+                        default => "{$parallelsWithTeacher} de {$parallelTotal} paralelos tienen un docente vigente.",
+                    },
+                    $scheduledTotal > 0 && $scheduledWithParallels === $scheduledTotal && $parallelTotal > 0 && $parallelsWithTeacher === $parallelTotal,
+                ),
+                $this->step(
+                    'career_project',
+                    'Completar el proyecto de carrera',
+                    match (true) {
+                        $scheduledTotal === 0 => 'Primero programe las materias del período.',
+                        $readiness['subjects_without_profile'] > 0 => "Falta en {$readiness['subjects_without_profile']} de {$scheduledTotal} materias.",
+                        default => "Completo en las {$scheduledTotal} materias.",
+                    },
+                    $scheduledTotal > 0 && $readiness['subjects_without_profile'] === 0,
                 ),
             ],
+            $this->step(
+                'convocation',
+                'Abrir la convocatoria de la carrera',
+                $this->coordinatorConvocationHint($readiness),
+                $readiness['convocation'] !== null,
+                $readiness['can_open'] ? 'open_convocation' : null,
+            ),
         );
+    }
+
+    private function careerHasActiveTeacher(string $careerId): bool
+    {
+        return RoleAssignment::query()
+            ->where('activo', true)
+            ->where('rol', RoleCode::Teacher->value)
+            ->where('carrera_id', $careerId)
+            ->whereHas('user', fn (Builder $user) => $user->where('activo', true)->whereNotNull('correo_verificado_en'))
+            ->exists();
     }
 
     /** @param CoordinatorReadiness $readiness */
@@ -165,11 +195,21 @@ class SetupChecklist
     }
 
     /**
+     * El último paso es abrir la convocatoria: lleva su acción solo cuando todos los anteriores están hechos.
+     *
      * @param  list<Step>  $steps
+     * @param  Step|null  $start
      * @return Checklist
      */
-    private function build(string $title, string $intro, array $steps): array
+    private function build(string $title, string $intro, array $steps, ?array $start = null, ?string $startAction = null): array
     {
+        if ($start !== null) {
+            $previousDone = array_filter($steps, fn (array $step): bool => ! $step['done']) === [];
+            if ($startAction !== null) {
+                $start['action'] = ! $start['done'] && $previousDone ? $startAction : null;
+            }
+            $steps[] = $start;
+        }
         $done = count(array_filter($steps, fn (array $step): bool => $step['done']));
 
         return ['title' => $title, 'intro' => $intro, 'done' => $done, 'total' => count($steps), 'steps' => $steps];

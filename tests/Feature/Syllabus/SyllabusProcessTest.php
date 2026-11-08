@@ -663,8 +663,8 @@ class SyllabusProcessTest extends TestCase
             ->assertJsonPath('coordination_convocation.state', null)
             ->assertJsonPath('coordination_convocation.process_open', true)
             ->assertJsonMissingPath('coordination_convocation.available_sources')
-            ->assertJsonCount(5, 'setup.steps')
-            ->assertJsonPath('setup.steps.4.action', 'open_convocation');
+            ->assertJsonCount(6, 'setup.steps')
+            ->assertJsonPath('setup.steps.5.action', 'open_convocation');
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
