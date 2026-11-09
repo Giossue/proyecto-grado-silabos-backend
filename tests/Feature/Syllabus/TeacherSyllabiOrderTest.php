@@ -10,6 +10,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\CreatesSyllabusProcess;
@@ -56,6 +57,41 @@ class TeacherSyllabiOrderTest extends TestCase
             ->json('syllabi.data.*.subject');
 
         $this->assertSame(['Biología', 'Zoología', 'Cálculo', 'Álgebra'], $subjects);
+    }
+
+    public function test_with_two_current_periods_the_newest_comes_first_and_each_card_says_its_period(): void
+    {
+        config(['sanctum.stateful' => ['localhost:5173']]);
+        $this->seed(DatabaseSeeder::class);
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        Syllabus::query()->delete();
+        // El período en curso aún no termina y ya se abrió la convocatoria del siguiente.
+        $current = AcademicPeriod::query()->firstOrFail();
+        $current->update(['fecha_fin' => $this->institutionDay(30)]);
+        $template = SyllabusTemplate::query()->create(['nombre' => 'Plantilla períodos', 'activo' => true]);
+        $old = $this->openSyllabusProcess($template->id);
+        $old->update(['estado' => SyllabusProcess::STATE_CLOSED, 'finalizada_en' => now()]);
+        $next = AcademicPeriod::query()->create(['codigo' => 'Período siguiente', 'fecha_inicio' => $this->institutionDay(31), 'fecha_fin' => $this->institutionDay(150), 'semanas_lectivas' => 16]);
+        $new = SyllabusProcess::query()->create(['periodo_academico_id' => $next->id, 'inicia_en' => now()->subDay(), 'entrega_en' => now()->addMonth(), 'estado' => SyllabusProcess::STATE_OPEN]);
+        $career = Career::query()->valueOrFail('id');
+        $base = Parallel::query()->firstOrFail();
+        foreach ([[$old, 'Álgebra', 1, 'P1'], [$new, 'Zoología', 2, 'P2']] as [$process, $name, $cycle, $code]) {
+            $convocation = Convocation::query()->create(['carrera_id' => $career, 'proceso_id' => $process->id, 'estado' => 'abierta']);
+            $parallel = Parallel::query()->create(['asignatura_id' => $base->asignatura_id, 'codigo' => $code, 'jornada' => 'matutina']);
+            TeacherAssignment::query()->create(['usuario_id' => $teacher->id, 'paralelo_id' => $parallel->id, 'activo' => true]);
+            Syllabus::query()->create(['convocatoria_id' => $convocation->id, 'paralelo_id' => $parallel->id, 'estado' => 'borrador', 'version_bloqueo' => 1,
+                'contexto_academico' => ['subject' => ['name' => $name, 'code' => $code, 'cycle' => $cycle]]]);
+        }
+
+        $data = $this->actingAs($teacher)
+            ->withSession(['active_role_assignment_id' => $teacher->roleAssignments()->firstOrFail()->id])
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.teacher.syllabi.index'))
+            ->assertOk()
+            ->json('syllabi.data');
+
+        $this->assertSame(['Zoología', 'Álgebra'], array_column($data, 'subject'));
+        $this->assertSame(['Período siguiente', $current->codigo], array_column($data, 'period'));
     }
 
     public function test_teacher_list_says_whether_the_career_has_an_open_convocation(): void

@@ -74,7 +74,14 @@ class SyllabusController extends Controller
             ))
             ->when($state, fn ($query, string $value) => $query->where('estado', $value))
             ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.subject'])
-            // Por ciclo y luego por asignatura; se usa la foto académica del sílabo y, si falta, la malla.
+            // Primero el período más reciente (puede haber dos sin terminar: el actual y el siguiente);
+            // dentro de cada uno, por ciclo y luego por asignatura, con la foto académica del sílabo o la malla.
+            ->orderByRaw(<<<'SQL'
+                (SELECT pa.fecha_inicio_periodo FROM convocatorias_carreras cc
+                    JOIN convocatorias_universidad cu ON cu.convocatoria_universidad_id = cc.convocatoria_universidad_id
+                    JOIN periodos_academicos pa ON pa.periodo_academico_id = cu.periodo_academico_id
+                    WHERE cc.convocatoria_carrera_id = silabos.convocatoria_carrera_id) DESC NULLS LAST
+                SQL)
             ->orderByRaw(<<<'SQL'
                 COALESCE((datos_academicos_silabo->'subject'->>'cycle')::int,
                     (SELECT a.ciclo_asignatura FROM paralelos p JOIN asignaturas a ON a.asignatura_id = p.asignatura_id WHERE p.paralelo_id = silabos.paralelo_id)) NULLS LAST
