@@ -46,6 +46,8 @@ class ReviewController extends Controller
         $query = Syllabus::query()
             ->whereHas('convocation', fn ($convocation) => $convocation->where('carrera_id', $activeRole?->carrera_id))
             ->whereHas('revisions')
+            // Solo la convocatoria actual: lo de convocatorias anteriores ya no se revisa.
+            ->inCurrentPeriod()
             ->with([
                 'convocation.process.academicPeriod:id,codigo',
                 'parallel.subject:id,nombre,codigo_asignatura',

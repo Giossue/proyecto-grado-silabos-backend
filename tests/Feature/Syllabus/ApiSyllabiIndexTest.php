@@ -86,7 +86,8 @@ class ApiSyllabiIndexTest extends TestCase
         $this->assertGreaterThan(0, $current);
         $request('api.v1.teacher.history.index')->assertOk()->assertJsonCount(0, 'careers');
 
-        AcademicPeriod::query()->update(['fecha_fin' => $this->institutionDay(-1)]);
+        // Al abrir la convocatoria siguiente, lo anterior sale de «Mis sílabos» y pasa al historial.
+        $this->openNextConvocation();
         $request('api.v1.teacher.syllabi.index')->assertOk()->assertJsonPath('syllabi.total', 0);
         $history = $request('api.v1.teacher.history.index')->assertOk()->assertJsonPath('careers.0.syllabi_count', $current);
 

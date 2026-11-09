@@ -3,6 +3,7 @@
 namespace App\Modules\Operations\Infrastructure\Persistence\Models;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Support\Database\MapsLegacyColumnNames;
 use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
@@ -58,9 +59,15 @@ class InternalNotification extends Model
     /** @param  Builder<InternalNotification>  $query */
     public function scopeInCurrentPeriod(Builder $query): void
     {
-        $query->whereIn('periodo_academico_id', AcademicPeriod::query()
-            ->whereDate('fecha_fin_periodo', '>=', InstitutionDate::todayOn())
-            ->select('periodo_academico_id'));
+        // Con convocatoria: solo los avisos del período de la actual (al abrir una nueva, los anteriores dejan de verse).
+        // Sin convocatoria (nunca la hubo o se eliminó, como su aviso de eliminación): mientras el período no termine.
+        $query->where(fn (Builder $visible) => $visible
+            ->whereIn('periodo_academico_id', SyllabusProcess::query()->whereKey(SyllabusProcess::currentId())->select('periodo_academico_id'))
+            ->orWhere(fn (Builder $withoutProcess) => $withoutProcess
+                ->whereNotIn('periodo_academico_id', SyllabusProcess::query()->select('periodo_academico_id'))
+                ->whereIn('periodo_academico_id', AcademicPeriod::query()
+                    ->whereDate('fecha_fin_periodo', '>=', InstitutionDate::todayOn())
+                    ->select('periodo_academico_id'))));
     }
 
     protected static function booted(): void

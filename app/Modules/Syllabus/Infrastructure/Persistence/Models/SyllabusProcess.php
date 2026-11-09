@@ -82,6 +82,17 @@ class SyllabusProcess extends Model
             : ($this->academicPeriod()->value('codigo') ?? 'Período'));
     }
 
+    /**
+     * La convocatoria institucional actual: la más reciente, esté abierta, en pausa o finalizada.
+     * Al abrir una nueva, la anterior pasa entera al historial (lo que no se terminó queda como estaba).
+     */
+    public static function currentId(): ?string
+    {
+        $id = static::query()->orderByDesc('inicia_en')->orderByDesc('convocatoria_universidad_id')->value('convocatoria_universidad_id');
+
+        return is_string($id) ? $id : null;
+    }
+
     /** @param  Builder<SyllabusProcess>  $query */
     public function scopeInProgress(Builder $query): void
     {

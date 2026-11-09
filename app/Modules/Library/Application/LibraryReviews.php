@@ -3,8 +3,8 @@
 namespace App\Modules\Library\Application;
 
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
-use App\Support\InstitutionDate;
 use App\Support\Search\AccentInsensitive;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -114,8 +114,9 @@ final class LibraryReviews
                     ->join('convocatorias_universidad as proceso', 'proceso.convocatoria_universidad_id', '=', 'convocatoria.convocatoria_universidad_id')
                     ->join('periodos_academicos as periodo', 'periodo.periodo_academico_id', '=', 'proceso.periodo_academico_id')
                     ->whereColumn('convocatoria.convocatoria_carrera_id', 'silabo.convocatoria_carrera_id')
-                    ->when($period === self::PERIOD_CURRENT, fn ($q) => $q->whereDate('periodo.fecha_fin_periodo', '>=', InstitutionDate::todayOn()))
-                    ->when($period === self::PERIOD_PAST, fn ($q) => $q->whereDate('periodo.fecha_fin_periodo', '<', InstitutionDate::todayOn()))
+                    // Actual = la convocatoria institucional más reciente; las demás van al historial.
+                    ->when($period === self::PERIOD_CURRENT, fn ($q) => $q->where('proceso.convocatoria_universidad_id', SyllabusProcess::currentId()))
+                    ->when($period === self::PERIOD_PAST, fn ($q) => $q->where('proceso.convocatoria_universidad_id', '!=', SyllabusProcess::currentId()))
                     ->when($periodId !== null, fn ($q) => $q->where('periodo.periodo_academico_id', $periodId)),
             ))
             ->when($handledBy !== null, fn (Builder $query) => $query->where(

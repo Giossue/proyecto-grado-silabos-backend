@@ -7,7 +7,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Support\Database\MapsLegacyColumnNames;
-use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -123,18 +122,30 @@ class Syllabus extends Model
         return $query->whereHas('parallel', fn (Builder $parallel) => $parallel->whereIn('asignatura_id', $subjectIds));
     }
 
-    /** @param  Builder<Syllabus>  $query */
+    /**
+     * Sílabos de la convocatoria institucional actual (la más reciente); lo anterior va al historial.
+     *
+     * @param  Builder<Syllabus>  $query
+     */
     public function scopeInCurrentPeriod(Builder $query): void
     {
-        $query->whereHas('convocation.process.academicPeriod', fn (Builder $period): Builder => $period
-            ->whereDate('fecha_fin_periodo', '>=', InstitutionDate::todayOn()));
+        $current = SyllabusProcess::currentId();
+        $current === null
+            ? $query->whereRaw('1 = 0')
+            : $query->whereHas('convocation', fn (Builder $convocation): Builder => $convocation->where('proceso_id', $current));
     }
 
-    /** @param  Builder<Syllabus>  $query */
+    /**
+     * Sílabos de convocatorias anteriores a la actual.
+     *
+     * @param  Builder<Syllabus>  $query
+     */
     public function scopeInPastPeriod(Builder $query): void
     {
-        $query->whereHas('convocation.process.academicPeriod', fn (Builder $period): Builder => $period
-            ->whereDate('fecha_fin_periodo', '<', InstitutionDate::todayOn()));
+        $current = SyllabusProcess::currentId();
+        $current === null
+            ? $query->whereRaw('1 = 0')
+            : $query->whereHas('convocation', fn (Builder $convocation): Builder => $convocation->where('proceso_id', '!=', $current));
     }
 
     /** @return HasOneThrough<Career, Convocation, $this> */

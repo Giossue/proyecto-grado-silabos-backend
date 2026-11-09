@@ -80,4 +80,27 @@ trait CreatesSyllabusProcess
             'estado' => SyllabusProcess::STATE_OPEN,
         ]);
     }
+
+    /**
+     * Finaliza la convocatoria actual y abre la del período siguiente: la anterior pasa al historial.
+     */
+    protected function openNextConvocation(): SyllabusProcess
+    {
+        $current = SyllabusProcess::query()->orderByDesc('inicia_en')->firstOrFail();
+        $current->update(['estado' => SyllabusProcess::STATE_CLOSED, 'finalizada_en' => now()]);
+        $previous = $current->academicPeriod()->firstOrFail();
+        $period = AcademicPeriod::query()->create([
+            'codigo' => 'Período siguiente',
+            'fecha_inicio' => $previous->fecha_fin->addDay(),
+            'fecha_fin' => $previous->fecha_fin->addDays(150),
+            'semanas_lectivas' => 16,
+        ]);
+
+        return SyllabusProcess::query()->create([
+            'periodo_academico_id' => $period->id,
+            'inicia_en' => max(now(), $current->inicia_en->addSecond()),
+            'entrega_en' => now()->addMonth(),
+            'estado' => SyllabusProcess::STATE_OPEN,
+        ]);
+    }
 }

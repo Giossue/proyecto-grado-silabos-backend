@@ -108,6 +108,8 @@ class ParallelTeacherChangeTest extends TestCase
         $this->assertDatabaseHas('revisiones_silabo', ['silabo_id' => $syllabus->id]);
         $this->assertSame(1, Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->count());
 
+        // Pasa al historial cuando se abre la convocatoria siguiente, con su autor.
+        $this->openNextConvocation();
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.history.index'))
             ->assertOk()->assertJsonCount(1, 'careers');
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();

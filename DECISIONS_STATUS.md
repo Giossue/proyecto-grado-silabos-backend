@@ -188,7 +188,13 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   hace lo mismo que reanudar: cada convocatoria de carrera que vuelve a «abierta» crea los sílabos
   sin iniciar de los paralelos que no tienen. Los paralelos sin exactamente un docente vigente se
   omiten sin impedir la reapertura; las que vuelven a «pausada» los crean al reanudarse.
-- En el historial, un sílabo de un período terminado pertenece a quien lo envió; si
+- **Convocatoria actual (2026-11-08, decisión del responsable del producto).** Las pantallas de trabajo
+  («Mis sílabos», la cola de Coordinación, la bandeja de Biblioteca y las notificaciones) muestran solo la
+  convocatoria institucional más reciente, esté abierta, en pausa o finalizada. Al abrir una nueva, lo de la
+  anterior pasa entero al historial y lo que no se terminó queda como estaba; usuarios, plantilla, malla,
+  materias y asignaciones se mantienen. Las notificaciones de un período sin convocatoria (nunca la hubo o se
+  eliminó) se ven mientras el período no termine.
+- En el historial, un sílabo de una convocatoria anterior pertenece a quien lo envió; si
   nunca se envió, al docente actual del paralelo (I-231).
 - La acción manual de cierre se llama «Finalizar» (2026-11-02); la ruta sigue siendo `cerrar`
   y el estado `cerrado`. Antes de confirmar muestra cuántos sílabos quedan sin aprobar, por

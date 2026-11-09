@@ -59,13 +59,13 @@ class TeacherSyllabiOrderTest extends TestCase
         $this->assertSame(['Biología', 'Zoología', 'Cálculo', 'Álgebra'], $subjects);
     }
 
-    public function test_with_two_current_periods_the_newest_comes_first_and_each_card_says_its_period(): void
+    public function test_when_a_new_convocation_opens_the_teacher_only_sees_the_new_one(): void
     {
         config(['sanctum.stateful' => ['localhost:5173']]);
         $this->seed(DatabaseSeeder::class);
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         Syllabus::query()->delete();
-        // El período en curso aún no termina y ya se abrió la convocatoria del siguiente.
+        // El período en curso aún no termina y ya se abrió la convocatoria del siguiente: solo se ve la nueva.
         $current = AcademicPeriod::query()->firstOrFail();
         $current->update(['fecha_fin' => $this->institutionDay(30)]);
         $template = SyllabusTemplate::query()->create(['nombre' => 'Plantilla períodos', 'activo' => true]);
@@ -90,8 +90,8 @@ class TeacherSyllabiOrderTest extends TestCase
             ->assertOk()
             ->json('syllabi.data');
 
-        $this->assertSame(['Zoología', 'Álgebra'], array_column($data, 'subject'));
-        $this->assertSame(['Período siguiente', $current->codigo], array_column($data, 'period'));
+        $this->assertSame(['Zoología'], array_column($data, 'subject'));
+        $this->assertSame(['Período siguiente'], array_column($data, 'period'));
     }
 
     public function test_teacher_list_says_whether_the_career_has_an_open_convocation(): void

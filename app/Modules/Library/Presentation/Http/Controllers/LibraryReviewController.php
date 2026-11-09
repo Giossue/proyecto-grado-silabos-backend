@@ -27,8 +27,8 @@ use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\SnapshotDocuments;
 use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
-use App\Support\InstitutionDate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 
@@ -57,7 +57,7 @@ class LibraryReviewController extends Controller
                 is_string($period) ? $period : null,
                 $request->boolean('mine') && $user instanceof User ? $user->id : null,
             ),
-            'periods' => AcademicPeriod::query()->whereDate('fecha_fin_periodo', '<', InstitutionDate::todayOn())->orderByDesc('fecha_fin_periodo')->get()
+            'periods' => AcademicPeriod::query()->whereIn('periodo_academico_id', SyllabusProcess::query()->whereKeyNot(SyllabusProcess::currentId())->select('periodo_academico_id'))->orderByDesc('fecha_fin_periodo')->get()
                 ->map(fn (AcademicPeriod $item): array => ['id' => $item->id, 'code' => $item->codigo])->all(),
         ]);
     }

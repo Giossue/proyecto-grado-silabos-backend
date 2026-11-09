@@ -122,7 +122,7 @@ Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo d
 
 Pulse uno para revisarlo. Si los libros están bien, lo firma y queda aprobado. Si algo falla, lo devuelve al docente.
 
-Puede filtrar por facultad si se reparten el trabajo; el sistema recuerda su elección. Los períodos terminados están en «Historial».',
+Puede filtrar por facultad si se reparten el trabajo; el sistema recuerda su elección. Lo de convocatorias anteriores está en «Historial».',
         ],
         '/biblioteca/revisiones/:revision' => [
             'title' => 'Revisión de bibliografía',

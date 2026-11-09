@@ -175,14 +175,16 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['faculty' => (string) Str::uuid()]))->assertUnprocessable()->assertJsonValidationErrors(['faculty']);
     }
 
-    public function test_al_terminar_el_periodo_sale_de_la_bandeja_y_pasa_al_historial_con_solo_los_mios(): void
+    public function test_al_abrir_la_convocatoria_siguiente_sale_de_la_bandeja_y_pasa_al_historial_con_solo_los_mios(): void
     {
         [$syllabus, $revision] = $this->submittedRevision();
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->people['coordinator'][0]), 'idempotency_key' => (string) Str::uuid()])->assertSuccessful();
         $this->as('librarian')->getJson(route('api.v1.library.history.index'))->assertOk()->assertJsonPath('reviews.total', 0);
-
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), ['reasons' => ['codigo_incorrecto']])->assertCreated();
         $period = $syllabus->convocation->process()->firstOrFail()->academicPeriod()->firstOrFail();
-        DB::table('periodos_academicos')->where('periodo_academico_id', $period->id)->update(['fecha_fin_periodo' => InstitutionDate::today()->subDay()->toDateString()]);
+
+        // Aunque el período siga en clases, al abrir la convocatoria siguiente lo anterior pasa al historial.
+        $this->openNextConvocation();
 
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 0);
         $this->as('librarian')->getJson(route('api.v1.dashboard.show'))->assertOk()->assertJsonPath('metrics.0.value', 0);
@@ -190,11 +192,19 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('reviews.total', 1)
             ->assertJsonFragment(['id' => $period->id, 'code' => $period->codigo]);
         $this->as('librarian')->getJson(route('api.v1.library.history.index', ['period' => $period->id]))->assertJsonPath('reviews.total', 1);
-        $this->as('librarian')->getJson(route('api.v1.library.history.index', ['mine' => 1]))->assertJsonPath('reviews.total', 0)->assertJsonPath('filters.mine', true);
-
-        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), ['reasons' => ['codigo_incorrecto']])->assertCreated();
-        $this->as('librarian')->getJson(route('api.v1.library.history.index', ['mine' => 1]))->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.state', 'atendido')->assertJsonPath('reviews.data.0.outcome', 'devuelto');
+        $this->as('librarian')->getJson(route('api.v1.library.history.index', ['mine' => 1]))->assertJsonPath('reviews.total', 1)->assertJsonPath('filters.mine', true)
+            ->assertJsonPath('reviews.data.0.state', 'atendido')->assertJsonPath('reviews.data.0.outcome', 'devuelto');
         $this->as('coordinator')->getJson(route('api.v1.library.history.index'))->assertForbidden();
+    }
+
+    public function test_la_cola_de_coordinacion_solo_muestra_la_convocatoria_actual(): void
+    {
+        $this->submittedRevision();
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 1);
+
+        $this->openNextConvocation();
+
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 0);
     }
 
     public function test_biblioteca_revisa_tras_coordinacion_y_devuelve_al_docente_que_reenvia_directo(): void

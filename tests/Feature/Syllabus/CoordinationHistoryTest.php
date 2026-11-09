@@ -86,6 +86,7 @@ class CoordinationHistoryTest extends TestCase
         $period = $this->period('2025-2026', -30);
         $syllabus = $this->syllabus($period, $this->parallel);
         $this->revisions($syllabus, $this->teacher, approved: true);
+        $this->currentConvocation();
 
         TeacherAssignment::query()->forUser($this->teacher->id)->delete();
         RoleAssignment::query()->where('usuario_id', $this->teacher->id)->update(['activo' => false]);
@@ -122,6 +123,7 @@ class CoordinationHistoryTest extends TestCase
         $this->revisions($this->syllabus($old, $this->parallelOf('SW-602', 'Bases de Datos', 'B')), $this->teacher, approved: true);
         $this->revisions($this->syllabus($recent, $this->parallel), $this->teacher, approved: true);
         $this->revisions($this->syllabus($old, $this->parallel), $this->teacher, approved: true);
+        $this->currentConvocation();
 
         $this->history(['q' => 'bases de dátos'])->assertOk()
             ->assertJsonPath('syllabi.total', 1)
@@ -154,6 +156,13 @@ class CoordinationHistoryTest extends TestCase
             ->getJson(route('api.v1.coordination.history.index', $query));
     }
 
+    /** Abre la convocatoria actual: todo lo anterior pasa al historial. */
+    private function currentConvocation(): void
+    {
+        $period = $this->period('2026-2027-ACTUAL', 120);
+        SyllabusProcess::query()->create(['periodo_academico_id' => $period->id, 'inicia_en' => $period->fecha_inicio, 'entrega_en' => $period->fecha_inicio->addMonth(), 'estado' => SyllabusProcess::STATE_OPEN]);
+    }
+
     private function period(string $code, int $endsInDays): AcademicPeriod
     {
         return AcademicPeriod::query()->create([
@@ -184,8 +193,9 @@ class CoordinationHistoryTest extends TestCase
     private function syllabus(AcademicPeriod $period, Parallel $parallel, string $state = 'aprobado', ?Career $career = null): Syllabus
     {
         $process = SyllabusProcess::query()->firstOrCreate(['periodo_academico_id' => $period->id], [
-            'inicia_en' => now()->subMonths(6),
-            'entrega_en' => now()->subMonths(5),
+            // Cada convocatoria empieza con su período: la más reciente es la actual y no va al historial.
+            'inicia_en' => $period->fecha_inicio,
+            'entrega_en' => $period->fecha_inicio->addMonth(),
             'estado' => SyllabusProcess::STATE_CLOSED,
         ]);
         $convocation = Convocation::query()->firstOrCreate(
