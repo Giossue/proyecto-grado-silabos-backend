@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
+use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
@@ -293,6 +294,7 @@ final class InProgressWork
             }
         }
         $profile = $this->profiles->values((string) $syllabus->parallel->asignatura_id);
+        $setups = $this->profiles->setups((string) $syllabus->parallel->asignatura_id);
 
         if (in_array($syllabus->estado, self::SENT_STATES, true)) {
             $this->clearHistory([(string) $syllabus->id]);
@@ -303,13 +305,14 @@ final class InProgressWork
             if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
                 continue;
             }
+            $template = $field->fromProfile() ? $field->contenido : ($setups[$field->id] ?? $field->contenido);
             $document = $field->fromProfile()
                 ? ($profile[$field->id] ?? null)
-                : $this->stillFits($field, $previous[$field->clave] ?? null);
+                : $this->stillFits($field, $previous[$field->clave] ?? null, $template);
             FieldValue::query()->create([
                 'silabo_id' => $syllabus->id,
                 'definicion_campo_id' => $field->id,
-                'valor' => $document === null || FieldDocument::isEmpty($document) ? $field->contenido : $document,
+                'valor' => $document === null || FieldDocument::isEmpty($document) ? $template : $document,
             ]);
         }
         $syllabus->version_bloqueo++;
@@ -319,14 +322,17 @@ final class InProgressWork
         return $syllabus;
     }
 
-    /** @return array<string, mixed>|null */
-    private function stillFits(FieldDefinition $field, mixed $value): ?array
+    /**
+     * @param  array<string, mixed>  $template
+     * @return array<string, mixed>|null
+     */
+    private function stillFits(FieldDefinition $field, mixed $value, array $template): ?array
     {
         if (! is_array($value)) {
             return null;
         }
         try {
-            $document = FieldResponse::normalize($field->contenido, $value);
+            $document = FieldResponse::normalize($template, $value);
         } catch (ValidationException) {
             return null;
         }
@@ -525,14 +531,22 @@ final class InProgressWork
             ->lockForUpdate()
             ->get();
         $fields = $this->profiles->fields()->keyBy('id');
+        $teacherFields = $profilesBefore === [] ? [] : $this->profiles->teacherFields()->keyBy('id')->all();
         $profilesAfter = $this->profilesFor(array_map('strval', array_keys($profilesBefore)));
-        $pending = $this->pendingChanges($syllabi, function (Parallel $parallel) use ($fields, $profilesAfter, $profilesBefore): array {
+        $pending = $this->pendingChanges($syllabi, function (Parallel $parallel, Syllabus $syllabus) use ($fields, $profilesAfter, $profilesBefore, $teacherFields): array {
             $documents = [];
             foreach ($fields as $fieldId => $field) {
                 $before = $profilesBefore[$parallel->asignatura_id][$fieldId] ?? null;
                 $after = $profilesAfter[$parallel->asignatura_id][$fieldId] ?? null;
                 if ($before != $after) {
                     $documents[$fieldId] = $after === null || FieldDocument::isEmpty($after) ? $field->contenido : $after;
+                }
+            }
+            foreach ($teacherFields as $fieldId => $field) {
+                $before = $profilesBefore[$parallel->asignatura_id][$fieldId] ?? null;
+                $after = $profilesAfter[$parallel->asignatura_id][$fieldId] ?? null;
+                if ($before != $after) {
+                    $documents += $this->rebuilt($syllabus, $field, FieldResponse::templateFor($field->contenido, $after));
                 }
             }
 
@@ -621,10 +635,13 @@ final class InProgressWork
     private function heldDocuments(): Closure
     {
         $fields = $this->profiles->fields();
+        $teacherFields = $this->profiles->teacherFields();
         $profiles = [];
+        $setups = [];
 
-        return function (Parallel $parallel, Syllabus $syllabus) use ($fields, &$profiles): array {
+        return function (Parallel $parallel, Syllabus $syllabus) use ($fields, $teacherFields, &$profiles, &$setups): array {
             $profile = $profiles[$parallel->asignatura_id] ??= $this->profiles->values((string) $parallel->asignatura_id);
+            $built = $setups[$parallel->asignatura_id] ??= $this->profiles->setups((string) $parallel->asignatura_id);
             $held = FieldValue::query()->where('silabo_id', $syllabus->id)->get()->keyBy('definicion_campo_id');
             $documents = [];
             foreach ($fields as $field) {
@@ -638,9 +655,31 @@ final class InProgressWork
                     $documents[$field->id] = $expected;
                 }
             }
+            foreach ($teacherFields as $field) {
+                $value = $held->get($field->id);
+                if ($value instanceof FieldValue && (isset($built[$field->id]) || ResponseKind::within($value->valor))) {
+                    $documents += $this->rebuilt($syllabus, $field, $built[$field->id] ?? $field->contenido, $value);
+                }
+            }
 
             return $documents;
         };
+    }
+
+    /**
+     * El campo del docente con las respuestas que Coordinación armó ahora: conserva lo que ya contestó donde todavía encaja.
+     *
+     * @param  array<string, mixed>  $template
+     * @return array<string, array<string, mixed>>
+     */
+    private function rebuilt(Syllabus $syllabus, FieldDefinition $field, array $template, ?FieldValue $held = null): array
+    {
+        $held ??= FieldValue::query()->where('silabo_id', $syllabus->id)->where('definicion_campo_id', $field->id)->first();
+        if (! $held instanceof FieldValue || FieldResponse::fits($template, $held->valor)) {
+            return [];
+        }
+
+        return [(string) $field->id => FieldResponse::carried($template, $held->valor)];
     }
 
     /** @param  list<array{syllabus: Syllabus, context: array<string, mixed>, documents: array<string, array<string, mixed>>, back_to_draft: bool}>  $pending */

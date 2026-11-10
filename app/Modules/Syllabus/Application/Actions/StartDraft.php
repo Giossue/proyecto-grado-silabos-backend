@@ -3,7 +3,9 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Configuration\Domain\FieldResponse;
+use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
@@ -21,6 +23,7 @@ class StartDraft
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly SubjectProfileFields $profiles,
     ) {}
 
     public function execute(string $syllabusId, User $actor, Request $request): Syllabus
@@ -80,10 +83,14 @@ class StartDraft
             ->where('silabo_id', $source->id)
             ->whereIn('definicion_campo_id', $fields->keys())
             ->get();
+        $setups = $this->profiles->setups((string) $syllabus->parallel()->value('asignatura_id'));
         foreach ($previous as $value) {
+            $setup = $setups[$value->definicion_campo_id] ?? null;
             FieldValue::query()->updateOrCreate(
                 ['silabo_id' => $syllabus->id, 'definicion_campo_id' => $value->definicion_campo_id],
-                ['valor' => FieldResponse::normalize($fields->get($value->definicion_campo_id)->contenido, $value->valor)],
+                ['valor' => $setup === null && ! ResponseKind::within($value->valor)
+                    ? FieldResponse::normalize($fields->get($value->definicion_campo_id)->contenido, $value->valor)
+                    : FieldResponse::carried($setup ?? $fields->get($value->definicion_campo_id)->contenido, $value->valor)],
             );
         }
     }

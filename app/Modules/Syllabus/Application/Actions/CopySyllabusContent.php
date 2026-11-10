@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -21,6 +22,7 @@ class CopySyllabusContent
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly SubjectProfileFields $profiles,
     ) {}
 
     /**
@@ -70,11 +72,12 @@ class CopySyllabusContent
                 ->where('silabo_id', $locked->id)
                 ->whereIn('definicion_campo_id', $fieldIds)
                 ->delete();
+            $setups = $this->profiles->setups((string) $locked->parallel()->value('asignatura_id'));
             foreach ($sourceValues as $value) {
                 FieldValue::query()->create([
                     'silabo_id' => $locked->id,
                     'definicion_campo_id' => $value->definicion_campo_id,
-                    'valor' => FieldResponse::normalize(FieldDefinition::query()->findOrFail($value->definicion_campo_id)->contenido, $value->valor),
+                    'valor' => FieldResponse::normalize($setups[$value->definicion_campo_id] ?? FieldDefinition::query()->findOrFail($value->definicion_campo_id)->contenido, $value->valor),
                 ]);
             }
 

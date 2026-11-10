@@ -10,6 +10,8 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\TemplateDocument;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -285,6 +287,31 @@ class FinalizedProcessFrozenTest extends TestCase
         $fresh = $draft->fresh();
         $this->assertSame('borrador', $fresh?->estado);
         $this->assertStringContainsString('Ficha cambiada con la convocatoria finalizada', FreeText::plainText($fresh?->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor));
+    }
+
+    public function test_a_response_built_for_a_teacher_field_warns_and_arrives_only_when_reopening(): void
+    {
+        [$process, $draft] = $this->finalizedProcess();
+        $subject = $draft->parallel->subject;
+        $field = FieldDefinition::query()->where('clave', 'metodologia')->firstOrFail();
+        $other = FieldDefinition::query()->where('clave', 'recursos_medios')->firstOrFail();
+        $written = $this->filledTemplateValue($other, 'Recursos que escribió el docente');
+        FieldValue::query()->where('silabo_id', $draft->id)->where('definicion_campo_id', $other->id)->update(['valor' => json_encode($written)]);
+        $built = ['type' => 'doc', 'content' => [['type' => 'paragraph', 'attrs' => ['textAlign' => 'left'], 'content' => [
+            ['type' => 'response', 'attrs' => ['kind' => 'una', 'options' => [['const' => 'o1', 'title' => 'Aula invertida'], ['const' => 'o2', 'title' => 'Proyectos']]]],
+        ]]]];
+        $save = fn (array $extra = []): TestResponse => $this->actingAsCoordinator()->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$field->id => $built], ...$extra]);
+
+        $this->assertWarned($save(), $process);
+        $save(['confirm_purge' => true])->assertOk();
+        $this->assertSame([], TemplateDocument::nodes($draft->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor, 'response'));
+
+        $this->extend($process, $this->institutionDay(20))->assertOk();
+
+        $fresh = $draft->fresh();
+        $this->assertSame('borrador', $fresh?->estado);
+        $this->assertSame('una', TemplateDocument::nodes($fresh?->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor, 'response')[0]['attrs']['kind']);
+        $this->assertStringContainsString('Recursos que escribió el docente', FreeText::plainText($fresh?->values()->where('definicion_campo_id', $other->id)->firstOrFail()->valor));
     }
 
     public function test_saving_the_same_career_project_does_not_warn(): void

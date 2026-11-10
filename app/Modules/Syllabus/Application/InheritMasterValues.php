@@ -21,8 +21,18 @@ class InheritMasterValues
     {
         $parallel->loadMissing('subject');
         $profile = $this->profiles->values($parallel->subject->id);
+        $setups = $this->profiles->setups($parallel->subject->id);
         foreach ($fields as $field) {
             if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
+                continue;
+            }
+            if ($field->teacherEditable()) {
+                FieldValue::query()->create([
+                    'silabo_id' => $syllabus->id,
+                    'definicion_campo_id' => $field->id,
+                    'valor' => $setups[$field->id] ?? $field->contenido,
+                ]);
+
                 continue;
             }
             $inherited = $field->fromProfile() ? ($profile[$field->id] ?? null) : null;

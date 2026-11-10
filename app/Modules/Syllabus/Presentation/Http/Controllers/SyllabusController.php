@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplatePresentation;
@@ -304,6 +305,7 @@ class SyllabusController extends Controller
             }
         }
         $definition = $snapshot !== null ? TemplateContext::fromSnapshot($snapshot) : $template->definition();
+        $setups = $frozen === null && $archivedView === null ? app(SubjectProfileFields::class)->setups((string) $syllabus->parallel()->value('asignatura_id')) : [];
         $variables = $frozen['template_variables'] ?? TemplateVariables::resolve(['identification' => $identification]);
 
         return [
@@ -330,7 +332,7 @@ class SyllabusController extends Controller
             'template_variables' => $variables,
             'definition' => TemplatePresentation::definition($definition),
             'sections' => $frozen['sections'] ?? $archivedView['sections'] ?? $template->sections
-                ->map(fn (TemplateSection $section): array => SyllabusSectionPayload::build($section, fn (FieldDefinition $field): mixed => $values->get($field->id) instanceof FieldValue ? $values->get($field->id)->valor : $field->contenido, ['identification' => $identification]))
+                ->map(fn (TemplateSection $section): array => SyllabusSectionPayload::build($section, fn (FieldDefinition $field): mixed => $values->get($field->id) instanceof FieldValue ? $values->get($field->id)->valor : ($setups[$field->id] ?? $field->contenido), ['identification' => $identification], $setups))
                 ->values(),
             'revisions' => $syllabus->revisions->sortBy('numero_revision')->map(fn (SyllabusRevision $revision): array => [
                 'id' => $revision->id,

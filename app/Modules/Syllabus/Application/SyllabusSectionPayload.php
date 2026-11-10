@@ -16,9 +16,10 @@ final class SyllabusSectionPayload
     /**
      * @param  Closure(FieldDefinition): mixed  $stored  valor guardado del campo (sin variables resueltas)
      * @param  array<string, mixed>  $context
+     * @param  array<string, array<string, mixed>>  $templates  lo que Coordinación armó en campos del docente, por definición de campo
      * @return array<string, mixed>
      */
-    public static function build(TemplateSection $section, Closure $stored, array $context): array
+    public static function build(TemplateSection $section, Closure $stored, array $context, array $templates = []): array
     {
         $variables = TemplateVariables::resolve($context);
 
@@ -27,7 +28,7 @@ final class SyllabusSectionPayload
             'key' => $section->clave,
             'title' => $section->titulo,
             'orientation' => $section->orientacion,
-            'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($stored, $variables): array {
+            'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($stored, $templates, $variables): array {
                 $document = FieldDocument::normalize($field->quien_llena === FieldDefinition::INSTITUTIONAL ? $field->contenido : $stored($field));
 
                 return [
@@ -35,7 +36,7 @@ final class SyllabusSectionPayload
                     'key' => $field->clave,
                     'label' => $field->etiqueta,
                     'quien_llena' => $field->quien_llena,
-                    ...(FieldResponse::enabled() && $field->quien_llena !== FieldDefinition::INSTITUTIONAL ? ['template' => FieldResponse::template(FieldDocument::normalize($field->contenido))] : []),
+                    ...(FieldResponse::enabled() && $field->quien_llena !== FieldDefinition::INSTITUTIONAL ? ['template' => FieldResponse::template(FieldDocument::normalize($templates[$field->id] ?? $field->contenido))] : []),
                     'teacher_editable' => $field->teacherEditable(),
                     'required' => $field->quien_llena !== FieldDefinition::INSTITUTIONAL,
                     'value' => $document,

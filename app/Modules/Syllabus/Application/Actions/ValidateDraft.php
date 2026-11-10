@@ -3,10 +3,12 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -20,11 +22,12 @@ use Illuminate\Validation\ValidationException;
 
 class ValidateDraft
 {
-    public const RULE_VERSION = 'field-document-v9';
+    public const RULE_VERSION = 'field-document-v10';
 
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly SubjectProfileFields $profiles,
     ) {}
 
     public function execute(Syllabus $syllabus, User $actor, Request $request): DraftValidation
@@ -35,12 +38,16 @@ class ValidateDraft
             $values = $locked->values()->get()->keyBy('definicion_campo_id');
             $issues = [];
             $variables = TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($locked)]);
+            $setups = $this->profiles->setups((string) $locked->parallel()->value('asignatura_id'));
             foreach ($fields as $field) {
                 if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
                     continue;
                 }
-                if (FieldResponse::isEmpty($field->contenido, $values->get($field->id)?->valor)) {
-                    $fromCareer = ! $field->teacherEditable();
+                $template = $field->teacherEditable() ? ($setups[$field->id] ?? $field->contenido) : $field->contenido;
+                $fromCareer = ! $field->teacherEditable();
+                $empty = FieldResponse::isEmpty($template, $values->get($field->id)?->valor);
+                $pending = ResponseKind::pending(FreeText::isDocument($values->get($field->id)?->valor) ? $values->get($field->id)?->valor : $template);
+                if ($empty || ($fromCareer && array_sum($pending) > 0)) {
                     $issues[] = [
                         'field_id' => $field->id,
                         'code' => $fromCareer ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
@@ -50,10 +57,16 @@ class ValidateDraft
                             : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
                     ];
                 }
+                if (! $fromCareer && $pending['without_options'] > 0) {
+                    $issues[] = ['field_id' => $field->id, 'code' => 'respuesta_sin_opciones', 'severity' => 'error', 'message' => "«{$field->displayName()}» tiene una respuesta sin opciones para elegir: pídalas al coordinador."];
+                }
+                if (! $fromCareer && ! $empty && $pending['unanswered'] > 0) {
+                    $issues[] = ['field_id' => $field->id, 'code' => 'respuesta_faltante', 'severity' => 'error', 'message' => "«{$field->displayName()}» tiene una respuesta sin contestar. Elija una opción o escriba el número antes de enviar."];
+                }
                 $stored = $values->get($field->id)?->valor;
                 if (FieldResponse::enabled() && is_array($stored)) {
                     try {
-                        FieldResponse::normalize($field->contenido, $stored);
+                        FieldResponse::normalize($template, $stored);
                     } catch (ValidationException) {
                         $issues[] = ['field_id' => $field->id, 'code' => 'estructura_respuesta_modificada', 'severity' => 'error', 'message' => 'El formato de este campo cambió. Complete las respuestas en la estructura vigente.'];
                     }
