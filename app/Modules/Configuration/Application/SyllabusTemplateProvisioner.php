@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Application;
 
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -77,7 +78,7 @@ final class SyllabusTemplateProvisioner
         });
     }
 
-    /** @return array<string, string> clave del campo => definición vigente de Coordinación */
+    /** @return array<string, string> clave del campo => definición vigente con valores por asignatura (Coordinación y lo que arma para el docente) */
     private function coordinationFieldsByKey(string $templateId): array
     {
         return DB::table('definiciones_campo')
@@ -85,7 +86,7 @@ final class SyllabusTemplateProvisioner
             ->where('definiciones_campo.plantilla_id', $templateId)
             ->where('definiciones_campo.vigente_en_plantilla', true)
             ->where('campos_plantilla.vigente_en_plantilla', true)
-            ->where('definiciones_campo.quien_llena_definicion_campo', FieldDefinition::COORDINATION)
+            ->whereIn('definiciones_campo.quien_llena_definicion_campo', [FieldDefinition::COORDINATION, FieldDefinition::TEACHER])
             ->pluck('definiciones_campo.definicion_campo_id', 'campos_plantilla.clave_campo_plantilla')
             ->map(fn (mixed $id): string => (string) $id)
             ->all();
@@ -161,7 +162,7 @@ final class SyllabusTemplateProvisioner
                     'plantilla_id' => $template->id,
                     'campo_plantilla_id' => $blockId,
                     'quien_llena' => $field['quien_llena'],
-                    'contenido' => FieldDocument::normalize(is_array($field['content']) && ! array_is_list($field['content']) ? $field['content'] : DocumentHtml::fromHtml($field['content'])),
+                    'contenido' => ResponseKind::forField((string) $field['quien_llena'], FieldDocument::normalize(is_array($field['content']) && ! array_is_list($field['content']) ? $field['content'] : DocumentHtml::fromHtml($field['content']))),
                 ];
             }
             $sections[] = [

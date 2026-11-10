@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
@@ -71,7 +72,7 @@ class SaveTemplateStructure
         return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $sectionId, $template): FieldDefinition {
             $locked = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
             $section = $locked->sectionOrFail($sectionId);
-            $content = FieldDocument::normalize($data['content']);
+            $content = ResponseKind::forField((string) $data['quien_llena'], FieldDocument::normalize($data['content']));
             $label = trim((string) ($data['label'] ?? ''));
             $count = $section->blocks()->count();
 
@@ -113,9 +114,10 @@ class SaveTemplateStructure
             $locked = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
             $label = array_key_exists('label', $data) ? trim((string) $data['label']) : $field->etiqueta;
 
+            $responsible = (string) ($data['quien_llena'] ?? $field->quien_llena);
             $field->update([
-                'quien_llena' => $data['quien_llena'] ?? $field->quien_llena,
-                'contenido' => array_key_exists('content', $data) ? FieldDocument::normalize($data['content']) : $field->contenido,
+                'quien_llena' => $responsible,
+                'contenido' => ResponseKind::forField($responsible, array_key_exists('content', $data) ? FieldDocument::normalize($data['content']) : $field->contenido),
             ]);
             $locked->updateBlockDocument($field->campo_plantilla_id, ['titulo' => $label]);
             $field->unsetRelation('blockRecord');

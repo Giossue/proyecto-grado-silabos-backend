@@ -14,7 +14,7 @@ final class FreeText
 
     private const CHILDREN = [
         'doc' => ['paragraph', 'bulletList', 'orderedList', 'table'],
-        'paragraph' => ['text', 'hardBreak'],
+        'paragraph' => ['text', 'hardBreak', ResponseKind::NODE],
         'bulletList' => ['listItem'],
         'orderedList' => ['listItem'],
         'listItem' => ['paragraph', 'bulletList', 'orderedList'],
@@ -68,6 +68,9 @@ final class FreeText
         }
         if ($type === 'documentBlock') {
             return DocumentBlock::plainText(is_array($node['attrs'] ?? null) ? $node['attrs'] : []);
+        }
+        if ($type === ResponseKind::NODE) {
+            return implode("\n", ResponseKind::lines(is_array($node['attrs'] ?? null) ? $node['attrs'] : []));
         }
         $children = array_map(
             fn (mixed $child): string => is_array($child) ? self::plainText($child) : '',
@@ -196,6 +199,13 @@ final class FreeText
         }
         if ($type === 'hardBreak') {
             return ['type' => 'hardBreak'];
+        }
+        if ($type === ResponseKind::NODE) {
+            try {
+                return ['type' => $type, 'attrs' => ResponseKind::attrs(is_array($raw['attrs'] ?? null) ? $raw['attrs'] : [])];
+            } catch (ValidationException $exception) {
+                self::fail($attribute, (string) collect($exception->errors())->flatten()->first());
+            }
         }
         $node = ['type' => $type];
         if (in_array($type, ['tableCell', 'tableHeader'], true)) {

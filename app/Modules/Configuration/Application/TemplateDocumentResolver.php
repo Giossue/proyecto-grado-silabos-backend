@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Application;
 
 use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\ResponseKind;
 
 final class TemplateDocumentResolver
 {
@@ -27,6 +28,17 @@ final class TemplateDocumentResolver
                     fn (array $expanded): array => self::resolve(['type' => 'doc', 'content' => [$expanded]], [], $variables)['content'],
                     DocumentBlock::expand($node, $variables),
                 ));
+            }
+            if ($type === ResponseKind::NODE) {
+                $lines = [];
+                foreach (ResponseKind::lines($attrs) as $line) {
+                    if ($lines !== []) {
+                        $lines[] = ['type' => 'hardBreak'];
+                    }
+                    $lines[] = ['type' => 'text', 'text' => $line, 'marks' => $node['marks'] ?? []];
+                }
+
+                return $lines;
             }
             if (in_array($type, ['variable', 'field'], true)) {
                 $value = '';

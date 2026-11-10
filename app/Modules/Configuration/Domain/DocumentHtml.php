@@ -125,6 +125,7 @@ final class DocumentHtml
                 'hardBreak' => '<br>',
                 'variable' => '<span data-variable="'.htmlspecialchars((string) $node['attrs']['id'], ENT_QUOTES | ENT_XML1).'"'
                     .(isset($node['attrs']['listStyle']) ? ' data-list="'.$node['attrs']['listStyle'].'"' : '').'></span>',
+                ResponseKind::NODE => '<span data-response="'.htmlspecialchars(json_encode($node['attrs'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), ENT_QUOTES | ENT_XML1, 'UTF-8').'"></span>',
                 'slot' => "<span data-slot='".htmlspecialchars(json_encode($node['attrs'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), ENT_NOQUOTES | ENT_XML1, 'UTF-8')."'></span>",
                 default => '',
             };
@@ -387,6 +388,11 @@ final class DocumentHtml
                 $attrs = json_decode($node->getAttribute('data-slot'), true);
 
                 return [self::withMarks(['type' => 'slot', 'attrs' => is_array($attrs) ? $attrs : []], $marks)];
+            }
+            if ($tag === 'span' && $node->hasAttribute('data-response')) {
+                $attrs = json_decode($node->getAttribute('data-response'), true);
+
+                return [self::withMarks(['type' => ResponseKind::NODE, 'attrs' => is_array($attrs) ? $attrs : []], $marks)];
             }
             if ($tag === 'span' && $node->hasAttribute('data-variable')) {
                 $variable = ['type' => 'variable', 'attrs' => ['id' => $node->getAttribute('data-variable')]];

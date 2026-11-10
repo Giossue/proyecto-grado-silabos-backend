@@ -35,7 +35,7 @@ final class TemplateDocument
                 'doc' => $layout === null ? ['paragraph', 'table', 'bulletList', 'orderedList', 'documentBlock'] : ['paragraph', 'table', 'bulletList', 'orderedList', 'group'],
                 'group' => ['paragraph', 'table', 'bulletList', 'orderedList', 'group'],
                 'tableCell', 'tableHeader' => ['paragraph', 'table', 'bulletList', 'orderedList'],
-                'paragraph' => $layout === null ? ['text', 'hardBreak', 'variable'] : ['text', 'hardBreak', 'variable', 'slot'],
+                'paragraph' => $layout === null ? ['text', 'hardBreak', 'variable', ResponseKind::NODE] : ['text', 'hardBreak', 'variable', 'slot'],
                 'table' => ['tableRow'],
                 'tableRow' => ['tableCell', 'tableHeader'],
                 'bulletList', 'orderedList' => ['listItem'],
@@ -55,6 +55,9 @@ final class TemplateDocument
             }
             if ($type === 'documentBlock') {
                 $node['attrs'] = DocumentBlock::normalize($attrs, $blocks);
+            }
+            if ($type === ResponseKind::NODE) {
+                $node['attrs'] = ResponseKind::attrs($attrs);
             }
             if ($type === 'slot') {
                 $node['attrs'] = $layout?->slot($attrs) ?? [];
@@ -139,7 +142,7 @@ final class TemplateDocument
                 $node['attrs'] = [...($node['attrs'] ?? []), ...$layout->directives($attrs, $type)];
             }
             if (isset($raw['marks'])) {
-                if (! in_array($type, ['text', 'variable', 'slot'], true) || ! is_array($raw['marks']) || count($raw['marks']) > 4) {
+                if (! in_array($type, ['text', 'variable', 'slot', ResponseKind::NODE], true) || ! is_array($raw['marks']) || count($raw['marks']) > 4) {
                     self::fail('Formato de texto no válido.');
                 }
                 $marks = [];
