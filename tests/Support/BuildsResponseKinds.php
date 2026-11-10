@@ -33,8 +33,6 @@ trait BuildsResponseKinds
     }
 
     /**
-     * Campo del docente «metodologia»: un texto fijo, un espacio de respuesta y una tabla que crece por filas.
-     *
      * @param  array<string, mixed>|null  $slot
      */
     protected function templateWithResponseField(?array $slot = null, string $key = 'metodologia'): SyllabusTemplate
@@ -60,8 +58,6 @@ trait BuildsResponseKinds
     }
 
     /**
-     * La plantilla del campo con respuestas puestas en el espacio suelto y en las dos celdas de la tabla.
-     *
      * @param  array<string, mixed>|null  $slot
      * @param  array<string, mixed>|null  $technique
      * @param  array<string, mixed>|null  $hours

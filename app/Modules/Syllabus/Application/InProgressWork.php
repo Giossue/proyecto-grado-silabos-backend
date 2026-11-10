@@ -667,8 +667,6 @@ final class InProgressWork
     }
 
     /**
-     * El campo del docente con las respuestas que Coordinación armó ahora: conserva lo que ya contestó donde todavía encaja.
-     *
      * @param  array<string, mixed>  $template
      * @return array<string, array<string, mixed>>
      */
