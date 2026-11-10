@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -41,24 +42,40 @@ class SaveSubjectProfile
     public function execute(Subject $subject, array $values, User $actor, Request $request): array
     {
         $allowed = $this->fields->fields()->keyBy('id');
+        $teacher = $this->fields->teacherFields()->keyBy('id');
         $fieldIds = array_map('strval', array_keys($values));
         foreach ($fieldIds as $fieldId) {
-            if (! $allowed->has($fieldId)) {
+            if (! $allowed->has($fieldId) && ! $teacher->has($fieldId)) {
                 throw ValidationException::withMessages(['values' => 'El proyecto de carrera incluye un campo que ya no existe en la plantilla.']);
             }
         }
 
-        return $this->work->keepContent($request, $subject->carrera_id, function () use ($actor, $allowed, $fieldIds, $request, $subject, $values): array {
+        return $this->work->keepContent($request, $subject->carrera_id, function () use ($actor, $allowed, $fieldIds, $request, $subject, $teacher, $values): array {
             $lockedSubject = Subject::query()->whereKey($subject->id)->lockForUpdate()->firstOrFail();
             $this->authorize($lockedSubject, $request);
             $this->locks->assertCareerEditable($lockedSubject->carrera_id);
 
             foreach ($fieldIds as $fieldId) {
-                $template = $allowed->get($fieldId)->contenido;
                 $current = FieldValue::query()
                     ->where('asignatura_id', $lockedSubject->id)
                     ->where('definicion_campo_id', $fieldId)
                     ->first();
+                if ($teacher->has($fieldId)) {
+                    $definition = $teacher->get($fieldId)->contenido;
+                    $setup = is_array($values[$fieldId]) ? FieldResponse::setup($definition, $values[$fieldId], "values.{$fieldId}") : null;
+                    if ($setup === null || $setup == FieldResponse::template(FieldDocument::normalize($definition))) {
+                        $current?->delete();
+
+                        continue;
+                    }
+                    FieldValue::query()->updateOrCreate(
+                        ['asignatura_id' => $lockedSubject->id, 'definicion_campo_id' => $fieldId],
+                        ['valor' => $setup],
+                    );
+
+                    continue;
+                }
+                $template = $allowed->get($fieldId)->contenido;
                 $document = match (true) {
                     array_key_exists($fieldId, $values) => is_array($values[$fieldId]) ? FieldResponse::normalize($template, $values[$fieldId], "values.{$fieldId}") : null,
                     is_array($current?->valor) => $current->valor,

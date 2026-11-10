@@ -5,6 +5,7 @@ namespace App\Modules\Academic\Application;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -17,6 +18,53 @@ class SubjectProfileFields
      */
     public function fields(): Collection
     {
+        return $this->templateFields()->filter(fn (FieldDefinition $field): bool => $field->fromProfile())->values();
+    }
+
+    /**
+     * @return Collection<int, FieldDefinition>
+     */
+    public function teacherFields(): Collection
+    {
+        return $this->templateFields()
+            ->filter(fn (FieldDefinition $field): bool => $field->teacherEditable() && FieldResponse::configurable($field->contenido))
+            ->values();
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function setups(string $subjectId): array
+    {
+        $fields = $this->templateFields()->filter(fn (FieldDefinition $field): bool => $field->teacherEditable())->keyBy('id');
+        if ($fields->isEmpty() || ! FieldResponse::enabled()) {
+            return [];
+        }
+        $setups = [];
+        foreach (FieldValue::query()->where('asignatura_id', $subjectId)->whereIn('definicion_campo_id', $fields->keys())->get() as $value) {
+            $definition = $fields->get($value->definicion_campo_id)->contenido;
+            $setup = FieldResponse::templateFor($definition, $value->valor);
+            if ($setup !== $definition) {
+                $setups[(string) $value->definicion_campo_id] = $setup;
+            }
+        }
+
+        return $setups;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function positions(): array
+    {
+        return array_flip($this->templateFields()->pluck('id')->all());
+    }
+
+    /**
+     * @return Collection<int, FieldDefinition>
+     */
+    private function templateFields(): Collection
+    {
         $template = SyllabusTemplate::query()->first();
         if ($template === null) {
             return new Collection;
@@ -24,7 +72,6 @@ class SubjectProfileFields
 
         return $template->sections
             ->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields))
-            ->filter(fn (FieldDefinition $field): bool => $field->fromProfile())
             ->each(fn (FieldDefinition $field) => $field->setRelation('template', $template))
             ->values();
     }
@@ -65,7 +112,11 @@ class SubjectProfileFields
                 ->whereIn('definicion_campo_id', $fieldIds)
                 ->get()
                 ->each(function (FieldValue $value) use (&$filled, $definitions): void {
-                    if (FreeText::isDocument($value->valor) && ! FieldResponse::isEmpty($definitions->get($value->definicion_campo_id)->contenido, FieldDocument::normalize($value->valor))) {
+                    if (! FreeText::isDocument($value->valor)) {
+                        return;
+                    }
+                    $document = FieldDocument::normalize($value->valor);
+                    if (! FieldResponse::isEmpty($definitions->get($value->definicion_campo_id)->contenido, $document) && array_sum(ResponseKind::pending($document)) === 0) {
                         $filled[$value->asignatura_id][$value->definicion_campo_id] = true;
                     }
                 });

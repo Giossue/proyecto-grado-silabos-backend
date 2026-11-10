@@ -55,7 +55,11 @@ class SubjectProfileController extends Controller
         $academic = $context->forSubject($asignatura);
         $identification = IdentificationCard::build($academic, [], [], []);
         $template = SyllabusTemplate::institutional();
-        $stored = function (FieldDefinition $field) use ($values): mixed {
+        $setups = $profile->setups($asignatura->id);
+        $stored = function (FieldDefinition $field) use ($setups, $values): mixed {
+            if ($field->teacherEditable()) {
+                return $setups[$field->id] ?? $field->contenido;
+            }
             $inherited = $field->fromProfile() ? ($values[$field->id] ?? null) : null;
 
             return $inherited === null || FieldDocument::isEmpty($inherited) ? $field->contenido : $inherited;
@@ -78,16 +82,23 @@ class SubjectProfileController extends Controller
      */
     private function payload(string $subjectId, array $values, SubjectProfileFields $profile): array
     {
+        $positions = $profile->positions();
+        $present = fn (FieldDefinition $field): array => [
+            'id' => $field->id,
+            'key' => $field->clave,
+            'label' => $field->etiqueta,
+            'quien_llena' => $field->quien_llena,
+            'content' => $field->contenido,
+            ...(FieldResponse::enabled() ? ['template' => FieldResponse::template(FieldDocument::normalize($field->contenido))] : []),
+            'section' => $field->block?->section?->titulo,
+            'position' => $positions[$field->id] ?? 0,
+        ];
+        $responseFields = $profile->teacherFields();
+        $values = [...array_diff_key($values, array_flip($responseFields->pluck('id')->all())), ...array_intersect_key($profile->setups($subjectId), array_flip($responseFields->pluck('id')->all()))];
+
         return [
-            'fields' => $profile->fields()->map(fn ($field): array => [
-                'id' => $field->id,
-                'key' => $field->clave,
-                'label' => $field->etiqueta,
-                'quien_llena' => $field->quien_llena,
-                'content' => $field->contenido,
-                ...(FieldResponse::enabled() ? ['template' => FieldResponse::template($field->contenido)] : []),
-                'section' => $field->block?->section?->titulo,
-            ])->all(),
+            'fields' => $profile->fields()->map($present)->all(),
+            'response_fields' => $responseFields->map($present)->all(),
             'values' => (object) $values,
             'complete' => $profile->completeBySubject([$subjectId])[$subjectId] ?? false,
             'definition' => TemplatePresentation::definition(TemplateContext::active()),

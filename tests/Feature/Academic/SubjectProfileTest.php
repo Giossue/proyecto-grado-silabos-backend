@@ -122,7 +122,7 @@ class SubjectProfileTest extends TestCase
         $this->asRole('coordinador@silabos.test');
 
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$teacherField->id => FreeText::fromText('No')]])
-            ->assertUnprocessable()->assertJsonValidationErrors('values');
+            ->assertUnprocessable()->assertJsonValidationErrors("values.{$teacherField->id}");
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [Str::uuid()->toString() => FreeText::fromText('No')]])
             ->assertUnprocessable()->assertJsonValidationErrors('values');
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$profileField->id => ['type' => 'html']]])
