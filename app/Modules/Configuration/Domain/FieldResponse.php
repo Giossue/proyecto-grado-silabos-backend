@@ -154,8 +154,15 @@ final class FieldResponse
     /** @param array<string, mixed> $cell */
     private static function slot(array $cell): bool
     {
-        return self::blank($cell) || array_all($cell['content'] ?? [], fn (array $child): bool => ($child['type'] ?? '') === 'paragraph'
-            && array_all($child['content'] ?? [], fn (array $inline): bool => ($inline['type'] ?? '') === ResponseKind::NODE));
+        if (self::blank($cell)) {
+            return true;
+        }
+        $paragraphs = $cell['content'] ?? [];
+        $inlines = array_merge(...array_map(fn (array $child): array => array_values($child['content'] ?? []), array_values($paragraphs)));
+
+        return ($cell['type'] ?? '') === 'tableCell' && $inlines !== []
+            && array_all($paragraphs, fn (array $child): bool => ($child['type'] ?? '') === 'paragraph')
+            && array_all($inlines, fn (array $inline): bool => ($inline['type'] ?? '') === ResponseKind::NODE);
     }
 
     /** @param array<string, mixed> $node */

@@ -526,3 +526,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   el campo se marca en rojo y el mensaje sale debajo (`lib/nativeValidation.ts`).
 - Los archivos son privados y registran quién los subió (I-180).
 - Un push a `main` despliega en Dokploy y ejecuta las migraciones.
+- Tipos de respuesta (2026-11-10): un campo o una celda puede pedir Número, Elegir una o
+  Elegir varias, además del texto libre. Los arma Administración en la plantilla (toda la
+  universidad) o Coordinación por materia en el proyecto de carrera, también en campos del
+  docente; quien llena el campo solo responde. Todo va en el JSON del campo, sin tablas
+  nuevas, y se bloquea con la convocatoria abierta igual que el proyecto de carrera.
