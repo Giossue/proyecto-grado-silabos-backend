@@ -76,6 +76,9 @@ Las demás tablas conservan filas, columnas, celdas combinadas y estilos. El ser
 rechaza cualquier modificación de las partes fijas. Los rótulos no cuentan como
 respuesta para completar el proyecto de carrera o enviar el sílabo.
 
+Un espacio de respuesta puede pedir además un **tipo de respuesta** (número, elegir una,
+elegir varias) en lugar de texto libre. Ver «Tipos de respuesta» más abajo.
+
 La API entrega `template` junto a `value` en campos de sílabo protegidos y junto a
 `content` en campos de proyecto de carrera protegidos. La SPA usa `FieldResponseEditor`; los campos
 anteriores sin `template` conservan el editor libre. Los bloques siguen usando sus
@@ -361,8 +364,10 @@ variables y bloques. Lo que cambia es el responsable (`quien_llena`):
 | `coordinacion` | El proyecto de carrera de la asignatura, que Coordinación llena una vez por materia. Se copia al crear el sílabo. Si el proyecto de carrera está vacío, se usa el `content` de la plantilla. | No |
 | `institucional` | El `content` de la plantilla con las variables resueltas. No se guarda por sílabo. | No |
 
-- El proyecto de carrera (`PUT academic/asignaturas/{id}/ficha`) acepta solo campos `coordinacion`.
-  La petición trae `values`. El proyecto de carrera está completo solo si todos sus campos tienen texto.
+- El proyecto de carrera (`PUT academic/asignaturas/{id}/ficha`) llena los campos `coordinacion`
+  y, en los campos `docente`, solo arma tipos de respuesta (ver abajo). La petición trae `values`.
+  El proyecto de carrera está completo solo si todos sus campos `coordinacion` tienen texto y sus
+  respuestas contestadas; los campos `docente` no cuentan.
 - El guardado del borrador acepta solo campos `docente`. Rechaza los demás con `422`.
 - Al enviar, todo campo que no sea `institucional` debe tener contenido.
 - Cambiar el proyecto de carrera con sílabos en curso actualiza esos campos en los sílabos de la materia
@@ -370,6 +375,68 @@ variables y bloques. Lo que cambia es el responsable (`quien_llena`):
 - Título y logos van en el encabezado fijo (`document.title`, `document.header`); no
   son campos.
 - En la plantilla oficial la bibliografía es `docente`.
+
+### Tipos de respuesta
+
+Un párrafo o una celda puede llevar una respuesta de un tipo, como en un formulario: quien arma
+elige el tipo y escribe las opciones; quien llena el campo solo responde. «Texto libre» es el
+espacio vacío de siempre y no lleva nodo.
+
+| Tipo (`kind`) | Nombre | Opciones | Se guarda en `value` |
+|---|---|---|---|
+| `numero` | Número | no lleva | texto con número (`12`, `12,5`); vacío `""` |
+| `una` | Elegir una | lista | la clave elegida o `null` |
+| `varias` | Elegir varias | lista | lista de claves; vacío `[]` |
+
+El tipo, las opciones y lo respondido viajan dentro del documento del campo, en un nodo en línea
+`response`. No hay tablas ni columnas para esto:
+
+```json
+{ "type": "response", "attrs": { "kind": "una",
+  "options": [ { "const": "o1", "title": "Presencial" }, { "const": "o2", "title": "En línea" } ],
+  "value": "o2" } }
+```
+
+En HTML: `<span data-response='{"kind":"una","options":[…],"value":null}'></span>`.
+
+Reglas:
+
+- Hasta 50 opciones por respuesta, cada una con texto de hasta 120 caracteres y sin repetir.
+  `const` es la clave estable de la opción (minúsculas, números y `_`); el editor la genera
+  (`o1`, `o2`…). Cambiar el texto de una opción conserva lo ya elegido.
+- Un campo `institucional` («Fijo») no admite tipos de respuesta. En la definición de la
+  plantilla las respuestas se guardan siempre sin contestar.
+- **Administración** las pone desde la cinta del editor de la plantilla, en campos `docente` o
+  `coordinacion`; valen para toda la universidad. Puede dejar una de elegir sin opciones.
+- **Coordinación**, en el proyecto de carrera de cada materia, ve también los campos `docente`
+  (`response_fields` en `GET academic/asignaturas/{id}/ficha`) solo para armar: convierte un
+  espacio de respuesta (párrafo, celda o campo vacío) en una respuesta de un tipo y escribe las
+  opciones, también las que Administración dejó vacías. No cambia el formato fijo ni las
+  respuestas que Administración ya definió, y no escribe en esos campos. Lo armado se guarda como
+  fila de `valores_campo` de la asignatura (`asignatura_id` + `definicion_campo_id` del campo
+  `docente`); si no arma nada, no hay fila. No cuenta para completar el proyecto de carrera y
+  sigue el mismo bloqueo de la convocatoria abierta. Reemplazar la plantilla lo conserva por
+  clave de campo mientras siga encajando.
+- **El sílabo** del docente parte de lo que Coordinación armó para su materia; esa es la
+  `template` que recibe y contra la que el servidor protege el guardado. El docente (o
+  Coordinación, en un campo `coordinacion`) solo contesta: no cambia el tipo ni las opciones, no
+  escribe junto a la respuesta y no la quita. En una tabla que crece, cada fila nueva repite las
+  respuestas de la fila modelo, sin contestar.
+- **Al enviar**, cada respuesta debe estar contestada (`respuesta_faltante`) y una de elegir sin
+  opciones escritas avisa `respuesta_sin_opciones` («…pídalas al coordinador.»).
+- **Cambiar lo armado con sílabos en curso** (en pausa, o al reabrir una convocatoria
+  finalizada) lleva el campo de cada sílabo a la estructura nueva y conserva lo ya contestado
+  donde todavía encaja; los enviados o aprobados vuelven a Borrador tras confirmar, como con
+  cualquier cambio del proyecto de carrera.
+- **Word, PDF y revisiones** imprimen lo elegido como texto (una opción por línea en «Elegir
+  varias») y nada si no se contestó. Las opciones viajan con la respuesta, así que una revisión
+  enviada conserva lo elegido aunque después cambien.
+
+El catálogo de tipos está en un solo lugar por capa: `ResponseKind::KINDS` (backend) y
+`RESPONSE_KINDS` en `src/lib/responseKinds.ts` (frontend). Cada tipo es un nombre y un esquema
+del mismo motor de valores de los bloques (`ValueSchema`: número, elección `oneOf`, lista), de
+modo que validar, mostrar el control e imprimir leen del catálogo. Agregar un tipo es agregar su
+entrada en cada catálogo (y su ícono en la cinta de Coordinación).
 
 ### HTML permitido en el contenido
 
@@ -384,6 +451,7 @@ variables y bloques. Lo que cambia es el responsable (`quien_llena`):
 | Color o fuente del texto | `<span style="color:#1F3864;font-family:Arial">…</span>`. El editor visual ofrece solo negro, azul `#365F91` y blanco para el texto, y celeste `#C3D4EA` o azul institucional `#4F81BD` para el fondo de celda; el JSON acepta cualquier `#RRGGBB`. |
 | Variable | `<span data-variable="clave"></span>` (`data-list="bullet\|number"` para listas) |
 | Bloque | `<div data-block="tipo" data-props='{…}' data-value='{…}'></div>` |
+| Tipo de respuesta | `<span data-response='{"kind":"numero","options":[],"value":""}'></span>` dentro de un párrafo |
 
 ## Validación y errores
 
@@ -407,6 +475,9 @@ Los errores de campos llevan su camino (`sections.0.fields.1.content`).
 
 - **Backend:** `TemplateDefinition`, `TemplateStyle`, `Blocks/*` (valor, diseño, condiciones y reglas) y
   `TemplateContext` (definición activa: la de la plantilla o la congelada en la fotografía).
+  `ResponseKind` es el catálogo de tipos de respuesta y `FieldResponse` protege el formato
+  (`normalize` para quien responde, `setup` para lo que arma Coordinación, `carried` para llevar
+  lo contestado a una estructura nueva).
 - **Frontend:** `src/lib/blocks/*` interpreta la misma definición; `DocumentBlockContent` dibuja y llena cualquier
   bloque.
 - **Conformidad:** `src/test/fixtures/block-conformance.json` guarda lo que produce el backend para cada bloque

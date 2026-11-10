@@ -112,6 +112,17 @@ completar el catálogo de unidades antes de reanudar.
 RF-017..033, RF-037..045; RN-009..012; CU-04, CU-05, CU-07, CU-09;
 ADM-06, COR-16, DOC-04. PV-16 no cambia.
 
+## Actualización 2026-11-10: tipos de respuesta
+
+Un espacio de respuesta puede pedir un tipo (número, elegir una, elegir varias) con un nodo
+`response` dentro del documento del campo, que lleva el tipo, las opciones y lo respondido.
+Sigue sin haber permisos por celda ni tablas nuevas. Administración lo pone en la plantilla;
+Coordinación lo arma por materia en los campos del docente y se guarda como valor de la
+asignatura para ese campo. `FieldResponse` protege tres cosas: quien responde no cambia tipos
+ni opciones (`normalize`), Coordinación solo arma en los espacios de respuesta (`setup`) y un
+cambio de lo armado conserva lo contestado donde encaja (`carried`). Detalle en
+`docs/architecture/template-json.md`, «Tipos de respuesta».
+
 ## Actualización 2026-10-30
 
 Se eliminó el interruptor de edición docente de la ficha (PV-21): los campos de

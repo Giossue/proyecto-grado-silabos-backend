@@ -99,6 +99,12 @@ y el botón «Documentos» (DOC-10).
     celda, quitar). El fondo de celda solo ofrece los colores de la tabla de
     identificación: «Celeste» (en negrita) y «Azul institucional» (texto blanco y negrita),
     o «Sin fondo»;
+  - «Tipo de respuesta» (ícono con ayuda): con el cursor en un párrafo o una celda de un campo
+    que no sea Fijo, abre un cuadro para elegir Número, Elegir una o Elegir varias y, si es de
+    elegir, escribir las opciones ahí mismo («Agregar opción»); «Insertar» pone la respuesta
+    donde está el cursor. Se ve como una etiqueta con el tipo y sus opciones. Las opciones se
+    pueden dejar vacías para que Coordinación las escriba en cada materia. En un campo Fijo el
+    botón queda deshabilitado («Tipo de respuesta: no va en campos Fijos») (2026-11-10);
   - con un campo elegido: «Quién llena» (Docente, Carrera, Fijo), «Plantilla» (inserta
     Identificación institucional, Distribución y planificación, Bibliografía básica o
     complementaria, o Firmas), nombre, subir, bajar y eliminar;
@@ -201,6 +207,18 @@ y el botón «Documentos» (DOC-10).
   «Incompleta». Filtros por materia, ciclo y estado.
 - Un clic abre «Proyecto de carrera de {materia}»: pestañas por sección, un editor por campo y
   «Guardar proyecto de carrera». Un campo vacío muestra «Sin llenar».
+- También aparecen, en su lugar de la plantilla, los campos que llena el docente y que tienen
+  espacios de respuesta, con la etiqueta «Lo llena el docente» y la nota «Elija solo el tipo de
+  respuesta de cada espacio: texto libre, número o elegir entre opciones. El docente lo llena en
+  su sílabo». No se escriben ni cuentan como «Sin llenar». Cada uno tiene su cinta «Texto libre»,
+  «Número», «Elegir una» y «Elegir varias»: se hace clic en un espacio o en una celda de la tabla
+  («Haga clic en un espacio y elija su tipo de respuesta») y el botón de la cinta lo convierte;
+  si es de elegir, las opciones se escriben debajo («Agregar opción»). El texto fijo, los
+  encabezados y la estructura de las tablas no se pueden cambiar. Una respuesta que puso
+  Administración sale como «{tipo} (lo definió Administración)» y solo admite escribir las
+  opciones que falten (2026-11-10).
+- En los campos de Coordinación, una respuesta que puso Administración se contesta ahí mismo
+  (número u opciones para marcar); sin contestar, el campo sigue «Sin llenar».
 - En la esquina del modal, junto a la X, un ojo («Vista previa») alterna con la edición y muestra el sílabo de la materia como lo
   recibirán sus docentes antes de llenarlo: los datos de la malla (carrera, facultad, materia, código,
   horas, créditos, prerrequisitos), lo escrito en el proyecto de carrera (aunque aún no se haya guardado) y
@@ -232,6 +250,13 @@ y el botón «Documentos» (DOC-10).
   admiten números. «Anterior» y «Siguiente», debajo de la tarjeta, recorren las secciones. Cada campo se guarda solo
   tras una breve pausa; si falla, muestra «Sin guardar» y «Reintentar»; si hay
   conflicto, «Recargar borrador».
+- Donde la plantilla o Coordinación pidieron un tipo de respuesta, el docente solo responde: un
+  número (no admite letras) o un botón que abre las opciones para marcar. Lo elegido queda como
+  etiqueta fija que solo se quita con su X; «Elegir una» admite una y «Elegir varias», una o más.
+  Sin opciones escritas dice «No hay opciones para elegir: pídalas al coordinador». Al enviar,
+  una respuesta sin contestar avisa ««{campo}» tiene una respuesta sin contestar. Elija una
+  opción o escriba el número antes de enviar.» y una sin opciones, ««{campo}» tiene una respuesta
+  sin opciones para elegir: pídalas al coordinador.» (2026-11-10).
 - Campos del docente: editables. Campos del proyecto de carrera: solo lectura, salvo los marcados
   como editables («Viene del proyecto de carrera; puede ajustarlo.»). Lo institucional se ve en
   «Vista previa».

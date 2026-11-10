@@ -59,6 +59,14 @@ encabezados, columnas ni estilos. Una tabla con encabezados y una sola fila vac�
 permite añadir filas y quitar la última. Las demás tablas conservan sus filas.
 Los rótulos e instrucciones no cuentan como respuesta para completar un campo.
 
+Un espacio de respuesta puede pedir un tipo, como en un formulario: **Texto libre** (el de
+siempre), **Número**, **Elegir una** o **Elegir varias**. Administración lo pone desde la cinta
+de la plantilla, para toda la universidad, en campos que no sean Fijos. Coordinación lo pone por
+materia, en «Proyecto de carrera», sobre los campos que llena el docente: elige el tipo y escribe
+las opciones, sin llenar el campo ni cambiar el formato fijo. Quien llena el campo solo responde:
+marca opciones (lo elegido queda fijo y solo se quita) o escribe el número. Para enviar, cada
+respuesta debe estar contestada. El documento imprime lo elegido como texto.
+
 El docente solo llena los datos del bloque; no cambia su tipo. El detalle técnico está en
 `docs/architecture/template-json.md`.
 
