@@ -25,7 +25,7 @@ class AuditEventController extends Controller
     private const VALUE_LABELS = [
         'sin_iniciar' => 'Sin iniciar', 'borrador' => 'Borrador', 'en_revision' => 'En revisión',
         'correccion_solicitada' => 'Corrección solicitada', 'aprobado' => 'Aprobado',
-        'docente' => 'Docente', 'coordinacion' => 'Coordinación', 'biblioteca' => 'Biblioteca',
+        'docente' => 'Docente', 'coordinador' => 'Coordinador', 'coordinacion' => 'Coordinación', 'biblioteca' => 'Biblioteca',
     ];
 
     public function index(ViewAuditEventsRequest $request, AuditTargets $targets): JsonResponse
@@ -406,6 +406,7 @@ class AuditEventController extends Controller
             'previous_attempts' => 'Intentos anteriores',
             'previous_error_code' => 'Categoría de fallo previa',
             'renderer_version' => 'Versión de formato',
+            'retired_users' => 'Usuarios retirados',
             'revision_number' => 'Número de revisión',
             'role' => 'Rol',
             'rule_version' => 'Versión de reglas',

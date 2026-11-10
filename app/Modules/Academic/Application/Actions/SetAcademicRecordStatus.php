@@ -10,7 +10,9 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
+use App\Modules\Identity\Application\Actions\RevokeUserSessions;
 use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
@@ -36,6 +38,7 @@ class SetAcademicRecordStatus
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
         private readonly CatalogDeactivationBlocks $blocks,
+        private readonly RevokeUserSessions $sessions,
     ) {}
 
     public function execute(
@@ -76,8 +79,12 @@ class SetAcademicRecordStatus
                 }
             }
 
+            $retired = 0;
             if (! $active) {
                 $this->ensureMayDeactivate($entity, $recordId);
+                if ($record instanceof Career) {
+                    $retired = $this->retireUsers($record, $actor, $activeRole);
+                }
             }
 
             $record->update(['activo' => $active]);
@@ -91,11 +98,55 @@ class SetAcademicRecordStatus
                 resourceType: $entity,
                 resourceId: (string) $record->getKey(),
                 result: 'exito',
-                metadata: ['active' => $active],
+                metadata: $entity === 'carrera' && ! $active ? ['active' => $active, 'retired_users' => $retired] : ['active' => $active],
             );
 
             return $record;
         }, $careerScope, null, null, $careerScope === [] ? null : $recordId);
+    }
+
+    /**
+     * Al desactivar la carrera se retiran sus roles (coordinación y docencia) y los paralelos de sus
+     * docentes. Las cuentas se conservan; quien queda sin ningún rol pierde sus sesiones y su enlace
+     * de activación pendiente, como al quitar a un docente de la carrera.
+     */
+    private function retireUsers(Career $career, User $actor, RoleAssignment $activeRole): int
+    {
+        $assignments = RoleAssignment::query()->with('user')->where('carrera_id', $career->id)
+            ->where('activo', true)->lockForUpdate()->get();
+        foreach ($assignments as $assignment) {
+            $parallels = TeacherAssignment::query()->where('asignacion_rol_id', $assignment->id)
+                ->where('activo', true)->lockForUpdate()->get();
+            foreach ($parallels as $parallel) {
+                $parallel->delete();
+            }
+            $assignment->update(['activo' => false]);
+            $user = $assignment->user;
+            if ($user instanceof User) {
+                // Su rol activo pudo ser este: vuelve a elegir al entrar.
+                $this->sessions->execute($user);
+                if (! RoleAssignment::query()->effective()->where('usuario_id', $user->id)->exists()) {
+                    ActivationInvitation::query()->where('usuario_id', $user->id)->whereNull('usada_en')
+                        ->whereNull('invalidada_en')->update(['invalidada_en' => now()]);
+                }
+            }
+            $this->audit->execute(
+                actorId: $actor->id,
+                roleAssignmentId: $activeRole->id,
+                action: 'usuario.rol_retirado',
+                resourceType: 'usuario',
+                resourceId: $assignment->usuario_id,
+                result: 'exito',
+                metadata: [
+                    'role' => $assignment->rol,
+                    'career_id' => $career->id,
+                    'removed_parallel_assignments' => $parallels->count(),
+                    'reason' => 'carrera_desactivada',
+                ],
+            );
+        }
+
+        return $assignments->count();
     }
 
     private function findCareerRecord(string $entity, string $recordId, ?string $careerId): Model

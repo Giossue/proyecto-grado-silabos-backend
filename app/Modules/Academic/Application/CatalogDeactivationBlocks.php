@@ -42,18 +42,32 @@ class CatalogDeactivationBlocks
             ->where('estado', '!=', Convocation::STATE_CLOSED)
             ->whereHas('process', fn ($process) => $process->where('estado', '!=', SyllabusProcess::STATE_CLOSED))
             ->distinct()->pluck('carrera_id')->all();
-        $withUsers = DB::table('asignaciones_rol')->whereIn('carrera_id', $careerIds)
-            ->where('asignacion_rol_activa', true)->distinct()->pluck('carrera_id')->all();
         $blocks = [];
 
         foreach ($withInProgress as $id) {
             $blocks[$id] = 'La carrera participa en una convocatoria en curso. Espere a que se cierre.';
         }
-        foreach ($withUsers as $id) {
-            $blocks[$id] = 'Retire primero a los usuarios de la carrera.';
-        }
 
         return $blocks;
+    }
+
+    /**
+     * Usuarios que se retiran al desactivar cada carrera (sus roles en ella).
+     *
+     * @param  array<int, string>  $careerIds
+     * @return array<string, array{coordinators: int, teachers: int}>
+     */
+    public function usersForCareers(array $careerIds): array
+    {
+        $counts = [];
+        $rows = DB::table('asignaciones_rol')->whereIn('carrera_id', $careerIds)->where('asignacion_rol_activa', true)
+            ->groupBy('carrera_id', 'rol')->selectRaw('carrera_id, rol, COUNT(*) AS total')->get();
+        foreach ($rows as $row) {
+            $counts[$row->carrera_id] ??= ['coordinators' => 0, 'teachers' => 0];
+            $counts[$row->carrera_id][$row->rol === 'coordinador' ? 'coordinators' : 'teachers'] += (int) $row->total;
+        }
+
+        return $counts;
     }
 
     public function forFaculty(string $facultyId): ?string

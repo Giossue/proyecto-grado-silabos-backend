@@ -12,6 +12,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
+use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -694,10 +695,12 @@ class AcademicStructureTest extends TestCase
         $blockOf = fn (string $catalog, string $id): ?string => collect($listing()[$catalog])->firstWhere('id', $id)['deactivate_block'];
 
         $this->assertSame('Desactive primero las carreras activas de esta facultad.', $blockOf('faculties', $career->facultad_id));
-        $this->assertSame('Retire primero a los usuarios de la carrera.', $blockOf('careers', $career->id));
+        // Los usuarios no bloquean: el listado dice cuántos se retirarán al desactivarla.
+        $this->assertNull($blockOf('careers', $career->id));
+        $this->assertSame(['coordinators' => 0, 'teachers' => 1], collect($listing()['careers'])->firstWhere('id', $career->id)['deactivate_users']);
 
         $role->update(['activo' => false]);
-        $this->assertNull($blockOf('careers', $career->id));
+        $this->assertSame(['coordinators' => 0, 'teachers' => 0], collect($listing()['careers'])->firstWhere('id', $career->id)['deactivate_users']);
     }
 
     public function test_administrator_deactivates_and_reactivates_a_career_with_audit(): void
@@ -708,15 +711,13 @@ class AcademicStructureTest extends TestCase
         $status = fn (bool $active) => $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.status', ['carrera', $career->id]), ['active' => $active]);
 
-        $status(false)->assertUnprocessable()->assertJsonPath('errors.record.0', 'Retire primero a los usuarios de la carrera.');
-        $role->update(['activo' => false]);
-
         $process = SyllabusProcess::query()->create([
             'periodo_academico_id' => AcademicPeriod::query()->valueOrFail('id'),
             'inicia_en' => now()->subDay(), 'entrega_en' => now()->addMonth(), 'estado' => SyllabusProcess::STATE_PAUSED,
         ]);
         Convocation::query()->create(['carrera_id' => $career->id, 'proceso_id' => $process->id, 'estado' => Convocation::STATE_PREPARATION]);
         $status(false)->assertUnprocessable();
+        $this->assertTrue($role->fresh()->activo, 'Con la convocatoria en curso no se retira a nadie.');
         $process->update(['estado' => SyllabusProcess::STATE_CLOSED]);
 
         $status(false)->assertOk();
@@ -728,6 +729,38 @@ class AcademicStructureTest extends TestCase
         $status(true)->assertOk();
         $this->assertTrue($career->fresh()->activo);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.carrera.reactivacion', 'recurso_id' => $career->id]);
+    }
+
+    public function test_desactivar_la_carrera_retira_a_su_coordinador_y_docentes_y_conserva_las_cuentas(): void
+    {
+        $career = $this->createCareer('MALLA-VIEJA');
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $teacherRole = RoleAssignment::query()->create(['usuario_id' => $teacher->id, 'rol' => 'docente', 'carrera_id' => $career->id, 'activo' => true]);
+        $subject = Subject::query()->firstOrFail()->replicate();
+        $subject->carrera_id = $career->id;
+        $subject->codigo_asignatura = 'MV-1';
+        $subject->save();
+        $parallel = Parallel::query()->firstOrFail()->replicate();
+        $parallel->asignatura_id = $subject->id;
+        $parallel->save();
+        TeacherAssignment::query()->create(['paralelo_id' => $parallel->id, 'asignacion_rol_id' => $teacherRole->id, 'activo' => true]);
+        $coordinator = User::factory()->create();
+        $coordinator->markEmailAsUnverified();
+        $coordinatorRole = RoleAssignment::query()->create(['usuario_id' => $coordinator->id, 'rol' => 'coordinador', 'carrera_id' => $career->id, 'activo' => true]);
+        $invitation = ActivationInvitation::query()->create(['usuario_id' => $coordinator->id, 'hash_activacion' => hash('sha256', 'malla-vieja'), 'expira_en' => now()->addDay()]);
+
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.academic.status', ['carrera', $career->id]), ['active' => false])->assertOk();
+
+        $this->assertFalse($career->fresh()->activo);
+        $this->assertFalse($teacherRole->fresh()->activo);
+        $this->assertFalse($coordinatorRole->fresh()->activo);
+        $this->assertSame(0, TeacherAssignment::query()->where('asignacion_rol_id', $teacherRole->id)->where('activo', true)->count());
+        // El docente conserva su rol en la otra carrera; el coordinador queda sin rol y su enlace ya no sirve.
+        $this->assertTrue(RoleAssignment::query()->effective()->where('usuario_id', $teacher->id)->exists());
+        $this->assertNotNull($coordinator->fresh());
+        $this->assertNotNull($invitation->fresh()->invalidada_en);
+        $this->assertSame(2, AuditEvent::query()->where('accion', 'usuario.rol_retirado')->whereIn('recurso_id', [$teacher->id, $coordinator->id])->count());
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.carrera.desactivacion', 'recurso_id' => $career->id]);
     }
 
     public function test_coordinator_cannot_change_a_career_status(): void

@@ -47,7 +47,9 @@ class AcademicStructureViewData
             ->keyBy('periodo_academico_id');
         $lockedPeriods = $this->locks->lockedPeriodReasons();
         $facultyBlocks = $this->deactivationBlocks->forFaculties(Faculty::query()->where('activo', true)->get(['id'])->map(fn (Faculty $faculty): string => $faculty->id)->values()->all());
-        $careerBlocks = $this->deactivationBlocks->forCareers(Career::query()->where('activo', true)->get(['id'])->map(fn (Career $career): string => $career->id)->values()->all());
+        $activeCareers = Career::query()->where('activo', true)->get(['id'])->map(fn (Career $career): string => $career->id)->values()->all();
+        $careerBlocks = $this->deactivationBlocks->forCareers($activeCareers);
+        $careerUsers = $this->deactivationBlocks->usersForCareers($activeCareers);
 
         return [
             'lock_reason' => $lockedPeriods === [] ? null : reset($lockedPeriods),
@@ -87,6 +89,7 @@ class AcademicStructureViewData
                         'name' => $career->nombre,
                         'active' => $career->activo,
                         'deactivate_block' => $careerBlocks[$career->id] ?? null,
+                        'deactivate_users' => $careerUsers[$career->id] ?? ['coordinators' => 0, 'teachers' => 0],
                         'lock_reason' => null,
                     ]),
                 'periods' => AcademicPeriod::query()
