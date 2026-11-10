@@ -89,7 +89,7 @@ class SubjectProfileController extends Controller
             'label' => $field->etiqueta,
             'quien_llena' => $field->quien_llena,
             'content' => $field->contenido,
-            ...(FieldResponse::enabled() ? ['template' => FieldResponse::template(FieldDocument::normalize($field->contenido))] : []),
+            ...(FieldResponse::enabled() ? ['template' => FieldResponse::template($field->teacherEditable() ? FieldDocument::normalize($field->contenido) : $field->contenido)] : []),
             'section' => $field->block?->section?->titulo,
             'position' => $positions[$field->id] ?? 0,
         ];

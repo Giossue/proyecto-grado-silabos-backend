@@ -36,16 +36,18 @@ class SubjectProfileFields
      */
     public function setups(string $subjectId): array
     {
-        $fields = $this->templateFields()->filter(fn (FieldDefinition $field): bool => $field->teacherEditable())->keyBy('id');
-        if ($fields->isEmpty() || ! FieldResponse::enabled()) {
+        if (! FieldResponse::enabled()) {
+            return [];
+        }
+        $stored = FieldValue::query()->where('asignatura_id', $subjectId)->get()->keyBy('definicion_campo_id');
+        if ($stored->isEmpty()) {
             return [];
         }
         $setups = [];
-        foreach (FieldValue::query()->where('asignatura_id', $subjectId)->whereIn('definicion_campo_id', $fields->keys())->get() as $value) {
-            $definition = $fields->get($value->definicion_campo_id)->contenido;
-            $setup = FieldResponse::templateFor($definition, $value->valor);
-            if ($setup !== $definition) {
-                $setups[(string) $value->definicion_campo_id] = $setup;
+        foreach (FieldDefinition::query()->whereKey($stored->keys()->all())->where('quien_llena', FieldDefinition::TEACHER)->get() as $field) {
+            $setup = FieldResponse::templateFor($field->contenido, $stored->get($field->id)?->valor);
+            if ($setup !== $field->contenido) {
+                $setups[(string) $field->id] = $setup;
             }
         }
 
