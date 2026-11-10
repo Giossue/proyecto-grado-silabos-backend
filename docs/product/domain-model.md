@@ -22,6 +22,10 @@ esquema completo está en `docs/generated/database-schema.md`; las reglas de est
   activa.
 - **Carrera** (`carreras`): facultad, código único, nombre, modalidad, número de ciclos
   (1 a 30) y activa. La malla es la propia carrera: no hay tabla de mallas ni versiones.
+  Si una carrera tiene dos mallas a la vez (la vigente y la «no vigente habilitada para
+  registro de títulos»), cada malla se registra como una carrera con su propio código y el
+  mismo nombre. Cuando dos carreras se llaman igual, las pantallas, avisos, reportes y
+  auditoría muestran «Nombre · código» (`Career::label()`); el sílabo lleva solo el nombre.
 - **Asignatura** (`asignaturas`): carrera, código único en la carrera, nombre, ciclo,
   orden en el ciclo, unidad curricular (`basica`, `profesional`,
   `integracion_curricular`), modalidad propia opcional, horas de docencia, prácticas y

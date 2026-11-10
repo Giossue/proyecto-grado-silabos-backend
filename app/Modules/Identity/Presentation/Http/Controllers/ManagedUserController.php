@@ -101,15 +101,15 @@ class ManagedUserController extends Controller
                         'id' => $assignment->id,
                         'code' => $assignment->rol,
                         'name' => $assignment->role->nombre_rol,
-                        'career_name' => $assignment->career?->nombre,
+                        'career_name' => $assignment->career?->label(),
                     ])->values()->all(),
                     'careers' => $effective
-                        ->map(fn ($assignment) => $assignment->career?->nombre)
+                        ->map(fn ($assignment) => $assignment->career?->label())
                         ->values()->all(),
                     'assignments' => $user->roleAssignments->map(fn ($assignment) => [
                         'id' => $assignment->id,
                         'role_name' => $assignment->role->nombre_rol,
-                        'career_name' => $assignment->career?->nombre,
+                        'career_name' => $assignment->career?->label(),
                         'active' => $assignment->activo,
                     ])->values()->all(),
                 ];
@@ -124,7 +124,8 @@ class ManagedUserController extends Controller
                 'career' => $career,
             ],
             'roles' => $this->fixedRoles(),
-            'careers' => Career::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
+            'careers' => Career::query()->where('activo', true)->orderBy('nombre')->orderBy('codigo_carrera')->get()
+                ->map(fn (Career $career): array => ['id' => $career->id, 'nombre' => $career->label()])->values()->all(),
         ];
 
         return response()->json($payload);
@@ -156,7 +157,7 @@ class ManagedUserController extends Controller
 
         return $template->download('plantilla-usuarios.xlsx', array_values(ImportManagedUsers::COLUMNS), [
             array_search('rol', $columns, true) => array_map(fn (RoleCode $role): string => $role->label(), RoleCode::cases()),
-            array_search('carrera', $columns, true) => Career::query()->where('activo', true)->orderBy('nombre')->pluck('nombre')->all(),
+            array_search('carrera', $columns, true) => Career::query()->where('activo', true)->orderBy('nombre')->orderBy('codigo_carrera')->get()->map(fn (Career $career): string => $career->label())->all(),
         ], [
             ...PersonNameColumns::NOTES,
             'Correo: use el correo institucional; no puede repetirse.',

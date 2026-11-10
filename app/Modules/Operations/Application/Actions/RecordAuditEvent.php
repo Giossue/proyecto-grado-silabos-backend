@@ -24,7 +24,7 @@ class RecordAuditEvent
             'actor_usuario_id' => $actorId,
             'actor_nombre' => $actorId === null ? null : User::query()->whereKey($actorId)->value('nombre_usuario'),
             'actor_rol' => $assignment?->role->nombre_rol,
-            'actor_carrera' => $assignment?->career?->nombre,
+            'actor_carrera' => $assignment?->career?->label(),
             'asignacion_rol_id' => $roleAssignmentId,
             'accion' => $action,
             'tipo_recurso' => $resourceType,

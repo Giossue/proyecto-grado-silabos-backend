@@ -95,9 +95,7 @@ class Convocation extends Model
     protected function nombre(): Attribute
     {
         return Attribute::get(function (): string {
-            $career = $this->relationLoaded('career')
-                ? $this->career->nombre
-                : $this->career()->value('nombre');
+            $career = $this->career->label();
             $process = $this->relationLoaded('process')
                 ? $this->process
                 : $this->process()->with('academicPeriod:id,codigo')->firstOrFail();
@@ -105,7 +103,7 @@ class Convocation extends Model
                 ? $process->academicPeriod->codigo
                 : $process->academicPeriod()->value('codigo');
 
-            return trim(($career ?? 'Carrera').' · '.($period ?? 'Período'));
+            return trim($career.' · '.($period ?? 'Período'));
         });
     }
 

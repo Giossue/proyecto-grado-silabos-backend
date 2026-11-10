@@ -124,7 +124,7 @@ class SyllabusController extends Controller
             ->groupBy(fn (Syllabus $syllabus): string => $syllabus->convocation->carrera_id)
             ->map(fn (Collection $group, string $careerId): array => [
                 'id' => $careerId,
-                'name' => $group->first()->convocation->career->nombre,
+                'name' => $group->first()->convocation->career->label(),
                 'syllabi_count' => $group->count(),
             ])
             ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
@@ -149,7 +149,7 @@ class SyllabusController extends Controller
         abort_if($syllabi->isEmpty(), 404);
 
         return response()->json([
-            'career' => ['id' => $career, 'name' => $syllabi->first()->convocation->career->nombre],
+            'career' => ['id' => $career, 'name' => $syllabi->first()->convocation->career->label()],
             'syllabi' => $syllabi->map(fn (Syllabus $syllabus): array => [
                 'id' => $syllabus->id,
                 'subject' => $syllabus->academicSubjectName(),

@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -72,7 +73,7 @@ class SetUserStatus
             ->get();
         foreach ($assignments as $assignment) {
             $assignment->update(['activo' => false]);
-            $closed[] = $assignment->career->nombre ?? (string) $assignment->carrera_id;
+            $closed[] = $assignment->career?->label() ?? (string) $assignment->carrera_id;
         }
 
         return $closed;
@@ -106,11 +107,12 @@ class SetUserStatus
             ->where('docentes_vigentes_silabo.usuario_id', $target->id)
             ->whereIn('silabos.estado_silabo', ['borrador', 'en_revision', 'correccion_solicitada'])
             ->where('convocatorias_carreras.estado_convocatoria_carrera', 'abierta')
-            ->groupBy('carreras.nombre_carrera')
-            ->selectRaw('carreras.nombre_carrera AS carrera, COUNT(DISTINCT silabos.silabo_id) AS total')
+            ->groupBy('carreras.carrera_id')
+            ->selectRaw('carreras.carrera_id AS carrera_id, COUNT(DISTINCT silabos.silabo_id) AS total')
             ->get();
         if ($inProgress->isNotEmpty()) {
-            $detail = $inProgress->map(fn (object $row): string => "{$row->total} en {$row->carrera}")->implode(', ');
+            $careers = Career::query()->whereKey($inProgress->pluck('carrera_id'))->get()->keyBy('id');
+            $detail = $inProgress->map(fn (object $row): string => "{$row->total} en ".($careers->get($row->carrera_id)?->label() ?? ''))->implode(', ');
             throw ValidationException::withMessages([
                 'active' => "Tiene sílabos en curso ({$detail}). Coordinación debe asignar otro docente a sus paralelos antes de desactivar la cuenta.",
             ]);

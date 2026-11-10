@@ -3,6 +3,7 @@
 namespace Tests\Feature\Library;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -122,6 +123,31 @@ class LibraryReviewTest extends TestCase
         $this->assertNotified($this->people['librarian'][0]->id, 'proceso.eliminado', 'Mensaje de Administración: Se abrirá otra convocatoria.');
         $this->assertNotified($this->people['coordinator'][0]->id, 'proceso.eliminado', 'Mensaje de Administración: Se abrirá otra convocatoria.');
         $this->assertNotified($this->people['teacher'][0]->id, 'proceso.eliminado', 'Mensaje de Administración: Se abrirá otra convocatoria.');
+    }
+
+    public function test_dos_carreras_con_el_mismo_nombre_se_distinguen_por_su_codigo_en_pantalla(): void
+    {
+        [$syllabus] = $this->submittedRevision();
+        $career = $syllabus->convocation->career()->firstOrFail();
+        $this->assertSame($career->nombre, $career->label());
+        $other = Career::query()->create([
+            'facultad_id' => $career->facultad_id,
+            'codigo_carrera' => 'MALLA-9',
+            'nombre' => $career->nombre,
+            'activo' => true,
+            'cantidad_ciclos_malla' => 9,
+        ]);
+        $label = "{$career->nombre} · {$career->codigo_carrera}";
+
+        $this->assertSame($label, $career->label());
+        $this->assertSame("{$career->nombre} · MALLA-9", $other->label());
+        $report = $this->as('admin')->getJson(route('api.v1.admin.reports.show'))->assertOk()->json('report');
+        $this->assertSame($label, $report['careers'][0]['career']);
+        $careers = $this->as('admin')->getJson(route('api.v1.admin.users.index'))->assertOk()->json('careers');
+        $this->assertContains($label, array_column($careers, 'nombre'));
+        $this->assertContains("{$career->nombre} · MALLA-9", array_column($careers, 'nombre'));
+        // El sílabo sigue con el nombre oficial, sin el código.
+        $this->assertSame($career->nombre, $syllabus->fresh()?->convocation->career->nombre);
     }
 
     public function test_el_reporte_de_la_convocatoria_resume_el_avance_por_carrera_y_se_exporta_a_excel(): void

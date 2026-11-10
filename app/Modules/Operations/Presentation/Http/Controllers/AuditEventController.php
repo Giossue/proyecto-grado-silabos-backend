@@ -49,8 +49,8 @@ class AuditEventController extends Controller
             'period_options' => AcademicPeriod::query()->orderByDesc('fecha_inicio')->get(['id', 'codigo'])
                 ->map(fn (AcademicPeriod $item): array => ['value' => $item->id, 'label' => $item->codigo])->values()->all(),
             'role_options' => array_map(fn (RoleCode $item): array => ['value' => $item->value, 'label' => $item->label()], RoleCode::cases()),
-            'career_options' => Career::query()->orderBy('nombre')->get(['id', 'nombre'])
-                ->map(fn (Career $item): array => ['value' => $item->id, 'label' => $item->nombre])->values()->all(),
+            'career_options' => Career::query()->orderBy('nombre')->orderBy('codigo_carrera')->get()
+                ->map(fn (Career $item): array => ['value' => $item->id, 'label' => $item->label()])->values()->all(),
             'events' => $page
                 ->through(fn (AuditEvent $event): array => [
                     'id' => $event->id,
@@ -60,7 +60,7 @@ class AuditEventController extends Controller
                     'result' => $event->resultado,
                     'actor' => $this->actorName($event),
                     'role' => $event->actor_rol ?? $event->roleAssignment?->role->nombre_rol,
-                    'career' => $event->actor_carrera ?? $event->roleAssignment?->career?->nombre,
+                    'career' => $event->actor_carrera ?? $event->roleAssignment?->career?->label(),
                     'details' => $this->safeDetails($event->metadatos),
                     'occurred_at' => $event->ocurrido_en->toIso8601String(),
                 ]),
@@ -83,7 +83,7 @@ class AuditEventController extends Controller
                     'occurred_at' => $event->ocurrido_en->setTimezone(InstitutionDate::timezone()),
                     'actor' => $this->actorName($event),
                     'role' => $event->actor_rol ?? $event->roleAssignment?->role->nombre_rol ?? '',
-                    'career' => $event->actor_carrera ?? $event->roleAssignment?->career->nombre ?? '',
+                    'career' => $event->actor_carrera ?? $event->roleAssignment?->career?->label() ?? '',
                     'action' => $this->actionLabel($event->accion),
                     'target' => ($described[$event->id] ?? '') !== '' ? $described[$event->id] : $this->resourceLabel($event->tipo_recurso),
                     'details' => implode('; ', array_map(fn (array $detail): string => "{$detail['label']}: ".$this->detailText($detail['value']), $this->safeDetails($event->metadatos))),
@@ -148,7 +148,7 @@ class AuditEventController extends Controller
         }
         if ($career instanceof Career) {
             $query->where(fn ($builder) => $builder
-                ->where('actor_carrera', $career->nombre)
+                ->where('actor_carrera', $career->label())
                 ->orWhereHas('roleAssignment', fn ($assignment) => $assignment->where('carrera_id', $career->id)));
         }
         if ($from !== '') {

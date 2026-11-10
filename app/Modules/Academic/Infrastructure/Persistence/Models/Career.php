@@ -35,6 +35,9 @@ class Career extends Model
 
     public $timestamps = false;
 
+    /** Nombres que comparten dos o más carreras: se calcula una vez por petición o trabajo de la cola. */
+    private const SHARED_NAMES = 'carreras.nombres_compartidos';
+
     protected $table = 'carreras';
 
     protected $primaryKey = 'carrera_id';
@@ -53,6 +56,30 @@ class Career extends Model
             'modalidad' => StudyModality::class,
             'cantidad_ciclos_malla' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => app()->forgetInstance(self::SHARED_NAMES));
+        static::deleted(fn () => app()->forgetInstance(self::SHARED_NAMES));
+    }
+
+    /**
+     * Nombre para las pantallas. Si otra carrera se llama igual (por ejemplo, dos mallas de
+     * una misma carrera), agrega el código para distinguirlas. El sílabo usa solo el nombre.
+     */
+    public function label(): string
+    {
+        if (! app()->bound(self::SHARED_NAMES)) {
+            app()->scoped(self::SHARED_NAMES, fn (): array => array_fill_keys(
+                static::query()->groupBy('nombre_carrera')->havingRaw('COUNT(*) > 1')->pluck('nombre_carrera')->all(),
+                true,
+            ));
+        }
+        /** @var array<string, true> $shared */
+        $shared = app(self::SHARED_NAMES);
+
+        return isset($shared[$this->nombre]) ? "{$this->nombre} · {$this->codigo_carrera}" : $this->nombre;
     }
 
     /** @return BelongsTo<Faculty, $this> */

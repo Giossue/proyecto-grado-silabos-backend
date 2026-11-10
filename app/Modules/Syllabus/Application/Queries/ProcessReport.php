@@ -44,7 +44,7 @@ final class ProcessReport
         $onTime = 0;
         $reviewDays = [];
         foreach ($syllabi as $syllabus) {
-            $career = $syllabus->convocation->career->nombre;
+            $career = $syllabus->convocation->career->label();
             $careers[$career] ??= ['career' => $career, 'total' => 0, 'states' => array_fill_keys(self::STATES, 0), 'returns' => ['coordinacion' => 0, 'biblioteca' => 0], 'late' => 0];
             $row = &$careers[$career];
             $row['total']++;

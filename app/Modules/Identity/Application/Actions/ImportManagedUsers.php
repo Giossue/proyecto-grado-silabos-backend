@@ -26,9 +26,14 @@ class ImportManagedUsers
     public function execute(array $rows, User $actor, Request $request, bool $confirm): array
     {
         Gate::forUser($actor)->authorize('create', User::class);
-        $careers = Career::query()->where('activo', true)->get()->mapWithKeys(
-            fn (Career $career): array => [$this->key($career->nombre) => $career->id],
-        );
+        // La carrera se reconoce por su nombre (si no se repite), por «Nombre · código» o por su código.
+        $active = Career::query()->where('activo', true)->get();
+        $repeated = $active->countBy(fn (Career $career): string => $this->key($career->nombre))->filter(fn (int $count): bool => $count > 1);
+        $careers = $active->flatMap(fn (Career $career): array => array_filter([
+            $this->key($career->label()) => $career->id,
+            $this->key($career->codigo_carrera) => $career->id,
+            $this->key($career->nombre) => $repeated->has($this->key($career->nombre)) ? null : $career->id,
+        ]));
         $roles = collect(RoleCode::cases())->mapWithKeys(fn (RoleCode $role): array => [
             $this->key($role->label()) => $role->value,
             $this->key($role->value) => $role->value,

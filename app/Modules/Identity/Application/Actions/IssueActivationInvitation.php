@@ -75,7 +75,7 @@ class IssueActivationInvitation
                 ->where('activo', true)
                 ->first();
             $roleName = $assignment?->role->nombre_rol ?? 'Usuario';
-            $careerName = $assignment?->career?->nombre;
+            $careerName = $assignment?->career?->label();
             $activationUrl = rtrim((string) config('app.frontend_url'), '/').'/activar-cuenta?token='.urlencode($token);
 
             DB::afterCommit(function () use ($activationUrl, $careerName, $roleName, $user): void {

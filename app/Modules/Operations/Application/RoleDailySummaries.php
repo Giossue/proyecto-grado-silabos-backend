@@ -46,7 +46,7 @@ final class RoleDailySummaries
                 if (($toFix[$teacherId] ?? 0) > 0) {
                     $parts[] = $toFix[$teacherId] === 1 ? '1 sílabo por corregir' : "{$toFix[$teacherId]} sílabos por corregir";
                 }
-                $lines[(string) $teacherId][] = "{$convocation->career->nombre}: ".implode(' y ', $parts).". Entrega hasta el {$this->notifications->date($due)}.";
+                $lines[(string) $teacherId][] = "{$convocation->career->label()}: ".implode(' y ', $parts).". Entrega hasta el {$this->notifications->date($due)}.";
             }
         }
 
@@ -67,7 +67,7 @@ final class RoleDailySummaries
             ->get();
         foreach ($syllabi as $syllabus) {
             if (ReviewStage::of($syllabus) === ReviewStage::LIBRARY) {
-                $career = (string) $syllabus->convocation->career->nombre;
+                $career = $syllabus->convocation->career->label();
                 $byCareer[$career] = ($byCareer[$career] ?? 0) + 1;
             }
         }

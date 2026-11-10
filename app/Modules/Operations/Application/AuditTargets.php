@@ -85,14 +85,14 @@ final class AuditTargets
             'usuario' => User::query()->whereKey($ids)->get()
                 ->mapWithKeys(fn (User $user): array => [$user->id => "{$user->nombre} ({$user->correo_electronico})"])->all(),
             'asignacion_rol' => RoleAssignment::query()->with(['user', 'career'])->whereKey($ids)->get()
-                ->mapWithKeys(fn (RoleAssignment $assignment): array => [$assignment->id => trim("{$assignment->user?->nombre} · {$assignment->role->nombre_rol}".($assignment->career ? " de {$assignment->career->nombre}" : ''))])->all(),
+                ->mapWithKeys(fn (RoleAssignment $assignment): array => [$assignment->id => trim("{$assignment->user?->nombre} · {$assignment->role->nombre_rol}".($assignment->career ? " de {$assignment->career->label()}" : ''))])->all(),
             'asignacion_docente' => TeacherAssignment::query()->with(['roleAssignment.user', 'parallel.subject'])->whereKey($ids)->get()
                 ->mapWithKeys(fn (TeacherAssignment $assignment): array => [$assignment->id => "{$assignment->parallel->subject->nombre} · Paralelo {$assignment->parallel->codigo} · {$assignment->roleAssignment->user?->nombre}"])->all(),
             'facultad' => Faculty::query()->whereKey($ids)->get()->mapWithKeys(fn (Faculty $faculty): array => [$faculty->id => $faculty->nombre])->all(),
-            'carrera' => Career::query()->whereKey($ids)->get()->mapWithKeys(fn (Career $career): array => [$career->id => $career->nombre])->all(),
+            'carrera' => Career::query()->whereKey($ids)->get()->mapWithKeys(fn (Career $career): array => [$career->id => $career->label()])->all(),
             'periodo' => AcademicPeriod::query()->whereKey($ids)->get()->mapWithKeys(fn (AcademicPeriod $period): array => [$period->id => $period->codigo])->all(),
             'convocatoria' => Convocation::query()->with(['career', 'process.academicPeriod'])->whereKey($ids)->get()
-                ->mapWithKeys(fn (Convocation $convocation): array => [$convocation->id => "{$convocation->career->nombre} · {$convocation->process->academicPeriod?->codigo}"])->all(),
+                ->mapWithKeys(fn (Convocation $convocation): array => [$convocation->id => "{$convocation->career->label()} · {$convocation->process->academicPeriod?->codigo}"])->all(),
             'proceso_silabos' => SyllabusProcess::query()->with('academicPeriod')->whereKey($ids)->get()
                 ->mapWithKeys(fn (SyllabusProcess $process): array => [$process->id => "Convocatoria institucional {$process->academicPeriod?->codigo}"])->all(),
             'documento_apoyo' => SupportDocument::query()->whereKey($ids)->get()

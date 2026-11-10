@@ -86,7 +86,7 @@ class OpenConvocation
                 deduplicationKey: "convocatoria.abierta:{$convocation->id}:{$teacherId}",
                 recipientIds: [$teacherId],
                 title: $count === 1 ? 'Tiene un sílabo por elaborar' : "Tiene {$count} sílabos por elaborar",
-                message: "Se abrió la convocatoria de {$convocation->career->nombre}{$due}.",
+                message: "Se abrió la convocatoria de {$convocation->career->label()}{$due}.",
                 resourceType: 'convocatoria',
                 resourceId: $convocation->id,
             );

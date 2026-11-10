@@ -98,7 +98,7 @@ final class NotificationDestination
         if ($assignment === null) {
             return null;
         }
-        $career = $assignment->career?->nombre;
+        $career = $assignment->career?->label();
 
         return match ($assignment->role->codigo_rol) {
             RoleCode::Coordinator->value => 'Coordinación'.($career !== null ? " · {$career}" : ''),

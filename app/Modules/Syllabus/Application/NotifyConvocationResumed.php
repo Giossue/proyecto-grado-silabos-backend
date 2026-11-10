@@ -29,7 +29,7 @@ final class NotifyConvocationResumed
                 deduplicationKey: "convocatoria.reanudada:{$convocation->id}:{$teacherId}:{$at}",
                 recipientIds: [$teacherId],
                 title: 'Se reanudó la convocatoria',
-                message: "Ya puede seguir con sus sílabos de {$convocation->career->nombre}.",
+                message: "Ya puede seguir con sus sílabos de {$convocation->career->label()}.",
                 resourceType: 'convocatoria',
                 resourceId: $convocation->id,
             );

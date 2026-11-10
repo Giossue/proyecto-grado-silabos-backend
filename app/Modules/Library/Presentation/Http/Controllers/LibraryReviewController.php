@@ -210,7 +210,7 @@ class LibraryReviewController extends Controller
             'subject' => $syllabus?->academicSubjectName(),
             'code' => $syllabus?->academicSubjectCode(),
             'faculty' => $syllabus?->convocation->career->faculty?->nombre,
-            'career' => $syllabus?->convocation->career->nombre,
+            'career' => $syllabus?->convocation->career->label(),
             'period' => $syllabus?->convocation->process->academicPeriod->codigo,
             'parallels' => $syllabus === null ? [] : [$syllabus->academicParallelCode()],
             'teachers' => $syllabus?->teachers->pluck('nombre')->unique()->values()->all() ?? [],

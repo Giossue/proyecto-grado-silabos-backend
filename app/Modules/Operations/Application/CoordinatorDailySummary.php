@@ -31,7 +31,7 @@ final class CoordinatorDailySummary
                 $review += ReviewStage::of($syllabus) === ReviewStage::COORDINATION ? 1 : 0;
             }
             if ($review > 0) {
-                $pending[$convocation->carrera_id] = ['career' => $convocation->career->nombre, 'review' => $review];
+                $pending[$convocation->carrera_id] = ['career' => $convocation->career->label(), 'review' => $review];
             }
         }
 

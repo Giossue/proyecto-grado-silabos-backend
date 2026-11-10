@@ -249,7 +249,7 @@ class SessionController extends Controller
             'id' => $assignment->id,
             'code' => $assignment->role->codigo_rol,
             'career_id' => $assignment->carrera_id,
-            'career_name' => $assignment->career?->nombre,
+            'career_name' => $assignment->career?->label(),
         ];
     }
 }
