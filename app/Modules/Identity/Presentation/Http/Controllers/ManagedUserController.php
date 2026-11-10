@@ -81,7 +81,7 @@ class ManagedUserController extends Controller
                     ->select('usuario_id'),
             ))
             ->with(['roleAssignments' => fn ($query) => $query
-                ->with(['career:id,nombre'])
+                ->with(['career:id,nombre,codigo_carrera'])
                 ->orderByDesc('asignado_en')])
             ->orderBy('nombre')
             ->paginate(20)

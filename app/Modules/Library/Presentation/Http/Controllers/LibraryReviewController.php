@@ -190,7 +190,7 @@ class LibraryReviewController extends Controller
         return Syllabus::query()
             ->whereKey($ids)
             ->with([
-                'convocation.career:id,nombre,facultad_id',
+                'convocation.career:id,nombre,codigo_carrera,facultad_id',
                 'convocation.career.faculty:id,nombre',
                 'convocation.process.academicPeriod',
                 'parallel.subject',

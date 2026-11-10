@@ -27,7 +27,7 @@ final class RoleDailySummaries
     public function teachers(): array
     {
         $lines = [];
-        $convocations = Convocation::query()->with('career:id,nombre')
+        $convocations = Convocation::query()->with('career:id,nombre,codigo_carrera')
             ->where('estado', Convocation::STATE_OPEN)
             ->whereHas('process', fn ($process) => $process->where('estado', SyllabusProcess::STATE_OPEN))
             ->get();
@@ -61,7 +61,7 @@ final class RoleDailySummaries
     public function library(): array
     {
         $byCareer = [];
-        $syllabi = Syllabus::query()->with('convocation.career:id,nombre')->where('estado', 'en_revision')
+        $syllabi = Syllabus::query()->with('convocation.career:id,nombre,codigo_carrera')->where('estado', 'en_revision')
             ->whereHas('convocation', fn ($convocation) => $convocation->where('estado', Convocation::STATE_OPEN))
             ->whereHas('convocation.process', fn ($process) => $process->where('estado', SyllabusProcess::STATE_OPEN))
             ->get();

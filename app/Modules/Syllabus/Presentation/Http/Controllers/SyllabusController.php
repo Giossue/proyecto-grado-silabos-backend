@@ -73,7 +73,7 @@ class SyllabusController extends Controller
                     ->orWhereRaw(AccentInsensitive::matches("datos_academicos_silabo->'subject'->>'code'"), [AccentInsensitive::pattern($term)]),
             ))
             ->when($state, fn ($query, string $value) => $query->where('estado', $value))
-            ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.subject'])
+            ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre,codigo_carrera', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.subject'])
             // Por ciclo y luego por asignatura; se usa la foto académica del sílabo y, si falta, la malla.
             ->orderByRaw(<<<'SQL'
                 COALESCE((datos_academicos_silabo->'subject'->>'cycle')::int,
@@ -119,7 +119,7 @@ class SyllabusController extends Controller
         $careers = Syllabus::query()
             ->writtenBy($user)
             ->inPastPeriod()
-            ->with(['convocation:id,carrera_id', 'convocation.career:id,nombre'])
+            ->with(['convocation:id,carrera_id', 'convocation.career:id,nombre,codigo_carrera'])
             ->get()
             ->groupBy(fn (Syllabus $syllabus): string => $syllabus->convocation->carrera_id)
             ->map(fn (Collection $group, string $careerId): array => [
@@ -142,7 +142,7 @@ class SyllabusController extends Controller
             ->writtenBy($user)
             ->inPastPeriod()
             ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $career))
-            ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo,fecha_fin', 'parallel.subject'])
+            ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre,codigo_carrera', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo,fecha_fin', 'parallel.subject'])
             ->get()
             ->sortByDesc(fn (Syllabus $syllabus) => $syllabus->convocation->process->academicPeriod->fecha_fin)
             ->values();

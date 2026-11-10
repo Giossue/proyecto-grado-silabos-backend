@@ -79,7 +79,13 @@ class Career extends Model
         /** @var array<string, true> $shared */
         $shared = app(self::SHARED_NAMES);
 
-        return isset($shared[$this->nombre]) ? "{$this->nombre} · {$this->codigo_carrera}" : $this->nombre;
+        if (! isset($shared[$this->nombre])) {
+            return $this->nombre;
+        }
+        // Si la carrera se cargó sin su código, se lee aparte para no mostrar «Nombre · ».
+        $code = $this->getAttribute('codigo_carrera') ?? static::query()->whereKey($this->getKey())->value('codigo_carrera');
+
+        return "{$this->nombre} · {$code}";
     }
 
     /** @return BelongsTo<Faculty, $this> */

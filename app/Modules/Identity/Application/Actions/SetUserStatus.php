@@ -66,7 +66,7 @@ class SetUserStatus
         $closed = [];
         $assignments = RoleAssignment::query()
             ->effective()
-            ->with('career:id,nombre')
+            ->with('career:id,nombre,codigo_carrera')
             ->where('usuario_id', $target->id)
             ->where('rol', RoleCode::Coordinator->value)
             ->lockForUpdate()

@@ -148,6 +148,9 @@ class LibraryReviewTest extends TestCase
         $this->assertContains("{$career->nombre} · MALLA-9", array_column($careers, 'nombre'));
         // El sílabo sigue con el nombre oficial, sin el código.
         $this->assertSame($career->nombre, $syllabus->fresh()?->convocation->career->nombre);
+        // El rol activo de la sesión también lleva el código, aunque la carrera se cargue sin él.
+        $this->as('coordinator')->getJson(route('api.v1.session.show'))->assertOk()->assertJsonFragment(['career_name' => $label]);
+        $this->assertSame($label, Career::query()->select(['carrera_id', 'nombre_carrera'])->findOrFail($career->id)->label());
     }
 
     public function test_el_reporte_de_la_convocatoria_resume_el_avance_por_carrera_y_se_exporta_a_excel(): void

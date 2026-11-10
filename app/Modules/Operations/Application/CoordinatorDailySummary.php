@@ -19,7 +19,7 @@ final class CoordinatorDailySummary
     {
         $pending = [];
         $convocations = Convocation::query()
-            ->with('career:id,nombre')
+            ->with('career:id,nombre,codigo_carrera')
             // En pausa nadie revisa: el resumen solo cuenta convocatorias abiertas.
             ->where('estado', Convocation::STATE_OPEN)
             ->whereHas('process', fn ($process) => $process->where('estado', SyllabusProcess::STATE_OPEN))

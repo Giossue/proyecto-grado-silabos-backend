@@ -22,7 +22,7 @@ class SelectActiveRole
         $assignment = RoleAssignment::query()
             ->effective()
             ->where('usuario_id', $user->id)
-            ->with(['career:id,nombre'])
+            ->with(['career:id,nombre,codigo_carrera'])
             ->find($assignmentId);
 
         if ($assignment === null || ! $this->roles->isEligible($assignment)) {

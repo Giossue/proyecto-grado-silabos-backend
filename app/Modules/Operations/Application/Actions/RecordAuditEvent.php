@@ -18,7 +18,7 @@ class RecordAuditEvent
         string $result,
         array $metadata = [],
     ): AuditEvent {
-        $assignment = $roleAssignmentId === null ? null : RoleAssignment::query()->with('career:id,nombre')->find($roleAssignmentId);
+        $assignment = $roleAssignmentId === null ? null : RoleAssignment::query()->with('career:id,nombre,codigo_carrera')->find($roleAssignmentId);
 
         return AuditEvent::query()->create([
             'actor_usuario_id' => $actorId,

@@ -115,7 +115,7 @@ class AuditEventController extends Controller
         $query = AuditEvent::query()->with([
             'actor:id,nombre',
             'roleAssignment',
-            'roleAssignment.career:id,nombre',
+            'roleAssignment.career:id,nombre,codigo_carrera',
         ]);
         if ($action !== '') {
             $query->where('accion', $action);
