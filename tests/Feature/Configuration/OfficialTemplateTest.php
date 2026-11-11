@@ -61,7 +61,7 @@ class OfficialTemplateTest extends TestCase
         $sections = $this->template->fresh()->sections();
         $this->assertCount(12, $sections);
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get();
-        $this->assertSame(['carrera' => 15, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
+        $this->assertSame(['carrera' => 15, 'institucional' => 5], $fields->countBy('quien_llena')->sortKeys()->all());
         $this->assertSame(OfficialTemplate::sectionKeys(), $sections->sortBy('posicion')->pluck('clave')->values()->all());
         $this->assertSame(array_column(OfficialTemplate::sections(), 'title'), $sections->sortBy('posicion')->pluck('titulo')->values()->all());
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.formateada']);
@@ -121,7 +121,7 @@ class OfficialTemplateTest extends TestCase
         $template = $this->template->fresh();
         $this->assertCount(12, $template->sections());
         $this->assertNull($template->sections()->firstWhere('clave', 'libre'));
-        $this->assertSame(19, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
+        $this->assertSame(20, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
     }
 
     public function test_the_document_title_can_be_changed_with_the_template(): void
@@ -381,10 +381,10 @@ class OfficialTemplateTest extends TestCase
     {
         $presets = collect($this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk()->json('presets'));
 
-        $this->assertSame(['identificacion', 'planificacion', 'bibliografia_basica', 'bibliografia_complementaria', 'firmas'], $presets->pluck('key')->all());
-        $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares', 'Bibliografía básica', 'Bibliografía complementaria', 'Firmas de revisión y aprobación'], $presets->pluck('label')->all());
-        $this->assertSame(['carrera', 'carrera', 'carrera', 'carrera', 'institucional'], $presets->pluck('quien_llena')->all());
-        $this->assertSame(['asignatura', 'unidades', 'bibliografia', 'bibliografia_complementaria', 'firmas'], $presets->pluck('field_key')->all());
+        $this->assertSame(['identificacion', 'planificacion', 'bibliografia_basica', 'bibliografia_complementaria', 'verificacion_bibliografia', 'firmas'], $presets->pluck('key')->all());
+        $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares', 'Bibliografía básica', 'Bibliografía complementaria', 'Bibliografía verificada por', 'Firmas de revisión y aprobación'], $presets->pluck('label')->all());
+        $this->assertSame(['carrera', 'carrera', 'carrera', 'carrera', 'institucional', 'institucional'], $presets->pluck('quien_llena')->all());
+        $this->assertSame(['asignatura', 'unidades', 'bibliografia', 'bibliografia_complementaria', 'verificacion_bibliografia', 'firmas'], $presets->pluck('field_key')->all());
         $this->assertSame('documentBlock', $presets->firstWhere('key', 'identificacion')['content']['content'][0]['type']);
     }
 
@@ -407,8 +407,12 @@ class OfficialTemplateTest extends TestCase
         foreach (['Puntualidad:', 'Acceso a la Video Conferencia:', 'Registro de Asistencia:', 'Trabajo en Equipo:', 'Dentro de los estándares de comportamiento', 'Se considera inadmisible lo siguiente:', 'Las violaciones serán analizadas'] as $expected) {
             $this->assertStringContainsString($expected, $text('conducta_etica'));
         }
-        foreach (['Elaborado por', 'Revisado y aprobado por', 'Bibliografía verificada por', 'Fecha de entrega:', 'Fecha de revisión:'] as $expected) {
+        foreach (['Elaborado por', 'Revisado y aprobado por', 'Fecha de entrega:', 'Fecha de revisión:'] as $expected) {
             $this->assertStringContainsString($expected, $text('firmas'));
+        }
+        $this->assertStringNotContainsString('Bibliografía verificada por', $text('firmas'));
+        foreach (['Bibliografía verificada por', 'Firma:', 'Biblioteca', 'Fecha de verificación:'] as $expected) {
+            $this->assertStringContainsString($expected, $text('verificacion_bibliografia'));
         }
     }
 

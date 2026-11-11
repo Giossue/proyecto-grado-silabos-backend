@@ -681,6 +681,11 @@
             "field": "bibliografia_complementaria"
         },
         {
+            "key": "verificacion_bibliografia",
+            "label": "Bibliografía verificada por",
+            "field": "verificacion_bibliografia"
+        },
+        {
             "key": "firmas",
             "label": "Firmas de revisión y aprobación",
             "field": "firmas"
@@ -940,6 +945,29 @@
                     "content": [
                         "<div data-block=\"bibliografia\"></div>"
                     ]
+                },
+                {
+                    "key": "verificacion_bibliografia",
+                    "label": "",
+                    "quien_llena": "institucional",
+                    "content": [
+                        "<table>",
+                        "<tr><th style=\"background:#C3D4EA;font-weight:bold\">Bibliografía verificada por</th></tr>",
+                        "<tr>",
+                        "<td>",
+                        "<p>Firma:</p>",
+                        "<p><span data-variable=\"firma_bibliotecario\"></span></p>",
+                        "</td>",
+                        "</tr>",
+                        "<tr>",
+                        "<td>",
+                        "<p><span data-variable=\"nombre_bibliotecario\"></span></p>",
+                        "<p>Biblioteca</p>",
+                        "</td>",
+                        "</tr>",
+                        "<tr><td>Fecha de verificación: <span data-variable=\"fecha_verificacion\"></span></td></tr>",
+                        "</table>"
+                    ]
                 }
             ]
         },
@@ -954,7 +982,7 @@
                     "quien_llena": "institucional",
                     "content": [
                         "<table>",
-                        "<tr><th style=\"background:#C3D4EA;font-weight:bold\">Elaborado por</th><th style=\"background:#C3D4EA;font-weight:bold\">Revisado y aprobado por</th><th style=\"background:#C3D4EA;font-weight:bold\">Bibliografía verificada por</th></tr>",
+                        "<tr><th style=\"background:#C3D4EA;font-weight:bold\">Elaborado por</th><th style=\"background:#C3D4EA;font-weight:bold\">Revisado y aprobado por</th></tr>",
                         "<tr>",
                         "<td>",
                         "<p>Firma:</p>",
@@ -963,10 +991,6 @@
                         "<td>",
                         "<p>Firma:</p>",
                         "<p><span data-variable=\"firma_coordinador\"></span></p>",
-                        "</td>",
-                        "<td>",
-                        "<p>Firma:</p>",
-                        "<p><span data-variable=\"firma_bibliotecario\"></span></p>",
                         "</td>",
                         "</tr>",
                         "<tr>",
@@ -978,12 +1002,8 @@
                         "<p><span data-variable=\"nombre_coordinador\"></span></p>",
                         "<p>Coordinación de Carrera</p>",
                         "</td>",
-                        "<td>",
-                        "<p><span data-variable=\"nombre_bibliotecario\"></span></p>",
-                        "<p>Biblioteca</p>",
-                        "</td>",
                         "</tr>",
-                        "<tr><td>Fecha de entrega: <span data-variable=\"fecha_entrega\"></span></td><td>Fecha de revisión: <span data-variable=\"fecha_revision\"></span></td><td>Fecha de verificación: <span data-variable=\"fecha_verificacion\"></span></td></tr>",
+                        "<tr><td>Fecha de entrega: <span data-variable=\"fecha_entrega\"></span></td><td>Fecha de revisión: <span data-variable=\"fecha_revision\"></span></td></tr>",
                         "</table>"
                     ]
                 }

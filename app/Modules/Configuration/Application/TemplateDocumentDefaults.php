@@ -49,11 +49,25 @@ final class TemplateDocumentDefaults
     public static function signatures(): array
     {
         return self::fixedTable([
-            [['Elaborado por'], ['Revisado y aprobado por'], ['Bibliografía verificada por']],
-            [['[[variable:firma_docente]]'], ['[[variable:firma_coordinador]]'], ['[[variable:firma_bibliotecario]]']],
-            [['[[variable:nombre_docente]]'], ['[[variable:nombre_coordinador]]'], ['[[variable:nombre_bibliotecario]]']],
-            [['Docente de la asignatura'], ['Coordinación de carrera'], ['Biblioteca']],
-            [['Fecha de entrega: [[variable:fecha_entrega]]'], ['Fecha de aprobación: [[variable:fecha_revision]]'], ['Fecha de verificación: [[variable:fecha_verificacion]]']],
+            [['Elaborado por'], ['Revisado y aprobado por']],
+            [['[[variable:firma_docente]]'], ['[[variable:firma_coordinador]]']],
+            [['[[variable:nombre_docente]]'], ['[[variable:nombre_coordinador]]']],
+            [['Docente de la asignatura'], ['Coordinación de carrera']],
+            [['Fecha de entrega: [[variable:fecha_entrega]]'], ['Fecha de aprobación: [[variable:fecha_revision]]']],
+        ], 1);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function libraryVerification(): array
+    {
+        return self::fixedTable([
+            [['Bibliografía verificada por']],
+            [['[[variable:firma_bibliotecario]]']],
+            [['[[variable:nombre_bibliotecario]]']],
+            [['Biblioteca']],
+            [['Fecha de verificación: [[variable:fecha_verificacion]]']],
         ], 1);
     }
 

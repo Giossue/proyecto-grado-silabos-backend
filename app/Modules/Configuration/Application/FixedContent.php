@@ -15,6 +15,7 @@ final class FixedContent
             'escala' => self::gradingScale(),
             'etica' => self::ethics(),
             'firmas' => self::signatures(),
+            'verificacion_bibliografia' => self::libraryVerification(),
             default => throw new InvalidArgumentException("No existe el contenido fijo «{$key}»."),
         };
 
@@ -99,9 +100,20 @@ final class FixedContent
         $signature = fn (): array => self::cell(['', '', 'Firma:']);
 
         return self::doc([self::table([
-            [$signature(), $signature(), $signature()],
-            [self::cell(['Docente – Investigador/a']), self::cell(['Coordinación de Carrera']), self::cell(['Biblioteca'])],
-            [self::strongHeader('Fecha de entrega:'), self::strongHeader('Fecha de revisión:'), self::strongHeader('Fecha de verificación:')],
+            [$signature(), $signature()],
+            [self::cell(['Docente – Investigador/a']), self::cell(['Coordinación de Carrera'])],
+            [self::strongHeader('Fecha de entrega:'), self::strongHeader('Fecha de revisión:')],
+        ])]);
+    }
+
+    /** @return array<string, mixed> */
+    private static function libraryVerification(): array
+    {
+        return self::doc([self::table([
+            [self::header('Bibliografía verificada por')],
+            [self::cell(['', '', 'Firma:'])],
+            [self::cell(['Biblioteca'])],
+            [self::strongHeader('Fecha de verificación:')],
         ])]);
     }
 

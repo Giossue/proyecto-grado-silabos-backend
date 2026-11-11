@@ -62,7 +62,7 @@ class SyllabusTemplateSeederTest extends TestCase
         $template = SyllabusTemplate::query()->firstOrFail();
         app(TemplateStructureValidator::class)->assertUsable($template);
         $fields = $template->fields()->get()->keyBy('clave');
-        $this->assertSame(['carrera' => 15, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
+        $this->assertSame(['carrera' => 15, 'institucional' => 5], $fields->countBy('quien_llena')->sortKeys()->all());
         foreach ($fields as $field) {
             $this->assertEquals($field->contenido, FieldDocument::normalize($field->contenido));
         }
@@ -89,6 +89,9 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertStringContainsString('Nivel de contribución', FreeText::plainText($fields['contribucion_perfil']->contenido));
         $this->assertSame('Revisión y aprobación', $template->sections->firstWhere('clave', 'revision')->titulo);
         $signatureKeys = array_column(array_column(TemplateDocument::nodes($fields['firmas']->contenido, 'variable'), 'attrs'), 'id');
-        $this->assertEqualsCanonicalizing(['firma_docente', 'firma_coordinador', 'firma_bibliotecario', 'nombre_docente', 'nombre_coordinador', 'nombre_bibliotecario', 'fecha_entrega', 'fecha_revision', 'fecha_verificacion'], $signatureKeys);
+        $this->assertEqualsCanonicalizing(['firma_docente', 'firma_coordinador', 'nombre_docente', 'nombre_coordinador', 'fecha_entrega', 'fecha_revision'], $signatureKeys);
+        $libraryKeys = array_column(array_column(TemplateDocument::nodes($fields['verificacion_bibliografia']->contenido, 'variable'), 'attrs'), 'id');
+        $this->assertEqualsCanonicalizing(['firma_bibliotecario', 'nombre_bibliotecario', 'fecha_verificacion'], $libraryKeys);
+        $this->assertSame('institucional', $fields['verificacion_bibliografia']->quien_llena);
     }
 }
