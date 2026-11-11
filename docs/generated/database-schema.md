@@ -2,8 +2,8 @@
 
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
-- Fecha: 2026-11-05.
-- Última migración aplicada: `2026_11_05_000266_drop_teacher_ai_chat_messages`.
+- Fecha: 2026-11-11.
+- Última migración aplicada: `2026_11_11_000271_library_review_email_keeps_its_switch`.
 - Origen: base temporal creada solo para regenerar este documento, con todas las migraciones aplicadas (PostgreSQL 18), esquema `public`, 37 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --dbname=<base temporal> -X -At -f <consulta>.sql`.
@@ -289,7 +289,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `campo_plantilla_id` | uuid | no |  |
 | `plantilla_id` | uuid | no |  |
 | `vigente_en_plantilla` | boolean | no | `true` |
-| `quien_llena_definicion_campo` | character varying(20) | no | `'docente'::character varying` |
+| `quien_llena_definicion_campo` | character varying(20) | no | `'carrera'::character varying` |
 | `contenido_definicion_campo` | jsonb | no | `'{"type": "doc", "content": [{"type": "paragraph"}]}'::jsonb` |
 
 - PK: `PRIMARY KEY (definicion_campo_id)`
@@ -301,7 +301,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `definiciones_campo_campo_unico`: `(campo_plantilla_id)`
 - CHECK:
   - `definiciones_campo_documento_check`: `CHECK (((contenido_definicion_campo ? 'type'::text) AND (contenido_definicion_campo ? 'content'::text) AND (jsonb_typeof(contenido_definicion_campo) = 'object'::text) AND ((contenido_definicion_campo ->> 'type'::text) = 'doc'::text) AND (jsonb_typeof((contenido_definicion_campo -> 'content'::text)) = 'array'::text)))`
-  - `definiciones_campo_responsable_check`: `CHECK (((quien_llena_definicion_campo)::text = ANY ((ARRAY['docente'::character varying, 'coordinacion'::character varying, 'institucional'::character varying])::text[])))`
+  - `definiciones_campo_responsable_check`: `CHECK (((quien_llena_definicion_campo)::text = ANY ((ARRAY['carrera'::character varying, 'institucional'::character varying])::text[])))`
 - Triggers:
   - `marcar_cambio_definicion_campo_plantilla`: AFTER INSERT OR DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION marcar_cambio_plantilla()
 
@@ -337,12 +337,19 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 |---|---|---|---|
 | `envio_biblioteca_id` | uuid | no |  |
 | `revision_silabo_id` | uuid | no |  |
+| `verificado_por` | uuid | sí |  |
+| `verificado_en` | timestamp with time zone | sí |  |
+| `verificacion_heredada` | boolean | no | `false` |
 
 - PK: `PRIMARY KEY (envio_biblioteca_id)`
 - FK:
   - `envios_biblioteca_revision_silabo_id_foreign`: `FOREIGN KEY (revision_silabo_id) REFERENCES revisiones_silabo(revision_silabo_id) ON DELETE RESTRICT`
+  - `envios_biblioteca_verificado_por_fkey`: `FOREIGN KEY (verificado_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
 - Únicos:
   - `envios_biblioteca_revision_unica`: `(revision_silabo_id)`
+- CHECK:
+  - `envios_biblioteca_herencia_verificada`: `CHECK (((NOT verificacion_heredada) OR (verificado_en IS NOT NULL)))`
+  - `envios_biblioteca_verificacion_completa`: `CHECK (((verificado_por IS NULL) = (verificado_en IS NULL)))`
 - Triggers:
   - `proteger_envio_biblioteca`: BEFORE DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION proteger_envio_biblioteca()
 
