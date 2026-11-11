@@ -137,10 +137,11 @@ pida.
   plantilla.
 - La plantilla es una sola, se edita en el sitio y no tiene versiones. Es solo datos
   (ADR-0011): `plantilla_silabo.definicion_plantilla` más secciones y campos. Cada campo
-  dice quién lo llena (`docente`, `coordinacion` o `institucional`).
-- El proyecto de carrera de cada asignatura guarda los campos de
-  Coordinación en `valores_campo`. Solo Coordinación los edita; el sílabo copia el valor
-  al crearse.
+  es `institucional` («Institucional»: lo escribe Administración) o `carrera` («Carrera»).
+- El proyecto de carrera de cada asignatura guarda los campos Carrera en `valores_campo`.
+  Coordinación escribe el texto y deja espacios para el docente (texto libre, número,
+  elegir una o varias); el docente solo llena esos espacios. El sílabo copia el valor al
+  crearse.
 - Al abrir su sílabo, el docente hereda sus campos del último sílabo suyo de esa
   asignatura en una convocatoria cerrada, salvo que la plantilla haya cambiado desde
   entonces.
