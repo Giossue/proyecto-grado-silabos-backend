@@ -39,8 +39,12 @@ class CareerFieldMigrationTest extends TestCase
             ['key' => 'metodologia', 'label' => '', 'quien_llena' => 'docente', 'value' => FreeText::fromText('Respuesta enviada'), 'document' => FreeText::fromText('Respuesta enviada')],
         ]]]];
 
+        DB::table('plantilla_silabo')->update(['plantilla_modificada_en' => '2026-01-02 03:04:05+00']);
+        $date = DB::table('plantilla_silabo')->value('plantilla_modificada_en');
+
         $this->migration()->up();
 
+        $this->assertSame($date, DB::table('plantilla_silabo')->value('plantilla_modificada_en'), 'Unir los responsables no cuenta como edición de la plantilla.');
         $this->assertSame(['carrera', 'institucional'], DB::table('definiciones_campo')->distinct()->orderBy('quien_llena_definicion_campo')->pluck('quien_llena_definicion_campo')->all());
         $this->assertSame($rows, DB::table('valores_campo')->whereNotNull('asignatura_id')->orderBy('valor_campo_id')->pluck('valor_campo', 'valor_campo_id')->all());
         $this->assertSame('carrera', json_decode((string) DB::table('plantilla_silabo')->value('definicion_plantilla'), true)['presets'][0]['quien_llena']);

@@ -3,11 +3,36 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Une los responsables «docente» y «coordinacion» en «carrera». Los sílabos y las revisiones
+ * enviadas no se tocan. No cuenta como edición de la plantilla: los triggers ponen
+ * plantilla_modificada_en y aquí se deja la fecha que tenía, porque al reanudar una
+ * convocatoria esa fecha rehace los sílabos (como en 000264).
+ */
 return new class extends Migration
 {
     private const LEGACY = ['docente', 'coordinacion'];
 
     public function up(): void
+    {
+        $this->keepingTemplateDate(fn () => $this->toCareer());
+    }
+
+    public function down(): void
+    {
+        $this->keepingTemplateDate(fn () => $this->toLegacy());
+    }
+
+    private function keepingTemplateDate(callable $change): void
+    {
+        $dates = DB::table('plantilla_silabo')->pluck('plantilla_modificada_en', 'plantilla_id');
+        $change();
+        foreach ($dates as $id => $date) {
+            DB::table('plantilla_silabo')->where('plantilla_id', $id)->update(['plantilla_modificada_en' => $date]);
+        }
+    }
+
+    private function toCareer(): void
     {
         DB::unprepared(<<<'SQL'
             ALTER TABLE definiciones_campo DROP CONSTRAINT IF EXISTS definiciones_campo_responsable_check;
@@ -20,7 +45,7 @@ return new class extends Migration
         $this->rewritePresets(fn (string $responsible): string => in_array($responsible, self::LEGACY, true) ? 'carrera' : $responsible);
     }
 
-    public function down(): void
+    private function toLegacy(): void
     {
         DB::unprepared(<<<'SQL'
             ALTER TABLE definiciones_campo DROP CONSTRAINT IF EXISTS definiciones_campo_responsable_check;
