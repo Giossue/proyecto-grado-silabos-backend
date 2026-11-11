@@ -139,7 +139,7 @@ pida.
   (ADR-0011): `plantilla_silabo.definicion_plantilla` más secciones y campos. Cada campo
   es `institucional` («Institucional»: lo escribe Administración) o `carrera` («Carrera»).
 - El proyecto de carrera de cada asignatura guarda los campos Carrera en `valores_campo`.
-  Coordinación escribe el texto y deja espacios para el docente (texto libre, número,
+  Coordinación escribe el texto y deja espacios para el docente (texto libre,
   elegir una o varias); el docente solo llena esos espacios. El sílabo copia el valor al
   crearse.
 - Al abrir su sílabo, el docente hereda sus campos del último sílabo suyo de esa
