@@ -21,10 +21,6 @@ final class ResponseKind
             'label' => 'Texto libre',
             'schema' => ['type' => 'string', 'maxLength' => self::TEXT_LENGTH, 'multiline' => true, 'errorMessage' => 'Escriba una respuesta de hasta 3000 caracteres.'],
         ],
-        'numero' => [
-            'label' => 'Número',
-            'schema' => ['type' => 'number', 'multipleOf' => 0.01, 'maximum' => 999999999.99, 'errorMessage' => 'Escriba solo un número, por ejemplo 12 o 12,5.'],
-        ],
         'una' => [
             'label' => 'Elegir una',
             'schema' => ['type' => 'string', 'oneOf' => [], 'errorMessage' => 'Elija solo entre las opciones de la respuesta.'],
@@ -242,7 +238,6 @@ final class ResponseKind
     private static function emptyValue(string $kind): mixed
     {
         return match (self::KINDS[$kind]['schema']['type'] ?? null) {
-            'number' => '',
             'array' => [],
             'string' => self::hasOptions($kind) ? null : '',
             default => null,

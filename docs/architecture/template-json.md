@@ -76,8 +76,8 @@ Las demás tablas conservan filas, columnas, celdas combinadas y estilos. El ser
 rechaza cualquier modificación de las partes fijas. Los rótulos no cuentan como
 respuesta para completar el proyecto de carrera o enviar el sílabo.
 
-Un espacio de respuesta puede pedir además un **tipo de respuesta** (número, elegir una,
-elegir varias) en lugar de texto libre. Ver «Tipos de respuesta» más abajo.
+Un espacio de respuesta puede pedir además un **tipo de respuesta** (texto libre, elegir una,
+elegir varias). Ver «Tipos de respuesta» más abajo.
 
 La API entrega `template` junto a `value` en campos de sílabo protegidos y junto a
 `content` en campos de proyecto de carrera protegidos. La SPA usa `FieldResponseEditor`; los campos
@@ -413,7 +413,6 @@ espacio de texto libre junto al texto que ya escribió Coordinación.
 | Tipo (`kind`) | Nombre | Opciones | Se guarda en `value` |
 |---|---|---|---|
 | `texto` | Texto libre | no lleva | texto de hasta 3000 caracteres, con saltos de línea; vacío `""` |
-| `numero` | Número | no lleva | texto con número (`12`, `12,5`); vacío `""` |
 | `una` | Elegir una | lista | la clave elegida o `null` |
 | `varias` | Elegir varias | lista | lista de claves; vacío `[]` |
 
@@ -439,7 +438,7 @@ Reglas:
 - **Administración** las pone desde la cinta del editor de la plantilla, en campos Carrera; valen
   para toda la universidad. Puede dejar una de elegir sin opciones.
 - **Coordinación**, en la página del proyecto de carrera de cada materia, escribe el campo y deja
-  espacios con «Espacio para el docente» (texto libre, número, elegir una o varias, con las
+  espacios con «Espacio para el docente» (texto libre, elegir una o varias, con las
   opciones escritas ahí mismo). Puede contestar una respuesta que puso Administración (queda fija
   para el docente) o dejarla para el docente, y escribe las opciones que Administración dejó
   vacías. No cambia el formato fijo de la plantilla. Lo escrito se guarda como fila de
@@ -479,7 +478,7 @@ entrada en cada catálogo (y su ícono en el menú de cada espacio, `ResponseSlo
 | Color o fuente del texto | `<span style="color:#1F3864;font-family:Arial">…</span>`. El editor visual ofrece solo negro, azul `#365F91` y blanco para el texto, y celeste `#C3D4EA` o azul institucional `#4F81BD` para el fondo de celda; el JSON acepta cualquier `#RRGGBB`. |
 | Variable | `<span data-variable="clave"></span>` (`data-list="bullet\|number"` para listas) |
 | Bloque | `<div data-block="tipo" data-props='{…}' data-value='{…}'></div>` |
-| Tipo de respuesta | `<span data-response='{"kind":"numero","options":[],"value":""}'></span>` dentro de un párrafo |
+| Tipo de respuesta | `<span data-response='{"kind":"texto","options":[],"value":""}'></span>` dentro de un párrafo |
 
 ## Validación y errores
 

@@ -194,7 +194,7 @@ Si hay una convocatoria abierta, no se puede cambiar; primero páusela.',
             'title' => 'Proyecto de carrera de una materia',
             'content' => 'Elija una sección a la izquierda y escriba sus campos a la derecha. Lo que escriba le llega fijo al docente.
 
-Con «Espacio para el docente» deja un espacio para que él responda: texto libre, un número o elegir de una lista que usted escribe ahí mismo. Un campo que deje vacío lo escribe el docente completo.
+Con «Espacio para el docente» deja un espacio para que él responda: texto libre o elegir de una lista que usted escribe ahí mismo. Un campo que deje vacío lo escribe el docente completo.
 
 El ojo muestra cómo recibirá el sílabo el docente. Pulse «Guardar proyecto de carrera» antes de salir.
 

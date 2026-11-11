@@ -23,7 +23,7 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 
 - **Carrera** (`carrera`): Coordinación lo escribe por materia en el proyecto de carrera (COR-16)
   y le llega fijo al docente; el docente llena solo los espacios que le quedan (texto libre,
-  número, elegir una o varias). Un campo que Coordinación deja vacío lo escribe el docente entero;
+  elegir una o varias). Un campo que Coordinación deja vacío lo escribe el docente entero;
   uno sin espacios es de solo lectura. Para enviar, cada campo con espacios debe tener algo y
   cada respuesta debe estar contestada.
 - **Institucional** (`institucional`): igual para todos los sílabos; nadie lo edita en el sílabo.
@@ -62,11 +62,11 @@ permite añadir filas y quitar la última. Las demás tablas conservan sus filas
 Los rótulos e instrucciones no cuentan como respuesta para completar un campo.
 
 Un espacio de respuesta puede pedir un tipo, como en un formulario: **Texto libre** (el de
-siempre), **Número**, **Elegir una** o **Elegir varias**. Administración lo pone desde la cinta
+siempre), **Elegir una** o **Elegir varias**. Administración lo pone desde la cinta
 de la plantilla, para toda la universidad, en campos Carrera. Coordinación los deja por
 materia, en la página del proyecto de carrera, con «Espacio para el docente», junto al texto que
 escribe, sin cambiar el formato fijo de la plantilla. El docente solo responde:
-marca opciones (lo elegido queda fijo y solo se quita) o escribe el número. Para enviar, cada
+marca opciones (lo elegido queda fijo y solo se quita) o escribe la respuesta. Para enviar, cada
 respuesta debe estar contestada. El documento imprime lo elegido como texto.
 
 El docente solo llena los datos del bloque; no cambia su tipo. El detalle técnico está en

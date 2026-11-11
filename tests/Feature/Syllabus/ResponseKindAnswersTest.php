@@ -71,13 +71,13 @@ class ResponseKindAnswersTest extends TestCase
     /** @return array<string, mixed> */
     private function built(): array
     {
-        return $this->withResponses($this->response('numero'), $this->response('una', self::TECHNIQUES), $this->response('varias', ['Aula', 'Laboratorio', 'Campo']));
+        return $this->withResponses($this->response('texto'), $this->response('una', self::TECHNIQUES), $this->response('varias', ['Aula', 'Laboratorio', 'Campo']));
     }
 
     /** @return array<string, mixed> */
-    private function answers(mixed $number = '12', mixed $technique = 'o2', mixed $places = ['o3', 'o1']): array
+    private function answers(mixed $text = '12', mixed $technique = 'o2', mixed $places = ['o3', 'o1']): array
     {
-        return $this->withResponses($this->response('numero', [], $number), $this->response('una', self::TECHNIQUES, $technique), $this->response('varias', ['Aula', 'Laboratorio', 'Campo'], $places));
+        return $this->withResponses($this->response('texto', [], $text), $this->response('una', self::TECHNIQUES, $technique), $this->response('varias', ['Aula', 'Laboratorio', 'Campo'], $places));
     }
 
     /** @param array<string, mixed> $document */
@@ -152,8 +152,6 @@ class ResponseKindAnswersTest extends TestCase
             $this->answer($document)->assertUnprocessable()->assertJsonValidationErrors(['value' => self::FIXED]);
         }
         $this->answer($this->answers(technique: ['o1', 'o2']))->assertUnprocessable()->assertJsonValidationErrors(['value' => 'Elija solo entre las opciones de la respuesta.']);
-        $this->answer($this->answers(number: 'doce'))->assertUnprocessable()->assertJsonValidationErrors(['value' => 'Escriba solo un número, por ejemplo 12 o 12,5.']);
-        $this->answer($this->answers(number: '12 horas'))->assertUnprocessable();
         $this->answer($this->answers(places: ['o1', 'o9']))->assertUnprocessable();
         $this->assertEquals($this->answers(), $this->stored());
     }
@@ -165,7 +163,7 @@ class ResponseKindAnswersTest extends TestCase
         $pending = ['field_id' => $this->responseField->id, 'code' => 'respuesta_faltante', 'severity' => 'error', 'message' => "«{$name}» tiene una respuesta sin contestar. Elija una opción o escriba la respuesta antes de enviar."];
 
         $this->assertSame(['campo_obligatorio_faltante'], array_column($this->issues(), 'code'));
-        foreach ([$this->answers(number: ''), $this->answers(technique: null), $this->answers(places: [])] as $document) {
+        foreach ([$this->answers(text: ''), $this->answers(technique: null), $this->answers(places: [])] as $document) {
             $this->answer($document)->assertOk();
             $this->assertSame([$pending], $this->issues());
         }
@@ -200,7 +198,7 @@ class ResponseKindAnswersTest extends TestCase
         $this->answer($this->answers())->assertOk();
         $this->submit()->assertSuccessful();
         FieldValue::query()->whereNotNull('asignatura_id')->where('definicion_campo_id', $this->responseField->id)
-            ->update(['valor' => json_encode($this->withResponses($this->response('numero'), $this->response('una', ['Otra cosa'])))]);
+            ->update(['valor' => json_encode($this->withResponses($this->response('texto'), $this->response('una', ['Otra cosa'])))]);
 
         $snapshot = SyllabusRevision::query()->firstOrFail()->fotografia;
         $field = collect($snapshot['sections'])->flatMap(fn (array $section): array => $section['fields'])->firstWhere('key', 'metodologia');
@@ -232,21 +230,21 @@ class ResponseKindAnswersTest extends TestCase
         $convocation = Convocation::query()->firstOrFail();
         $this->asUser('coordinador@silabos.test')->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))->assertSuccessful();
 
-        $rebuilt = $this->withResponses($this->response('numero'), $this->response('una', [...self::TECHNIQUES, 'Seminario']));
+        $rebuilt = $this->withResponses($this->response('texto'), $this->response('una', [...self::TECHNIQUES, 'Seminario']));
         $this->saveSetup($rebuilt)->assertOk();
 
         $draft = $this->stored();
         $this->assertSame('borrador', $this->syllabus->fresh()->estado);
-        $this->assertEquals(['kind' => 'numero', 'options' => [], 'value' => ''], $draft['content'][1]['content'][0]['attrs']);
+        $this->assertEquals(['kind' => 'texto', 'options' => [], 'value' => ''], $draft['content'][1]['content'][0]['attrs']);
         $technique = $draft['content'][2]['content'][1]['content'][0]['content'][0]['content'][0]['attrs'];
         $this->assertSame('o2', $technique['value']);
         $this->assertSame('Seminario', $technique['options'][2]['title']);
         $this->assertEquals($hours, $draft['content'][2]['content'][1]['content'][1]['content'][0]['content']);
 
         Syllabus::query()->whereKey($this->syllabus->id)->update(['estado' => 'aprobado']);
-        $this->saveSetup($this->withResponses($this->response('numero'), $this->response('una', ['Taller'])))->assertUnprocessable()->assertJsonValidationErrors('purge_required');
+        $this->saveSetup($this->withResponses($this->response('texto'), $this->response('una', ['Taller'])))->assertUnprocessable()->assertJsonValidationErrors('purge_required');
         $this->assertSame('aprobado', $this->syllabus->fresh()->estado);
-        $this->saveSetup($this->withResponses($this->response('numero'), $this->response('una', ['Taller'])), ['confirm_purge' => true])->assertOk();
+        $this->saveSetup($this->withResponses($this->response('texto'), $this->response('una', ['Taller'])), ['confirm_purge' => true])->assertOk();
         $this->assertSame('borrador', $this->syllabus->fresh()->estado);
         $this->assertNull($this->stored()['content'][2]['content'][1]['content'][0]['content'][0]['content'][0]['attrs']['value']);
         $this->assertEquals($hours, $this->stored()['content'][2]['content'][1]['content'][1]['content'][0]['content']);
@@ -263,7 +261,7 @@ class ResponseKindAnswersTest extends TestCase
         $changed = $this->filledTemplateValue($this->responseField, 'Respuesta escrita');
         $changed['content'][0]['content'][0]['text'] = 'Otro texto fijo';
         $this->answer($changed)->assertUnprocessable()->assertJsonValidationErrors(['value' => self::FIXED]);
-        $forged = $this->withResponses($this->response('numero', [], '3'));
+        $forged = $this->withResponses($this->response('texto', [], '3'));
         $this->answer($forged)->assertUnprocessable()->assertJsonValidationErrors(['value' => self::FIXED]);
     }
 }

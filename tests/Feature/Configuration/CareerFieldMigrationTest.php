@@ -25,7 +25,7 @@ class CareerFieldMigrationTest extends TestCase
         $this->templateWithResponseField();
         $subject = Subject::query()->firstOrFail();
         $this->fillSubjectProfiles();
-        $this->saveSetup($this->withResponses($this->response('numero')))->assertOk();
+        $this->saveSetup($this->withResponses($this->response('texto')))->assertOk();
         $this->migration()->down();
         $keys = fn (array $keys): array => FieldDefinition::query()->get()->filter(fn (FieldDefinition $field): bool => in_array($field->clave, $keys, true))->pluck('id')->all();
         DB::table('definiciones_campo')->whereIn('definicion_campo_id', $keys(self::CAREER_PROJECT_KEYS))->update(['quien_llena_definicion_campo' => 'coordinacion']);
@@ -55,7 +55,7 @@ class CareerFieldMigrationTest extends TestCase
         $this->assertFalse(SubjectProfileFields::teacherEditable($fields['descripcion'], $templates));
         $this->assertTrue(SubjectProfileFields::teacherEditable($fields['tecnicas_ensenanza'], $templates));
         $this->assertTrue(SubjectProfileFields::teacherEditable($fields['metodologia'], $templates));
-        $this->assertSame('numero', $templates[$fields['metodologia']->id]['content'][1]['content'][0]['attrs']['kind']);
+        $this->assertSame('texto', $templates[$fields['metodologia']->id]['content'][1]['content'][0]['attrs']['kind']);
         $present = SnapshotDocuments::present($snapshot);
         $this->assertSame(['coordinacion', 'docente'], array_column($present['sections'][0]['fields'], 'quien_llena'));
         $this->assertSame('Texto enviado', FreeText::plainText($present['sections'][0]['fields'][0]['document']));

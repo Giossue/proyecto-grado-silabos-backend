@@ -129,7 +129,7 @@ class CareerFieldTest extends TestCase
         $this->asUser('coordinador@silabos.test');
         $this->saveSetup($this->document(
             $this->paragraph('Texto de la carrera.'),
-            ['type' => 'paragraph', 'content' => [$this->response('una', ['Taller', 'Seminario'], 'o1'), $this->response('numero', [], '4')]],
+            ['type' => 'paragraph', 'content' => [$this->response('una', ['Taller', 'Seminario'], 'o1'), $this->response('texto', [], '4')]],
         ))->assertOk();
 
         $row = $this->profileRow();

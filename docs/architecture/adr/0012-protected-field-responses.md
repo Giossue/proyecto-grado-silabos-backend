@@ -114,7 +114,7 @@ ADM-06, COR-16, DOC-04. PV-16 no cambia.
 
 ## Actualización 2026-11-10: tipos de respuesta
 
-Un espacio de respuesta puede pedir un tipo (número, elegir una, elegir varias) con un nodo
+Un espacio de respuesta puede pedir un tipo (texto libre, elegir una, elegir varias) con un nodo
 `response` dentro del documento del campo, que lleva el tipo, las opciones y lo respondido.
 Sigue sin haber permisos por celda ni tablas nuevas. Administración lo pone en la plantilla;
 Coordinación lo arma por materia en los campos del docente y se guarda como valor de la

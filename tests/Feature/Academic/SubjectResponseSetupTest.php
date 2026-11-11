@@ -51,12 +51,12 @@ class SubjectResponseSetupTest extends TestCase
     public function test_coordination_turns_a_slot_and_a_table_cell_into_a_response_and_it_is_kept_as_json_of_the_subject(): void
     {
         $this->templateWithResponseField();
-        $setup = $this->withResponses($this->response('numero', [], '7'), $this->response('una', ['Clase magistral', 'Taller'], 'o1'));
+        $setup = $this->withResponses($this->response('texto', [], '7'), $this->response('una', ['Clase magistral', 'Taller'], 'o1'));
 
         $saved = $this->saveSetup($setup)->assertOk();
 
         $stored = $this->setupRow()?->valor;
-        $this->assertSame('numero', $stored['content'][1]['content'][0]['attrs']['kind']);
+        $this->assertSame('texto', $stored['content'][1]['content'][0]['attrs']['kind']);
         $this->assertSame('', $stored['content'][1]['content'][0]['attrs']['value']);
         $cell = $stored['content'][2]['content'][1]['content'][0]['content'][0]['content'][0]['attrs'];
         $this->assertEquals(['kind' => 'una', 'options' => [['const' => 'o1', 'title' => 'Clase magistral'], ['const' => 'o2', 'title' => 'Taller']], 'value' => null], $cell);
@@ -93,7 +93,7 @@ class SubjectResponseSetupTest extends TestCase
         $filledCell = $base;
         $filledCell['content'][2]['content'][1]['content'][0]['content'][0]['content'] = $text;
         $textNextToResponse = $this->withResponses();
-        $textNextToResponse['content'][1]['content'] = [...$text, $this->response('numero')];
+        $textNextToResponse['content'][1]['content'] = [...$text, $this->response('texto')];
 
         foreach ([$changedText, $changedHeader] as $document) {
             $this->saveSetup($document)->assertUnprocessable()->assertJsonValidationErrors(["values.{$this->responseField->id}" => self::FIXED]);
@@ -111,7 +111,7 @@ class SubjectResponseSetupTest extends TestCase
         $this->saveSetup($this->withResponses($this->response('una', ['Sí', 'No'])))->assertOk();
         $this->assertSame('Sí', $this->setupRow()?->valor['content'][1]['content'][0]['attrs']['options'][0]['title']);
         $this->saveSetup($this->withResponses($this->response('varias', ['Sí', 'No'])))->assertUnprocessable();
-        $this->saveSetup($this->withResponses($this->response('numero')))->assertUnprocessable();
+        $this->saveSetup($this->withResponses($this->response('texto')))->assertUnprocessable();
 
         $this->asUser('admin@silabos.test')->patchJson(route('api.v1.admin.template.structure.fields.update', [SyllabusTemplate::institutional(), $this->responseField]), [
             'content' => $this->withResponses($this->response('una', ['Presencial', 'Virtual'])),
@@ -125,20 +125,20 @@ class SubjectResponseSetupTest extends TestCase
     {
         $template = $this->templateWithResponseField();
         $this->fillSubjectProfiles();
-        $this->saveSetup($this->withResponses($this->response('numero')))->assertOk();
+        $this->saveSetup($this->withResponses($this->response('texto')))->assertOk();
         $this->asUser('coordinador@silabos.test')->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id)->id,
         ])->assertSuccessful();
 
         $this->saveSetup($this->withResponses($this->response('una', ['A'])))->assertUnprocessable()->assertJsonValidationErrors('process');
-        $this->assertSame('numero', $this->setupRow()?->valor['content'][1]['content'][0]['attrs']['kind']);
+        $this->assertSame('texto', $this->setupRow()?->valor['content'][1]['content'][0]['attrs']['kind']);
     }
 
     public function test_only_the_career_of_the_subject_builds_its_responses(): void
     {
         $this->templateWithResponseField();
         $this->asUser('docente@silabos.test')->putJson(route('api.v1.academic.subjects.profile.update', $this->subject), [
-            'values' => [$this->responseField->id => $this->withResponses($this->response('numero'))],
+            'values' => [$this->responseField->id => $this->withResponses($this->response('texto'))],
         ])->assertForbidden();
         $this->assertNull($this->setupRow());
     }
@@ -161,7 +161,7 @@ class SubjectResponseSetupTest extends TestCase
     public function test_replacing_the_template_keeps_what_coordination_built_in_the_same_field(): void
     {
         $template = $this->templateWithResponseField();
-        $this->saveSetup($this->withResponses($this->response('numero')))->assertOk();
+        $this->saveSetup($this->withResponses($this->response('texto')))->assertOk();
         $previous = $this->responseField->id;
 
         $json = $this->asUser('admin@silabos.test')->getJson(route('api.v1.admin.template.json.export', $template))->assertOk()->json();
@@ -170,7 +170,7 @@ class SubjectResponseSetupTest extends TestCase
         $this->responseField = FieldDefinition::query()->where('clave', 'metodologia')->firstOrFail();
         $this->assertNotSame($previous, $this->responseField->id);
         $this->asUser('coordinador@silabos.test')->getJson(route('api.v1.academic.subjects.profile.show', $this->subject))->assertOk()
-            ->assertJsonPath("values.{$this->responseField->id}.content.1.content.0.attrs.kind", 'numero');
+            ->assertJsonPath("values.{$this->responseField->id}.content.1.content.0.attrs.kind", 'texto');
     }
 
     public function test_a_field_without_responses_is_saved_and_protected_as_before(): void

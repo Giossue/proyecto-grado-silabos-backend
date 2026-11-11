@@ -100,7 +100,7 @@ y el botón «Documentos» (DOC-10).
     identificación: «Celeste» (en negrita) y «Azul institucional» (texto blanco y negrita),
     o «Sin fondo»;
   - «Tipo de respuesta» (ícono con ayuda): con el cursor en un párrafo o una celda de un campo
-    Carrera, abre un cuadro para elegir Texto libre, Número, Elegir una o Elegir varias y, si es de
+    Carrera, abre un cuadro para elegir Texto libre, Elegir una o Elegir varias y, si es de
     elegir, escribir las opciones ahí mismo («Agregar opción»); «Insertar» pone la respuesta
     donde está el cursor. Se ve como una etiqueta con el tipo y sus opciones. Las opciones se
     pueden dejar vacías para que Coordinación las escriba en cada materia. En un campo
@@ -212,7 +212,7 @@ y el botón «Documentos» (DOC-10).
   sección a la derecha, cada uno con el mismo editor de texto (negrita, cursiva, subrayado,
   viñetas y numeración). Arriba a la derecha, el ojo («Vista previa») y «Guardar proyecto de
   carrera». Si sale con cambios sin guardar, pregunta «Hay cambios sin guardar» (2026-11-10).
-- En la cinta del editor, «Espacio para el docente» abre un cuadro con «Texto libre», «Número»,
+- En la cinta del editor, «Espacio para el docente» abre un cuadro con «Texto libre»,
   «Elegir una» y «Elegir varias»; si es de elegir, las opciones se escriben ahí mismo y no se
   puede insertar sin ninguna. Lo que escribe Coordinación le llega fijo al docente; un campo que
   deja vacío lo escribe el docente entero. En campos con formato de la plantilla (texto fijo o
@@ -254,11 +254,11 @@ y el botón «Documentos» (DOC-10).
   tras una breve pausa; si falla, muestra «Sin guardar» y «Reintentar»; si hay
   conflicto, «Recargar borrador».
 - Donde la plantilla o Coordinación pidieron un tipo de respuesta, el docente solo responde: un
-  número (no admite letras) o un botón que abre las opciones para marcar. Lo elegido queda como
+  cuadro de texto libre o un botón que abre las opciones para marcar. Lo elegido queda como
   etiqueta fija que solo se quita con su X; «Elegir una» admite una y «Elegir varias», una o más.
   Sin opciones escritas dice «No hay opciones para elegir: pídalas al coordinador». Al enviar,
   una respuesta sin contestar avisa ««{campo}» tiene una respuesta sin contestar. Elija una
-  opción o escriba el número antes de enviar.» y una sin opciones, ««{campo}» tiene una respuesta
+  opción o escriba la respuesta antes de enviar.» y una sin opciones, ««{campo}» tiene una respuesta
   sin opciones para elegir: pídalas al coordinador.» (2026-11-10).
 - Campos del docente: editables. Campos del proyecto de carrera: solo lectura, salvo los marcados
   como editables («Viene del proyecto de carrera; puede ajustarlo.»). Lo institucional se ve en
