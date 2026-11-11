@@ -64,8 +64,8 @@ Opcionalmente, `title` y `layout` (formato 1) sobrescriben el título y los már
 ## Formato fijo y respuestas
 
 `response_policy` no añade interruptores al constructor. Administración edita todo el
-documento; Carrera y Docencia completan sus respuestas con los permisos de campo
-existentes. El texto no vacío y los encabezados quedan fijos. Un párrafo vacío recibe
+documento; en los campos Carrera, Coordinación y el docente completan sus espacios (ver
+«Quién llena cada campo»). El texto no vacío y los encabezados quedan fijos. Un párrafo vacío recibe
 texto con saltos de línea; una celda de datos vacía recibe texto enriquecido. Un campo
 completamente vacío admite una respuesta documental libre. Si solo hay texto fijo,
 se añade un espacio de respuesta al final al presentar el campo.
@@ -338,7 +338,7 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
   "title": "2. Descripción de la asignatura",
   "orientation": "portrait",
   "fields": [
-    { "key": "descripcion", "label": "Descripción", "quien_llena": "coordinacion", "content": ["<p></p>"] }
+    { "key": "descripcion", "label": "Descripción", "quien_llena": "carrera", "content": ["<p></p>"] }
   ]
 }
 ```
@@ -348,7 +348,7 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | `key` | Minúsculas, números y `_`; empieza con letra; máximo 100. Única entre secciones o entre campos de toda la plantilla. No cambie la clave de un campo en uso. |
 | `title` / `label` | Máximo 180. El título se imprime tal cual. Un `label` vacío no imprime subtítulo. |
 | `orientation` | `portrait` o `landscape`. |
-| `quien_llena` | `docente`, `coordinacion` («Carrera», en el proyecto de carrera de la asignatura) o `institucional` («Fijo»). |
+| `quien_llena` | `carrera` («Carrera») o `institucional` («Institucional»). Un JSON anterior con `docente` o `coordinacion` se importa como `carrera`. |
 | `content` | Lista de líneas HTML, un texto HTML o un documento Tiptap (`{"type":"doc",...}`). |
 
 Límites: 60 secciones, 60 campos por sección, tablas de hasta 24 columnas y 100 filas, documentos de hasta 2 MB.
@@ -356,34 +356,63 @@ Límites: 60 secciones, 60 campos por sección, tablas de hasta 24 columnas y 10
 ### Quién llena cada campo
 
 Los campos no tienen tipo: todos guardan un documento Tiptap con texto, listas, tablas,
-variables y bloques. Lo que cambia es el responsable (`quien_llena`):
+variables y bloques. Lo que cambia es el responsable (`quien_llena`). Hay dos (2026-11-10;
+antes eran `docente`, `coordinacion` e `institucional`):
 
-| `quien_llena` | Contenido que ve el sílabo | ¿El docente lo edita? |
+| `quien_llena` | En pantalla | Contenido que ve el sílabo |
 |---|---|---|
-| `docente` | Empieza con el `content` de la plantilla; luego lo escribe el docente. | Sí |
-| `coordinacion` | El proyecto de carrera de la asignatura, que Coordinación llena una vez por materia. Se copia al crear el sílabo. Si el proyecto de carrera está vacío, se usa el `content` de la plantilla. | No |
-| `institucional` | El `content` de la plantilla con las variables resueltas. No se guarda por sílabo. | No |
+| `carrera` | Carrera | Se arma en tres capas: el `content` de la plantilla (su texto no vacío queda fijo para todos), lo que Coordinación escribe para cada materia en el proyecto de carrera y lo que el docente escribe en los espacios que le quedan. |
+| `institucional` | Institucional | El `content` de la plantilla con las variables resueltas. No se guarda por sílabo. Nadie lo edita. |
 
-- El proyecto de carrera (`PUT academic/asignaturas/{id}/ficha`) llena los campos `coordinacion`
-  y, en los campos `docente`, solo arma tipos de respuesta (ver abajo). La petición trae `values`.
-  El proyecto de carrera está completo solo si todos sus campos `coordinacion` tienen texto y sus
-  respuestas contestadas; los campos `docente` no cuentan.
-- El guardado del borrador acepta solo campos `docente`. Rechaza los demás con `422`.
-- Al enviar, todo campo que no sea `institucional` debe tener contenido.
-- Cambiar el proyecto de carrera con sílabos en curso actualiza esos campos en los sílabos de la materia
-  y conserva lo del docente; los enviados o aprobados vuelven a Borrador tras confirmar.
+Un campo Carrera, en cada materia:
+
+- **Sin fila de la materia** (Coordinación no escribió nada): el docente lo escribe entero, como
+  el antiguo campo `docente`. Si la plantilla solo trae texto fijo, se le añade un espacio al final.
+- **Con fila de la materia**: lo que escribió Coordinación le llega fijo al docente. El docente
+  solo llena los espacios: los espacios vacíos de la plantilla que Coordinación dejó vacíos, las
+  celdas vacías de tablas y las respuestas sin contestar (incluido «Texto libre»). Una respuesta
+  que Coordinación contestó queda fija. Si no queda ningún espacio, el campo es de solo lectura
+  para el docente (`teacher_editable: false`), como el antiguo campo `coordinacion`.
+- Al guardar, el servidor quita las líneas vacías que Coordinación deja dentro de lo que escribió
+  (no son espacios para el docente) y deja sin contestar las respuestas que ella puso. Para dejar
+  un espacio se usa el botón «Espacio para el docente».
+
+Reglas:
+
+- El proyecto de carrera (`GET`/`PUT academic/asignaturas/{id}/ficha`) lista todos los campos
+  Carrera con algún espacio para escribir (los que son solo un bloque, como unidades o
+  bibliografía, no). `values` trae lo guardado por campo; `null` o lo mismo que la plantilla
+  borra la fila. Ya no existe `response_fields`.
+- El proyecto de carrera de una materia está **completo** si ningún campo Carrera deja un espacio
+  de elegir sin opciones. Un campo sin llenar no lo deja incompleto: lo escribe el docente.
+  Esa regla decide el paso «Completar el proyecto de carrera» y el aviso «Falta completar el
+  proyecto de carrera de N materias.» al abrir la convocatoria.
+- El guardado del borrador acepta solo campos Carrera con espacios para el docente; rechaza los
+  demás con `422` («Este campo pertenece a Coordinación o a la institución y el docente no
+  puede cambiarlo.»).
+- Al enviar, cada campo Carrera con espacios debe tener algo escrito o respondido y cada
+  respuesta debe estar contestada. Los campos de solo lectura no se revisan.
+- Cambiar el proyecto de carrera con sílabos en curso actualiza esos campos en los sílabos de la
+  materia y conserva lo que el docente escribió donde todavía encaja; un campo que queda de solo
+  lectura toma lo que escribió Coordinación. Los enviados o aprobados vuelven a Borrador tras
+  confirmar.
+- La importación desde Excel escribe el contenido de los campos Carrera (no crea espacios de
+  elegir): lo importado le llega fijo al docente.
+- Las revisiones enviadas antes del cambio conservan `docente` o `coordinacion` en su
+  fotografía; el PDF, el Word y la vista previa no dependen de ese valor.
 - Título y logos van en el encabezado fijo (`document.title`, `document.header`); no
   son campos.
-- En la plantilla oficial la bibliografía es `docente`.
 
 ### Tipos de respuesta
 
 Un párrafo o una celda puede llevar una respuesta de un tipo, como en un formulario: quien arma
-elige el tipo y escribe las opciones; quien llena el campo solo responde. «Texto libre» es el
-espacio vacío de siempre y no lleva nodo.
+elige el tipo y escribe las opciones; quien llena el campo solo responde. Un párrafo o una celda
+vacíos siguen siendo un espacio de texto libre sin nodo; el tipo `texto` sirve para dejar un
+espacio de texto libre junto al texto que ya escribió Coordinación.
 
 | Tipo (`kind`) | Nombre | Opciones | Se guarda en `value` |
 |---|---|---|---|
+| `texto` | Texto libre | no lleva | texto de hasta 3000 caracteres, con saltos de línea; vacío `""` |
 | `numero` | Número | no lleva | texto con número (`12`, `12,5`); vacío `""` |
 | `una` | Elegir una | lista | la clave elegida o `null` |
 | `varias` | Elegir varias | lista | lista de claves; vacío `[]` |
@@ -404,25 +433,24 @@ Reglas:
 - Hasta 50 opciones por respuesta, cada una con texto de hasta 120 caracteres y sin repetir.
   `const` es la clave estable de la opción (minúsculas, números y `_`); el editor la genera
   (`o1`, `o2`…). Cambiar el texto de una opción conserva lo ya elegido.
-- Un campo `institucional` («Fijo») no admite tipos de respuesta. En la definición de la
-  plantilla las respuestas se guardan siempre sin contestar.
-- **Administración** las pone desde la cinta del editor de la plantilla, en campos `docente` o
-  `coordinacion`; valen para toda la universidad. Puede dejar una de elegir sin opciones.
-- **Coordinación**, en el proyecto de carrera de cada materia, ve también los campos `docente`
-  (`response_fields` en `GET academic/asignaturas/{id}/ficha`) solo para armar: convierte un
-  espacio de respuesta (párrafo, celda o campo vacío) en una respuesta de un tipo y escribe las
-  opciones, también las que Administración dejó vacías. No cambia el formato fijo ni las
-  respuestas que Administración ya definió, y no escribe en esos campos. Lo armado se guarda como
-  fila de `valores_campo` de la asignatura (`asignatura_id` + `definicion_campo_id` del campo
-  `docente`); si no arma nada, no hay fila. No cuenta para completar el proyecto de carrera y
-  sigue el mismo bloqueo de la convocatoria abierta. Reemplazar la plantilla lo conserva por
-  clave de campo mientras siga encajando.
-- **El sílabo** del docente parte de lo que Coordinación armó para su materia; esa es la
-  `template` que recibe y contra la que el servidor protege el guardado. El docente (o
-  Coordinación, en un campo `coordinacion`) solo contesta: no cambia el tipo ni las opciones, no
+- Un campo `institucional` («Institucional») no admite tipos de respuesta («Un campo
+  Institucional no lleva tipos de respuesta. Cambie quién lo llena o quite la respuesta.»). En la
+  definición de la plantilla las respuestas se guardan siempre sin contestar.
+- **Administración** las pone desde la cinta del editor de la plantilla, en campos Carrera; valen
+  para toda la universidad. Puede dejar una de elegir sin opciones.
+- **Coordinación**, en la página del proyecto de carrera de cada materia, escribe el campo y deja
+  espacios con «Espacio para el docente» (texto libre, número, elegir una o varias, con las
+  opciones escritas ahí mismo). Puede contestar una respuesta que puso Administración (queda fija
+  para el docente) o dejarla para el docente, y escribe las opciones que Administración dejó
+  vacías. No cambia el formato fijo de la plantilla. Lo escrito se guarda como fila de
+  `valores_campo` de la asignatura y sigue el bloqueo de la convocatoria abierta. Reemplazar la
+  plantilla lo conserva por clave de campo mientras siga encajando.
+- **El sílabo** del docente parte de esa fila; esa es la `template` que recibe y contra la que el
+  servidor protege el guardado. El docente solo contesta: no cambia el tipo ni las opciones, no
   escribe junto a la respuesta y no la quita. En una tabla que crece, cada fila nueva repite las
   respuestas de la fila modelo, sin contestar.
-- **Al enviar**, cada respuesta debe estar contestada (`respuesta_faltante`) y una de elegir sin
+- **Al enviar**, cada respuesta debe estar contestada (`respuesta_faltante`: ««{campo}» tiene una
+  respuesta sin contestar. Elija una opción o escriba la respuesta antes de enviar.») y una de elegir sin
   opciones escritas avisa `respuesta_sin_opciones` («…pídalas al coordinador.»).
 - **Cambiar lo armado con sílabos en curso** (en pausa, o al reabrir una convocatoria
   finalizada) lleva el campo de cada sílabo a la estructura nueva y conserva lo ya contestado

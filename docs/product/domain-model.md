@@ -49,8 +49,10 @@ esquema completo está en `docs/generated/database-schema.md`; las reglas de est
   definición.
 - **Sección** (`secciones_plantilla`): clave, título, posición y orientación.
 - **Campo** (`campos_plantilla`): sección, clave, título y posición.
-- **Definición de campo** (`definiciones_campo`): quién lo llena (`docente`,
-  `coordinacion`, `institucional`) y su contenido inicial como documento.
+- **Definición de campo** (`definiciones_campo`): quién lo llena (`carrera`
+  o `institucional`) y su contenido inicial como documento. Un campo Carrera lo escribe
+  Coordinación por materia (fila de `valores_campo` con `asignatura_id`) y el docente llena los
+  espacios que le quedan.
 
 Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 

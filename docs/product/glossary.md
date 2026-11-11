@@ -14,7 +14,7 @@
 | Importación del proyecto de carrera | Carga de un Excel generado desde las materias y campos actuales de Coordinación. Se completa el contenido y se revisa antes de aplicar. La vista previa se descarta al cerrar o recargar. |
 | Plantilla | Definición única del sílabo: papel, estilo, variables, bloques, secciones y campos. Es un dato, no código (ADR-0011). |
 | Sección | Parte numerada del sílabo, con título y orientación (vertical u horizontal). |
-| Campo | Contenido dentro de una sección. Indica quién lo llena: docente, coordinación (en pantalla, «Carrera») o institucional («Fijo»). |
+| Campo | Contenido dentro de una sección. Indica quién lo llena: Carrera (Coordinación lo escribe por materia y el docente llena los espacios que le deja) o Institucional (igual para todos). |
 | Variable | Dato del sistema que se inserta en la plantilla, como el nombre de la carrera o las horas de la asignatura. |
 | Bloque | Pieza con diseño, datos y reglas propias, por ejemplo `unidades` (semanas del período) o `identificacion`. |
 | Sílabo | Expediente de un paralelo dentro de una convocatoria. Estados: sin iniciar, borrador, en revisión, corrección solicitada, aprobado. |

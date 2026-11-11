@@ -19,7 +19,7 @@ sequenceDiagram
     C->>API: POST coordination/convocations
     API->>DB: convocatorias_carreras (preparacion → abierta)
     API->>DB: un sílabo sin_iniciar por paralelo + valores_campo heredados
-    Note over API,DB: campos de Coordinación ← proyecto de carrera de la asignatura<br/>campos docentes ← contenido inicial de la plantilla
+    Note over API,DB: campos Carrera ← proyecto de carrera de la asignatura<br/>o, sin él, contenido inicial de la plantilla
     D->>API: POST teacher/syllabi/{id}/start
     API->>DB: estado borrador, version_bloqueo = 1
     loop Autoguardado por campo
@@ -38,8 +38,8 @@ sequenceDiagram
   (`CoordinatorConvocationReadiness`) y una plantilla usable.
 - El docente puede copiar el contenido de otro paralelo suyo de la misma asignatura
   hacia un sílabo que aún no envió (`POST …/copy-from/{source}`).
-- El docente edita campos `docente` y los de Coordinación con el permiso del proyecto de carrera
-  activado.
+- El docente edita solo los espacios de los campos Carrera que le deja el proyecto de carrera
+  (todo el campo si Coordinación lo dejó vacío).
 
 ## 2. Validar y enviar
 

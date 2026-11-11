@@ -7,26 +7,28 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 | N.º | Sección | Campos | Quién llena | Bloque y reglas |
 |---:|---|---|---|---|
 | 1 | Identificación institucional | Tabla de identificación | Sistema y docente | `identificacion`: datos del sistema; el docente responde la discapacidad (ver `identificacion-institucional.md`). |
-| 2 | Descripción de la asignatura | Descripción | Coordinación (proyecto de carrera) | — |
-| 3 | Objetivos de la asignatura | Objetivo general; objetivos específicos | Coordinación (proyecto de carrera) | — |
-| 4 | Resultados de aprendizaje | Resultados de aprendizaje | Coordinación (proyecto de carrera) | — |
-| 5 | Habilidades blandas | Habilidades blandas | Coordinación (proyecto de carrera) | — |
-| 6 | Distribución y planificación de las unidades curriculares | Unidades | Carrera (nombre y resultado) y Docente (semanas), dentro de la misma tabla | Bloque `unidades`, hoja horizontal. Ver abajo. |
-| 7 | Metodología y ambientes de aprendizaje | 7.1 Métodos; 7.2 Técnicas; 7.3 Recursos; 7.4 Herramientas TIC/TAC e IA; 7.5 Ambientes | Docente | — |
-| 8 | Evaluación de los aprendizajes | Indicadores por parcial; escala de valoración | Fijo | `evaluacion`: tabla de puntos por parcial. Tiene dos variantes, con o sin horas prácticas (APE). |
-| 9 | Perfil de egreso | Resultados de la asignatura frente a los de la carrera | Coordinación (proyecto de carrera) | — |
-| 10 | Conducta y comportamiento ético | Conducta y comportamiento ético | Fijo | — |
-| 11 | Bibliografía | Básica; complementaria | Docente | Biblioteca la verifica (`library_sections`). |
-| 12 | Revisión y aprobación | Tabla de firmas | Fijo | Variables de firma (docente, coordinación, biblioteca) y fechas de envío y aprobación. |
+| 2 | Descripción de la asignatura | Descripción | Carrera | — |
+| 3 | Objetivos de la asignatura | Objetivo general; objetivos específicos | Carrera | — |
+| 4 | Resultados de aprendizaje | Resultados de aprendizaje | Carrera | — |
+| 5 | Habilidades blandas | Habilidades blandas | Carrera | — |
+| 6 | Distribución y planificación de las unidades curriculares | Unidades | Carrera (el docente llena nombre, resultado y semanas, salvo lo que fije el proyecto de carrera) | Bloque `unidades`, hoja horizontal. Ver abajo. |
+| 7 | Metodología y ambientes de aprendizaje | 7.1 Métodos; 7.2 Técnicas; 7.3 Recursos; 7.4 Herramientas TIC/TAC e IA; 7.5 Ambientes | Carrera | — |
+| 8 | Evaluación de los aprendizajes | Indicadores por parcial; escala de valoración | Institucional | `evaluacion`: tabla de puntos por parcial. Tiene dos variantes, con o sin horas prácticas (APE). |
+| 9 | Perfil de egreso | Resultados de la asignatura frente a los de la carrera | Carrera | — |
+| 10 | Conducta y comportamiento ético | Conducta y comportamiento ético | Institucional | — |
+| 11 | Bibliografía | Básica; complementaria | Carrera | Biblioteca la verifica (`library_sections`). |
+| 12 | Revisión y aprobación | Tabla de firmas | Institucional | Variables de firma (docente, coordinación, biblioteca) y fechas de envío y aprobación. |
 
 ## Quién llena
 
-- **Docente**: escribe en su sílabo. Todo campo del docente es obligatorio para enviar.
-- **Coordinación** («Carrera»): el valor sale del proyecto de carrera de la asignatura (COR-16). El
-  docente lo ve en solo lectura, salvo que Coordinación active «El docente puede
-  editarlo» en ese campo del proyecto de carrera. Si el proyecto de carrera está vacío, el envío se bloquea con el
-  aviso «La asignatura no tiene proyecto de carrera: pídalo al coordinador».
-- **Fijo** (`institucional`): igual para todos los sílabos; nadie lo edita en el sílabo.
+- **Carrera** (`carrera`): Coordinación lo escribe por materia en el proyecto de carrera (COR-16)
+  y le llega fijo al docente; el docente llena solo los espacios que le quedan (texto libre,
+  número, elegir una o varias). Un campo que Coordinación deja vacío lo escribe el docente entero;
+  uno sin espacios es de solo lectura. Para enviar, cada campo con espacios debe tener algo y
+  cada respuesta debe estar contestada.
+- **Institucional** (`institucional`): igual para todos los sílabos; nadie lo edita en el sílabo.
+- Hasta el 2026-11-10 había tres: Docente, Coordinación («Carrera») y Fijo. Las secciones 2 a 5
+  y 9 eran de Coordinación; la 1, 6, 7 y 11, del docente.
 
 ## Unidades (sección 6)
 
@@ -61,9 +63,9 @@ Los rótulos e instrucciones no cuentan como respuesta para completar un campo.
 
 Un espacio de respuesta puede pedir un tipo, como en un formulario: **Texto libre** (el de
 siempre), **Número**, **Elegir una** o **Elegir varias**. Administración lo pone desde la cinta
-de la plantilla, para toda la universidad, en campos que no sean Fijos. Coordinación lo pone por
-materia, en «Proyecto de carrera», sobre los campos que llena el docente: elige el tipo y escribe
-las opciones, sin llenar el campo ni cambiar el formato fijo. Quien llena el campo solo responde:
+de la plantilla, para toda la universidad, en campos Carrera. Coordinación los deja por
+materia, en la página del proyecto de carrera, con «Espacio para el docente», junto al texto que
+escribe, sin cambiar el formato fijo de la plantilla. El docente solo responde:
 marca opciones (lo elegido queda fijo y solo se quita) o escribe el número. Para enviar, cada
 respuesta debe estar contestada. El documento imprime lo elegido como texto.
 

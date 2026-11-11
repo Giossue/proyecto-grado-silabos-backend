@@ -100,12 +100,13 @@ y el botón «Documentos» (DOC-10).
     identificación: «Celeste» (en negrita) y «Azul institucional» (texto blanco y negrita),
     o «Sin fondo»;
   - «Tipo de respuesta» (ícono con ayuda): con el cursor en un párrafo o una celda de un campo
-    que no sea Fijo, abre un cuadro para elegir Número, Elegir una o Elegir varias y, si es de
+    Carrera, abre un cuadro para elegir Texto libre, Número, Elegir una o Elegir varias y, si es de
     elegir, escribir las opciones ahí mismo («Agregar opción»); «Insertar» pone la respuesta
     donde está el cursor. Se ve como una etiqueta con el tipo y sus opciones. Las opciones se
-    pueden dejar vacías para que Coordinación las escriba en cada materia. En un campo Fijo el
-    botón queda deshabilitado («Tipo de respuesta: no va en campos Fijos») (2026-11-10);
-  - con un campo elegido: «Quién llena» (Docente, Carrera, Fijo), «Plantilla» (inserta
+    pueden dejar vacías para que Coordinación las escriba en cada materia. En un campo
+    Institucional el botón queda deshabilitado («Tipo de respuesta: no va en campos
+    Institucionales») (2026-11-10);
+  - con un campo elegido: «Quién llena» (Institucional o Carrera), «Plantilla» (inserta
     Identificación institucional, Distribución y planificación, Bibliografía básica o
     complementaria, o Firmas), nombre, subir, bajar y eliminar;
   - con una sección elegida: vertical u horizontal, subir, bajar y eliminar;
@@ -205,29 +206,30 @@ y el botón «Documentos» (DOC-10).
 
 - Materias agrupadas por ciclo, con su estado: «Completa», «n de m campos» o
   «Incompleta». Filtros por materia, ciclo y estado.
-- Un clic abre «Proyecto de carrera de {materia}»: pestañas por sección, un editor por campo y
-  «Guardar proyecto de carrera». Un campo vacío muestra «Sin llenar».
-- Los campos que llena el docente y que tienen espacios de respuesta van juntos en la última
-  pestaña, «Respuestas del docente», agrupados por sección, con una sola nota arriba: «Estos
-  campos los llena el docente. Si quiere que en un espacio elija de una lista o escriba un
-  número, haga clic en él». No se escriben ni cuentan como «Sin llenar». Cada espacio o celda
-  vacía se ve como un recuadro punteado «Lo escribe el docente»; al hacer clic se abre un menú
-  pequeño «¿Cómo responde el docente?» con «Texto libre», «Número», «Elegir una» y «Elegir
-  varias». Si es de elegir, las opciones se escriben ahí mismo («Agregar opción») sin cerrar el
-  menú. Un espacio ya armado se ve como una etiqueta corta, por ejemplo «Elegir varias · 4
-  opciones», que vuelve a abrir el menú. El texto fijo, los encabezados y la estructura de las
-  tablas no se pueden cambiar. Una respuesta que puso Administración sale como «{tipo} (lo
-  definió Administración)» y solo admite escribir las opciones que falten (2026-11-10).
-- En los campos de Coordinación, una respuesta que puso Administración se contesta ahí mismo
-  (número u opciones para marcar); sin contestar, el campo sigue «Sin llenar».
-- En la esquina del modal, junto a la X, un ojo («Vista previa») alterna con la edición y muestra el sílabo de la materia como lo
+- Un clic en una materia abre su página `/coordinacion/proyecto-carrera/{materia}` (antes era
+  una ventana): «Volver al proyecto de carrera» arriba, título «Proyecto de carrera de
+  {materia}», las secciones en una lista vertical a la izquierda y los campos Carrera de la
+  sección a la derecha, cada uno con el mismo editor de texto (negrita, cursiva, subrayado,
+  viñetas y numeración). Arriba a la derecha, el ojo («Vista previa») y «Guardar proyecto de
+  carrera». Si sale con cambios sin guardar, pregunta «Hay cambios sin guardar» (2026-11-10).
+- En la cinta del editor, «Espacio para el docente» abre un cuadro con «Texto libre», «Número»,
+  «Elegir una» y «Elegir varias»; si es de elegir, las opciones se escriben ahí mismo y no se
+  puede insertar sin ninguna. Lo que escribe Coordinación le llega fijo al docente; un campo que
+  deja vacío lo escribe el docente entero. En campos con formato de la plantilla (texto fijo o
+  tablas), cada espacio vacío trae un cuadro de texto y el mismo botón; un espacio armado se ve
+  como «Espacio para el docente: {tipo}», con sus opciones y el botón «Quitar el espacio».
+- Una respuesta que puso Administración sin opciones sale como «{tipo} (lo definió
+  Administración)» y pide escribir las opciones; el campo y su sección muestran «Faltan
+  opciones» hasta escribirlas. Es lo único que deja la materia «Incompleta».
+- La pestaña «Respuestas del docente» y el menú por espacio ya no existen.
+- El ojo alterna con la edición y muestra el sílabo de la materia como lo
   recibirán sus docentes antes de llenarlo: los datos de la malla (carrera, facultad, materia, código,
   horas, créditos, prerrequisitos), lo escrito en el proyecto de carrera (aunque aún no se haya guardado) y
   el resto como en la plantilla. Lo que depende del período o del paralelo (modalidad, campus, paralelo,
   docente) queda vacío.
 - «Importar desde Excel», con la misma variante verde de las otras importaciones,
   abre «Importar el proyecto de carrera»:
-  1. «Descargar plantilla Excel» genera las materias y los campos de Coordinación;
+  1. «Descargar plantilla Excel» genera las materias y los campos Carrera;
   2. completar las celdas de contenido, manteniendo nombres, encabezados y materias;
   3. cargar un `.xlsx` y pulsar «Revisar Excel»;
   4. revisar «n de m campos con contenido», tablas y comparación con el proyecto de carrera actual;

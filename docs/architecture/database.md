@@ -83,8 +83,9 @@ base; este documento explica las reglas que hay detrás.
   `vencida` queda admitido pero hoy la vigencia la decide la pantalla con la versión del
   borrador. Aplicada o descartada exige quién y cuándo
   (`propuestas_ia_plantilla_decision_check`).
-- `definiciones_campo.quien_llena_definicion_campo` solo admite `docente`,
-  `coordinacion` e `institucional`. El contenido es un documento Tiptap
+- `definiciones_campo.quien_llena_definicion_campo` solo admite `carrera` e
+  `institucional` (por defecto `carrera`; la migración `2026_11_10_000268` pasó `docente` y
+  `coordinacion` a `carrera` sin tocar valores ni revisiones). El contenido es un documento Tiptap
   (`{"type":"doc","content":[…]}`), comprobado por `CHECK`.
 
 ### Valores de campo: un solo dueño

@@ -123,6 +123,18 @@ ni opciones (`normalize`), Coordinación solo arma en los espacios de respuesta 
 cambio de lo armado conserva lo contestado donde encaja (`carried`). Detalle en
 `docs/architecture/template-json.md`, «Tipos de respuesta».
 
+## Actualización 2026-11-10: campo Carrera
+
+`docente` y `coordinacion` se unen en `carrera` (en pantalla «Carrera»; `institucional` se
+muestra «Institucional»). La plantilla efectiva de un campo Carrera en una materia es la fila
+de la asignatura si encaja con la plantilla (`FieldResponse::career`/`templateFor`): Coordinación
+escribe en los espacios de la plantilla, contesta o deja respuestas y agrega espacios nuevos
+(también del tipo `texto`). Al guardar se quitan sus líneas vacías y se dejan sin contestar los
+espacios que agregó. Para el docente, lo escrito por Coordinación queda fijo y una respuesta
+contestada por ella también (`ResponseKind::sameAnswer`); si no queda ningún espacio
+(`FieldResponse::open`), el campo es de solo lectura. Se retiran `setup`, `configurable` y
+`response_fields`. Detalle en `docs/architecture/template-json.md`, «Quién llena cada campo».
+
 ## Actualización 2026-10-30
 
 Se eliminó el interruptor de edición docente de la ficha (PV-21): los campos de

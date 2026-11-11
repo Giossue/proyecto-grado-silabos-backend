@@ -1,7 +1,8 @@
 # Proyecto de carrera: Excel estructurado
 
 Coordinación descarga un Excel generado desde las materias activas de su carrera y
-los campos vigentes cuyo responsable sea `coordinacion`. Completa el contenido,
+los campos Carrera vigentes que el proyecto de carrera muestra (los que tienen algún espacio para
+escribir). Lo importado le llega fijo al docente; no crea espacios de elegir. Completa el contenido,
 carga el archivo, revisa la vista previa y elige qué aplicar. Este flujo no utiliza
 IA, OCR ni trabajos de cola. Funciona con `AI_DRIVER=disabled`.
 

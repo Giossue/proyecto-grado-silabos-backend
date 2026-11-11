@@ -264,8 +264,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   guarda el estilo del documento, las variables, los bloques (valor, reglas y diseño),
   las secciones obligatorias, las de biblioteca y las plantillas listas. Las secciones y
   los campos van en sus tablas. Manual: `docs/architecture/template-json.md`.
-- Cada campo dice quién lo llena: `docente`, `coordinacion` o `institucional`. Su
-  contenido es un documento TipTap (I-210).
+- Cada campo dice quién lo llena: `carrera` («Carrera») o `institucional`
+  («Institucional»). Su contenido es un documento TipTap (I-210). `docente` y
+  `coordinacion` se unieron en `carrera` con una migración que conserva lo escrito
+  (2026-11-10).
 - Las plantillas nuevas o importadas en formato 2 protegen el formato de Administración
   (ADR-0012). Docencia y Coordinación completan párrafos y celdas vacíos; texto,
   encabezados, columnas y estilos se conservan. Una tabla con encabezados y una sola
@@ -328,9 +330,13 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   de cola. Se elimina `importaciones_ficha`, incluidos sus registros históricos, con
   una nueva migración y respaldo previo. La aplicación relee el mismo Excel al
   confirmar, compara sus huellas y guarda únicamente la selección en `valores_campo`.
-- Los campos del proyecto de carrera son solo de Coordinación: el docente no los edita y el proyecto de carrera
-  está completa solo si todos tienen texto. Se eliminó el interruptor «El docente puede
-  editarlo» (PV-21, 2026-10-30; reemplaza I-230).
+- Un campo Carrera lo escribe Coordinación por materia en la página del proyecto de carrera,
+  con el editor de texto y el botón «Espacio para el docente» (texto libre, número, elegir
+  una o varias). Lo que escribe le llega fijo al docente, que solo llena los espacios; sin
+  espacios, el campo es de solo lectura; si lo deja vacío, el docente lo escribe entero. El
+  proyecto de carrera solo queda incompleto con un espacio de elegir sin opciones
+  (2026-11-10; reemplaza la regla de PV-21 del 2026-10-30 de que todos los campos tengan
+  texto).
 - El docente declara de 1 a 8 unidades (empieza con 4) y escribe el nombre y el
   resultado de aprendizaje de cada una dentro de su tabla del formato oficial, y
   completa la planificación semanal. Para enviar, cada unidad debe tener nombre y
