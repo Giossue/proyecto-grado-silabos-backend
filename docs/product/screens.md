@@ -95,7 +95,7 @@ y el botón «Documentos» (DOC-10).
   - formato de texto (negrita, cursiva, subrayado, color del texto, alineación, listas). El
     color del texto solo ofrece negro, azul (`#365F91`, el de los rótulos de las unidades) y
     blanco;
-  - menú «Tabla» (insertar, filas, columnas, combinar, separar, encabezado, fondo de
+  - ícono «Tabla» con su menú (insertar, filas, columnas, combinar, separar, encabezado, fondo de
     celda, quitar). El fondo de celda solo ofrece los colores de la tabla de
     identificación: «Celeste» (en negrita) y «Azul institucional» (texto blanco y negrita),
     o «Sin fondo»;
