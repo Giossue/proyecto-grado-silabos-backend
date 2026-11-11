@@ -32,8 +32,8 @@ final class WorkflowNotificationMessages
         $reasonLabel = $reason === null || trim($reason) === '' ? '' : ' Motivo: '.trim($reason);
 
         return match ($eventType) {
-            'coordinacion.aprobado' => [
-                'Sílabo aprobado por Coordinación',
+            'silabo.enviado' => [
+                'Sílabo enviado',
                 "Revise la bibliografía del sílabo de {$subject}{$revisionLabel}.",
             ],
             'silabo.reenviado_biblioteca' => [
@@ -44,13 +44,9 @@ final class WorkflowNotificationMessages
                 'Corrección solicitada',
                 "Revise las observaciones del sílabo de {$subject}{$revisionLabel}, corríjalo y envíelo otra vez.",
             ],
-            'biblioteca.aprobado' => [
-                'Biblioteca aprobó un sílabo',
-                "El sílabo de {$subject}{$revisionLabel} quedó aprobado y firmado.",
-            ],
-            'biblioteca.correccion_solicitada' => [
-                'Biblioteca pidió una corrección',
-                "Es sobre la bibliografía del sílabo de {$subject}{$revisionLabel}. El docente la corrige y la reenvía directo a Biblioteca, sin pasar por Coordinación.",
+            'biblioteca.verificado' => [
+                'Bibliografía verificada por Biblioteca',
+                "Revise y apruebe el sílabo de {$subject}{$revisionLabel}.",
             ],
             'silabo.aprobado' => [
                 'Sílabo aprobado',

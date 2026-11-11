@@ -91,12 +91,15 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
   contexto académico, logos, variables y valores), huella, quién y cuándo envió. Si se
   devolvió, guarda comentario, etapa (`coordinacion` o `biblioteca`), quién y cuándo;
   los cuatro datos van juntos o ninguno.
+- **Envío a biblioteca** (`envios_biblioteca`): uno por revisión enviada; la pone en la
+  bandeja de Biblioteca. Guarda quién verificó la bibliografía y cuándo
+  (`verificado_por`, `verificado_en`, se escriben una sola vez). Si Coordinación devolvió y
+  la bibliografía no cambió, el reenvío copia la verificación anterior y la marca
+  `verificacion_heredada`; esa copia no cuenta como trabajo de Biblioteca.
 - **Revisión de coordinación** (`revisiones_coordinacion`): una por revisión; quién y
-  cuándo aprobó la etapa de coordinación.
-- **Envío a biblioteca** (`envios_biblioteca`): una por revisión; la pone en la bandeja
-  de Biblioteca.
-- **Aprobación** (`aprobaciones`): una por revisión; quién y cuándo, clave de
-  idempotencia y huella.
+  cuándo aprobó Coordinación. Se registra junto con la aprobación.
+- **Aprobación** (`aprobaciones`): una por revisión; la da Coordinación tras la
+  verificación de Biblioteca; quién y cuándo, clave de idempotencia y huella.
 
 ## Documentos (`Documents`)
 
@@ -135,11 +138,11 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 6. Todo envío crea una revisión nueva; nunca modifica la anterior.
 7. Una revisión enviada no se edita. Solo desaparece si se elimina o se rehace el
    sílabo completo, o si vuelve a borrador por un cambio de la base institucional.
-8. Revisión de coordinación, envío a biblioteca y aprobación se registran una sola vez
-   por revisión.
+8. Envío a biblioteca, verificación de Biblioteca, revisión de coordinación y aprobación
+   se registran una sola vez por revisión, en ese orden.
 9. El PDF se genera desde la copia guardada en la revisión.
 10. Cada persona firma una vez por sílabo, al decidir: docente al primer envío,
-    Coordinación al aprobar y Biblioteca al aprobar.
+    Biblioteca al verificar y Coordinación al aprobar.
 11. La IA no cambia estados ni escribe en el sílabo.
 12. Perder la cola o el servicio de IA no daña el sílabo.
 13. El total de horas de una asignatura es la suma de sus componentes.

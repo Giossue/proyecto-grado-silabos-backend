@@ -41,12 +41,13 @@ final class EmailNoticeCatalog
         ],
         'coordinador' => [
             self::DAILY_SUMMARY => ['label' => 'Resumen diario', 'description' => 'Sílabos por revisar, de lunes a viernes, solo si hay pendientes'],
+            'biblioteca.verificado' => ['label' => 'Bibliografía verificada', 'description' => 'Biblioteca verificó la bibliografía de un sílabo y espera su aprobación'],
             'proceso.reanudado' => ['label' => 'Convocatoria reanudada por Administración', 'description' => 'Se retoman las revisiones tras una pausa institucional'],
             'proceso.cierre_proximo' => ['label' => 'Cierre de la convocatoria', 'description' => '3 días antes del último día de entrega, si su carrera tiene sílabos sin aprobar'],
         ],
         'bibliotecario' => [
             self::LIBRARY_SUMMARY => ['label' => 'Resumen diario', 'description' => 'Sílabos por revisar, de lunes a viernes, solo si hay pendientes'],
-            'coordinacion.aprobado' => ['label' => 'Sílabo por revisar', 'description' => 'Coordinación aprobó un sílabo y espera la revisión de biblioteca'],
+            'silabo.enviado' => ['label' => 'Sílabo por revisar', 'description' => 'Un docente envió un sílabo y espera la revisión de biblioteca'],
             'silabo.reenviado_biblioteca' => ['label' => 'Sílabo reenviado', 'description' => 'El docente corrigió la bibliografía y la reenvió'],
             'proceso.reanudado' => ['label' => 'Convocatoria reanudada por Administración', 'description' => 'Se retoman las revisiones tras una pausa institucional'],
         ],

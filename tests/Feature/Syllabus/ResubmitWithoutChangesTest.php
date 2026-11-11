@@ -50,6 +50,9 @@ class ResubmitWithoutChangesTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
         $revision = SyllabusRevision::query()->latest('enviado_en')->firstOrFail();
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+        $this->actingAs($librarian)->withSession(['active_role_assignment_id' => $librarian->roleAssignments()->firstOrFail()->id])
+            ->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $librarian)])->assertCreated();
         $this->asCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
         ])->assertSuccessful();

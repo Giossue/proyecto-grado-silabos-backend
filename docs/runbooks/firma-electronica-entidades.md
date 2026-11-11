@@ -73,8 +73,8 @@ BCE de 2008 (2028-10-23) y las CA1/CA2 de Uanataca 2016 (2029-03-11).
 Después de cada despliegue que toque documentos o firmas:
 
 1. Con un `.p12` real, envíe un sílabo de prueba como docente («Firmar y enviar»).
-2. Apruébelo como coordinación («Firmar y enviar a biblioteca») y como biblioteca
-   («Firmar y aprobar»), cada cuenta con su propio certificado, cuyo titular debe
+2. Verifíquelo como biblioteca («Firmar y enviar a coordinación») y apruébelo como
+   coordinación («Firmar y aprobar»), cada cuenta con su propio certificado, cuyo titular debe
    coincidir con el nombre de la cuenta.
 3. Abra el PDF y revise que el cuadro de firmas muestre un sello por persona.
 

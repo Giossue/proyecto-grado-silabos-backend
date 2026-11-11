@@ -52,7 +52,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - El código de carrera es obligatorio y único (I-107).
 - Una carrera tiene un solo coordinador. Se asigna en «Usuarios y roles»; si ya tiene uno, se
   confirma el reemplazo (2026-11-01). En la convocatoria en curso no queda firma del saliente: lo que
-  aprobó vuelve a «En coordinación» para que el entrante lo firme, y biblioteca verifica de nuevo.
+  aprobó o firmó vuelve a «En coordinación» para que el entrante lo firme; la verificación de
+  Biblioteca, que va antes, se conserva (2026-11-11).
 - Facultades y carreras no se eliminan: se desactivan y se reactivan, y conservan su historial
   (2026-11-01). Una facultad se desactiva cuando no le quedan carreras activas; una carrera,
   cuando no tiene usuarios activos ni una convocatoria en curso. Los períodos sí se eliminan
@@ -95,16 +96,16 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Las fechas de inicio y de entrega son fechas de calendario. Se guardan con los
   límites del día en la zona institucional y la API las publica como `YYYY-MM-DD`.
   Un plazo de entrega cierra al final del día local, no a las 19:00.
-- La cola de revisión de Coordinación solo trae lo que espera su decisión (en revisión y todavía sin pasar a Biblioteca); lo demás (en biblioteca, devuelto, aprobado) está en Seguimiento, cuyas filas abren la revisión (2026-10-31). Coordinación no ve el comentario ni quién verificó de Biblioteca: solo que lo devolvió; Biblioteca ve únicamente su bibliografía.
+- La cola de revisión de Coordinación solo trae lo que espera su decisión (en revisión y ya verificado por Biblioteca, 2026-11-11); lo demás (en biblioteca, devuelto, aprobado) está en Seguimiento, cuyas filas abren la revisión (2026-10-31). Coordinación no ve el comentario ni quién verificó de Biblioteca: solo que lo devolvió; Biblioteca ve únicamente su bibliografía.
 - Coordinación tiene una sola acción para descartar un sílabo, «Reiniciar sílabo» (2026-10-31), solo con el sílabo aprobado y la convocatoria abierta (en pausa tampoco, 2026-11-02), con motivo obligatorio que ve el docente y queda en la auditoría y, si está aprobado (borra todo y no hay reapertura), el nombre de la materia. Se retiró «Eliminar sílabo» (`DELETE /coordination/syllabi/{syllabus}`); `POST .../reset` borra el sílabo aprobado y crea uno nuevo para el paralelo.
-- El historial de un sílabo para Coordinación es una pantalla de versiones como la de Google Docs (documento a la izquierda, panel de versiones agrupadas por día a la derecha; los cambios respecto a la versión anterior se marcan solos), no una lista de revisiones (2026-10-31): envíos, correcciones de Coordinación con su comentario, aprobación de Coordinación y aprobación final. De lo que hace Biblioteca solo se ve «Biblioteca lo devolvió al docente», sin nombre ni comentario. Cada envío a partir del segundo ofrece «Ver qué cambió», y el detalle puede resaltar en el documento los campos cambiados desde el envío anterior.
+- El historial de un sílabo para Coordinación es una pantalla de versiones como la de Google Docs (documento a la izquierda, panel de versiones agrupadas por día a la derecha; los cambios respecto a la versión anterior se marcan solos), no una lista de revisiones (2026-10-31): envíos, verificación de Biblioteca, correcciones de Coordinación con su comentario y aprobación final de Coordinación (2026-11-11). De lo que hace Biblioteca solo se ve «Biblioteca lo devolvió al docente», sin nombre ni comentario. Cada envío a partir del segundo ofrece «Ver qué cambió», y el detalle puede resaltar en el documento los campos cambiados desde el envío anterior.
 - Con el plazo de entrega vencido (2026-10-31) el docente queda en solo lectura: el servidor
   rechaza iniciar, editar y enviar, y la API explica el motivo en `edit_block_reason`.
   Coordinación y Biblioteca siguen revisando lo ya enviado. Solo Administración prorroga; al
   hacerlo, todo se reabre. El aviso de plazo vencido sale en rojo.
 - Cada persona elige qué avisos recibe por correo (2026-11-02), en Configuración › Notificaciones,
   no Administración: Docente (convocatoria abierta y reanudada, corrección solicitada, devuelto a
-  borrador, aprobado, cierre de la convocatoria), Coordinación (resumen diario, convocatoria reanudada por Administración y cierre de la convocatoria) y Biblioteca (sílabo por revisar y reenviado,
+  borrador, aprobado, cierre de la convocatoria), Coordinación (resumen diario, bibliografía verificada por Biblioteca, convocatoria reanudada por Administración y cierre de la convocatoria) y Biblioteca (sílabo por revisar y reenviado,
   que antes no llegaban por correo). Sin elegir, llegan todos. Administración conserva solo el
   interruptor general (que también apaga los resúmenes) y la hora del resumen. Coordinación ya no
   recibe «sílabo enviado» ni «reenviado» en la campana: los ve en Revisión y en el resumen.
@@ -115,8 +116,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   Mis sílabos; la reanudación de Administración, a la bandeja de revisiones de Coordinación o
   Biblioteca; la exportación fallida, a Auditoría filtrada. Si se reinician varios sílabos de un
   docente a la vez, recibe un solo aviso con todas las materias; cambiar el código o la jornada
-  de un paralelo con el sílabo enviado o aprobado también le avisa. Coordinación recibe un aviso
-  (solo campana) cuando Biblioteca aprueba un sílabo de su carrera o pide corregir la bibliografía.
+  de un paralelo con el sílabo enviado o aprobado también le avisa. Coordinación recibe
+  «Bibliografía verificada por Biblioteca» (campana y correo) cuando un sílabo de su carrera pasa a
+  su etapa; ya no recibe aviso cuando Biblioteca devuelve, porque todavía no lo revisó (2026-11-11).
   Los reinicios de sílabo (por Coordinación, por la malla o el paralelo, o por la plantilla) llegan
   también por correo al docente, con un solo interruptor «Sílabo reiniciado». Los correos siguen
   abriendo la página de inicio, sin enlace al aviso.
@@ -425,7 +427,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## Revisión
 
-- El orden es Docente → Coordinación → Biblioteca → Aprobado (I-220).
+- El orden es Docente → Biblioteca → Coordinación → Aprobado (2026-11-11, reemplaza el orden
+  de I-220). Coordinación da la aprobación final: con su firma el sílabo queda aprobado, se guarda
+  la huella y se genera el PDF.
 - Coordinación aprueba o pide corrección con un comentario general (I-177).
 - Biblioteca revisa la bibliografía: la aprueba o devuelve el sílabo marcando motivos
   predefinidos (I-177): libro no disponible, código incorrecto, ISBN incorrecto, edición
@@ -433,10 +437,19 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   «Otro motivo», lo escribe; el texto se une a los motivos marcados en la misma
   justificación de la revisión, sin columnas nuevas (2026-10-27).
 - Si Biblioteca devuelve, el reenvío del docente va directo a Biblioteca (I-220).
+- Si Coordinación devuelve, el reenvío vuelve a Biblioteca solo si el docente cambió la
+  bibliografía desde la última revisión que Biblioteca verificó; si no, va directo a
+  Coordinación y conserva la verificación anterior (quién y cuándo), sin aparecer como trabajo
+  nuevo de Biblioteca (decisión del usuario, 2026-11-11). Se comparan las secciones de
+  bibliografía de las dos revisiones.
+- La verificación de Biblioteca (quién y cuándo) se guarda por revisión en `envios_biblioteca`.
+  De ahí salen el nombre de quien verificó y la «Fecha de verificación»; el nombre y la fecha de
+  Coordinación salen de su aprobación. Los aprobados antes del cambio conservan los mismos datos
+  (migración 000269).
 - Una revisión enviada o aprobada no se modifica (ADR-0002).
 - Con la convocatoria cerrada, la revisión queda solo para consulta.
 - Biblioteca ve dos estados en su bandeja (2026-10-28, firmas al decidir): «Por revisar» y
-  «Atendidos». «Atendido» junta lo firmado y aprobado por biblioteca, lo devuelto al docente y lo
+  «Atendidos». «Atendido» junta lo firmado y aprobado por biblioteca (ya en Coordinación), lo devuelto al docente y lo
   reemplazado por una revisión nueva; la API lo detalla en `outcome` (`firmado`, `devuelto`,
   `reemplazado`). Ya no existe «Por firmar» (`por_firmar`).
 
@@ -451,9 +464,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Firmas al decidir (2026-10-28, reemplaza la firma secuencial del PDF ya aprobado): cada
   persona firma una sola vez por sílabo con su `.p12` en el navegador, en el momento de
   decidir. El docente firma al primer envío («Firmar y enviar»); los reenvíos tras una
-  corrección no se firman. Coordinación firma al aprobar («Firmar y enviar a biblioteca»)
-  y Biblioteca al aprobar («Firmar y aprobar»), con lo que el sílabo queda aprobado. Pedir
-  corrección o devolver no se firma. Reiniciar o eliminar el sílabo borra sus firmas.
+  corrección no se firman. Biblioteca firma al verificar («Firmar y enviar a coordinación») y
+  Coordinación al aprobar («Firmar y aprobar»), con lo que el sílabo queda aprobado
+  (2026-11-11). Quien ya firmó el sílabo decide después sin volver a firmar («Enviar a
+  coordinación», «Aprobar»). Pedir corrección o devolver no se firma. Reiniciar o eliminar el sílabo borra sus firmas.
 - Se firma una declaración de texto que da el servidor
   (`silabos-ueb|silabo:{id}|accion:{envio_docente|aprobacion_coordinacion|aprobacion_biblioteca}|huella:{sha256}`)
   con firma CMS/PKCS#7 separada (SHA-256). La huella es la del contenido que se decide: la
@@ -461,11 +475,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   `firmas_silabo` y se audita como `silabo.firmado` (I-227).
 - El titular del certificado debe coincidir con el nombre de la cuenta. Si se configura
   la lista de entidades certificadoras (DT-16), la cadena debe llegar a una de ellas.
-- Cuando Biblioteca aprueba, el sistema genera en cola un solo PDF (el Word es un paso
+- Cuando Coordinación aprueba, el sistema genera en cola un solo PDF (el Word es un paso
   interno y no se guarda ni se descarga). Gotenberg convierte el Word en PDF; sin
   Gotenberg el PDF sale como texto simple. El cuadro de firmas lleva un sello visible por
   persona: «Firmado electrónicamente por NOMBRE · ROL · fecha · certificado N.º · emisor».
-- Si la bibliografía cambió después de la firma del docente o de Coordinación, el PDF
+- Si el contenido cambió después de la firma del docente o de Biblioteca, el PDF
   igual lleva sus sellos: no se vuelve a firmar (decisión del usuario).
 - El PDF se descarga apenas existe. Cada descarga queda en auditoría.
 

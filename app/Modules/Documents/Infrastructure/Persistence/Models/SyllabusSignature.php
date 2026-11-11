@@ -43,7 +43,7 @@ class SyllabusSignature extends Model
 
     public const ROLE_LIBRARY = 'biblioteca';
 
-    public const ORDER = [self::ROLE_TEACHER, self::ROLE_COORDINATION, self::ROLE_LIBRARY];
+    public const ORDER = [self::ROLE_TEACHER, self::ROLE_LIBRARY, self::ROLE_COORDINATION];
 
     public $timestamps = false;
 

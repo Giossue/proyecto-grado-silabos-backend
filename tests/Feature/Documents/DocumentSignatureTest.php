@@ -96,6 +96,9 @@ class DocumentSignatureTest extends TestCase
         $this->assertSame('Firma de coordinación', trim($shown['firma_coordinador']));
         $this->assertStringContainsString('Firmado electrónicamente por', json_encode($this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->json('syllabus.sections'), JSON_UNESCAPED_UNICODE));
 
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), [
+            'signature' => $this->decisionSignature(SigningStatement::for($syllabus->id, 'biblioteca', $revision->huella_sha256), $this->people['librarian'][0]->nombre),
+        ])->assertCreated();
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
             'justification' => 'Ajuste los resultados de aprendizaje.',
         ])->assertSuccessful();
@@ -104,44 +107,51 @@ class DocumentSignatureTest extends TestCase
             ->assertOk()->assertJsonPath('required', false);
         $this->submit($syllabus, null)->assertSuccessful();
         $this->assertDatabaseCount('revisiones_silabo', 2);
-        $this->assertSame(1, SyllabusSignature::query()->count());
+        $this->assertSame(1, SyllabusSignature::query()->where('firmado_como', 'docente')->count());
     }
 
-    public function test_coordinacion_y_biblioteca_firman_al_decidir_y_el_pdf_lleva_los_tres_sellos(): void
+    public function test_biblioteca_y_coordinacion_firman_al_decidir_y_el_pdf_lleva_los_tres_sellos(): void
     {
         Queue::fake([GenerateSyllabusExportJob::class]);
         [$syllabus, $revision] = $this->submitted();
         [$coordinator] = $this->people['coordinator'];
         [$librarian] = $this->people['librarian'];
         $coordinationStatement = SigningStatement::for($syllabus->id, 'coordinacion', $revision->huella_sha256);
+        $libraryStatement = SigningStatement::for($syllabus->id, 'biblioteca', $revision->huella_sha256);
+
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertOk()->assertJsonPath('review.signing_statement', $libraryStatement)->assertJsonCount(1, 'review.signatures');
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))
+            ->assertJsonValidationErrors(['signature' => 'Firme con su firma electrónica.']);
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), [
+            'signature' => $this->decisionSignature($coordinationStatement, $librarian->nombre),
+        ])->assertJsonValidationErrors(['signature' => 'La declaración firmada no corresponde. Vuelva a firmar.']);
+        $this->assertNull(DB::table('envios_biblioteca')->where('revision_silabo_id', $revision->id)->value('verificado_en'));
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), [
+            'signature' => $this->decisionSignature($libraryStatement, $librarian->nombre),
+        ])->assertCreated();
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertJsonPath('review.signing_statement', null)->assertJsonPath('review.signatures.1.role', 'biblioteca');
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
 
         $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.show', $revision))
             ->assertOk()
             ->assertJsonPath('signing_statement', $coordinationStatement)
-            ->assertJsonCount(1, 'signatures');
+            ->assertJsonCount(2, 'signatures');
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision))
             ->assertJsonValidationErrors(['signature' => 'Firme con su firma electrónica.']);
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), [
-            'signature' => $this->decisionSignature(SigningStatement::for($syllabus->id, 'biblioteca', $revision->huella_sha256), $coordinator->nombre),
+            'signature' => $this->decisionSignature($libraryStatement, $coordinator->nombre),
         ])->assertJsonValidationErrors(['signature' => 'La declaración firmada no corresponde. Vuelva a firmar.']);
         $this->assertDatabaseCount('revisiones_coordinacion', 0);
+        $this->assertDatabaseCount('aprobaciones', 0);
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'signature' => $this->decisionSignature($coordinationStatement, $coordinator->nombre),
         ])->assertSuccessful();
         $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.show', $revision))
-            ->assertJsonPath('signing_statement', null)->assertJsonPath('signatures.1.role', 'coordinacion');
-
-        $libraryStatement = SigningStatement::for($syllabus->id, 'biblioteca', $revision->huella_sha256);
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
-            ->assertOk()->assertJsonPath('review.signing_statement', $libraryStatement)->assertJsonCount(2, 'review.signatures');
-        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))
-            ->assertJsonValidationErrors(['signature' => 'Firme con su firma electrónica.']);
-        $this->assertSame('en_revision', $syllabus->fresh()->estado);
-        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), [
-            'signature' => $this->decisionSignature($libraryStatement, $librarian->nombre),
-        ])->assertCreated();
+            ->assertJsonPath('signing_statement', null)->assertJsonPath('signatures.*.role', ['docente', 'biblioteca', 'coordinacion']);
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
-        $this->assertSame(['docente', 'coordinacion', 'biblioteca'], SyllabusSignature::query()->orderBy('firmado_en')->orderByRaw("firmado_como = 'biblioteca', firmado_como = 'coordinacion'")->pluck('firmado_como')->all());
+        $this->assertSame(['docente', 'biblioteca', 'coordinacion'], SyllabusSignature::query()->orderBy('firmado_en')->orderByRaw("firmado_como = 'coordinacion', firmado_como = 'biblioteca'")->pluck('firmado_como')->all());
         $this->assertSame(3, DB::table('eventos_auditoria')->where('accion', 'silabo.firmado')->count());
 
         config(['services.gotenberg.url' => 'http://gotenberg:3000/']);

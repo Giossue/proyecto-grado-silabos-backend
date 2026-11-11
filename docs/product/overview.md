@@ -11,10 +11,10 @@ un cambio y si lo aprobado coincide con lo entregado.
 
 Aplicación web con inicio de sesión. Administración abre una convocatoria por período.
 Cada sílabo nace de una plantilla institucional única y trae ya los datos de la malla,
-del paralelo y del proyecto de carrera de la asignatura. El docente completa lo suyo y lo envía. Coordinación revisa el contenido y Biblioteca
-verifica la bibliografía. Cada uno firma con su firma electrónica al decidir: el docente
-al enviar, Coordinación y Biblioteca al aprobar. Al aprobarse, el sistema genera el PDF
-con los tres sellos.
+del paralelo y del proyecto de carrera de la asignatura. El docente completa lo suyo y lo envía. Biblioteca verifica primero la bibliografía y
+después Coordinación revisa el contenido y da la aprobación final. Cada uno firma con su
+firma electrónica al decidir: el docente al enviar, Biblioteca al verificar y Coordinación
+al aprobar. Al aprobarse, el sistema genera el PDF con los tres sellos.
 
 ## Objetivo de valor
 
@@ -33,7 +33,7 @@ con los tres sellos.
 | Administrador | Usuarios y roles, facultades y carreras, plantilla, convocatorias y auditoría. |
 | Coordinador | Malla, paralelos, docentes y Proyecto de carrera de su carrera; inicia su convocatoria; revisa la etapa de coordinación y la aprueba firmando. |
 | Docente | Elabora, corrige y envía el sílabo de sus paralelos; firma en el primer envío. |
-| Bibliotecario | Verifica la bibliografía de toda la universidad: aprueba firmando o devuelve con motivos. |
+| Bibliotecario | Verifica la bibliografía de toda la universidad antes que Coordinación: aprueba firmando o devuelve con motivos. |
 
 Una persona puede tener varios roles, salvo Administrador, que es exclusivo. El detalle
 está en `roles-and-permissions.md`.
@@ -45,7 +45,7 @@ está en `roles-and-permissions.md`.
 3. Proyecto de carrera: datos por asignatura, con importación mediante plantilla Excel.
 4. Convocatoria por período y un sílabo por paralelo.
 5. Elaboración con autoguardado, validación.
-6. Revisión: coordinación y luego biblioteca; corrección y reenvío.
+6. Revisión: biblioteca y luego coordinación; corrección y reenvío.
 7. Firma electrónica al decidir y PDF automático al aprobar.
 8. Avisos cuando hay que actuar, ayuda por pantalla, accesibilidad y auditoría.
 

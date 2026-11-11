@@ -19,7 +19,7 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 | Rol | Carrera | Notas |
 |---|---|---|
 | Administrador | No | Exclusivo: no se combina con otro rol activo. |
-| Coordinador | Sí | Una sola coordinación activa por carrera. Se asigna en «Usuarios y roles»; si la carrera ya tiene coordinador, se confirma el reemplazo y el saliente deja de coordinarla en el mismo paso. En la convocatoria en curso no queda ninguna firma del saliente: lo que aprobó vuelve a «En coordinación» para que el entrante lo revise y firme, y biblioteca verifica de nuevo. El contenido y la firma del docente no cambian. |
+| Coordinador | Sí | Una sola coordinación activa por carrera. Se asigna en «Usuarios y roles»; si la carrera ya tiene coordinador, se confirma el reemplazo y el saliente deja de coordinarla en el mismo paso. En la convocatoria en curso no queda ninguna firma del saliente: lo que aprobó o firmó vuelve a «En coordinación» para que el entrante lo revise y firme. La verificación y la firma de Biblioteca, que van antes, se conservan. El contenido y la firma del docente no cambian. |
 | Docente | Sí | Trabaja solo en los sílabos de sus paralelos. |
 | Bibliotecario | No | Revisa toda la universidad. No se combina con Coordinador ni Docente. |
 
@@ -39,11 +39,11 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 | Elaborar, validar y enviar el sílabo | No | No | Sí, en sus paralelos, con la convocatoria en curso; firma en el primer envío | No |
 | Copiar el sílabo de otro paralelo propio | No | No | Sí | No |
 | Asistente de IA de la plantilla | Sí | No | No | No |
-| Revisar: aprobar (firmando) o pedir corrección | No | Sí, etapa de coordinación de su carrera | No | Sí, etapa de biblioteca |
+| Revisar: aprobar (firmando) o pedir corrección | No | Sí, etapa de coordinación de su carrera (aprobación final, después de Biblioteca) | No | Sí, etapa de biblioteca (primero, verifica la bibliografía) |
 | Comparar revisiones | No | Sí | No | No |
 | Reiniciar un sílabo («Reiniciar sílabo», con motivo; solo con el sílabo aprobado y la convocatoria abierta, no en pausa; borra todo) | No | Sí, en su carrera | No | No |
-| Firmar con su `.p12` (una vez por sílabo, al decidir) | No | Sí, al aprobar | Sí, al primer envío | Sí, al aprobar |
-| Ver y descargar el PDF (apenas se genera; no hay Word) | No | Sí, en su carrera | Sí, de sus paralelos | Sí, de los sílabos que llegaron a biblioteca |
+| Firmar con su `.p12` (una vez por sílabo, al decidir) | No | Sí, al aprobar | Sí, al primer envío | Sí, al verificar la bibliografía |
+| Ver y descargar el PDF (apenas se genera; no hay Word) | No | Sí, en su carrera | Sí, de sus paralelos | Sí, de los sílabos enviados (todos pasan por biblioteca) |
 | Auditoría | Sí | No | No | No |
 
 Las decisiones de revisión solo se admiten con la convocatoria de la carrera abierta o

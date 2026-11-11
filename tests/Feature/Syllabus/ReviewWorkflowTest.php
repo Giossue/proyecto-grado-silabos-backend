@@ -10,6 +10,7 @@ use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
+use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
@@ -203,8 +204,8 @@ class ReviewWorkflowTest extends TestCase
             'detalles->from_state' => 'borrador',
             'detalles->to_state' => 'en_revision',
         ]);
-        // Coordinación ya no recibe aviso por cada envío: lo ve en Revisión y en el resumen diario.
-        $this->assertNoWorkflowNotification($syllabus->id, 'silabo.enviado');
+        $this->assertSame([$this->librarian->id], InternalNotification::query()->where('tipo', 'silabo.enviado')->where('recurso_id', $syllabus->id)->pluck('usuario_id')->all());
+        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id, 'verificado_por' => null, 'verificacion_heredada' => false]);
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'signature' => $this->teacherSignature($syllabus, $this->teacher),
@@ -212,6 +213,7 @@ class ReviewWorkflowTest extends TestCase
             'idempotency_key' => $key,
         ])->assertSuccessful();
         $this->assertDatabaseCount('revisiones_silabo', 1);
+        $this->assertDatabaseCount('envios_biblioteca', 1);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
@@ -325,7 +327,7 @@ class ReviewWorkflowTest extends TestCase
         $freeTextField = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
         $firstSnapshot = $firstRevision->fotografia;
 
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $firstRevision), ['signature' => $this->revisionSignature($firstRevision, 'biblioteca', $this->librarian)])->assertForbidden();
+        $this->verifyBibliography($firstRevision);
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $firstRevision), [
             'justification' => 'Corto',
@@ -370,6 +372,8 @@ class ReviewWorkflowTest extends TestCase
         ])->assertSuccessful();
 
         $secondRevision = SyllabusRevision::query()->where('numero_revision', 2)->firstOrFail();
+        $this->assertSame(ReviewStage::LIBRARY, ReviewStage::ofRevision($secondRevision));
+        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $secondRevision->id, 'verificado_por' => null, 'verificacion_heredada' => false]);
         $this->assertSame($firstSnapshot, $firstRevision->fresh()->fotografia);
         $this->assertNotSame($firstRevision->huella_sha256, $secondRevision->huella_sha256);
         $this->assertSame($firstRevision->id, $secondRevision->revision_anterior_id);
@@ -395,44 +399,46 @@ class ReviewWorkflowTest extends TestCase
     {
         [$syllabus, $revision] = $this->submitValidDraft();
         $key = (string) Str::uuid();
+        $approve = fn () => $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+            'signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator), 'idempotency_key' => $key,
+        ]);
 
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertForbidden();
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
-            'idempotency_key' => $key,
-        ])->assertSuccessful();
+        $approve()->assertUnprocessable()->assertJsonPath('errors.revision.0', 'La revisión ya no espera la decisión de coordinación.');
+        $this->assertDatabaseCount('revisiones_coordinacion', 0);
+        $this->verifyBibliography($revision);
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('aprobaciones', 0);
-        $this->assertDatabaseHas('revisiones_coordinacion', ['revision_silabo_id' => $revision->id, 'revisado_por' => $this->coordinator->id]);
-        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id]);
-        $this->assertWorkflowNotification($syllabus->id, 'coordinacion.aprobado');
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
-            'idempotency_key' => $key,
-        ])->assertSuccessful();
-        $this->assertDatabaseCount('revisiones_coordinacion', 1);
+        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id, 'verificado_por' => $this->librarian->id]);
+        $this->assertWorkflowNotification($syllabus->id, 'biblioteca.verificado');
+        $this->verifyBibliography($revision);
+        $this->assertSame(1, SyllabusSignature::query()->where('firmado_como', 'biblioteca')->count());
 
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertCreated();
+        $approve()->assertSuccessful();
         $approval = Approval::query()->firstOrFail();
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
-        $this->assertSame($this->librarian->id, $approval->aprobado_por);
+        $this->assertSame($this->coordinator->id, $approval->aprobado_por);
         $this->assertSame($revision->id, $approval->revision_silabo_id);
         $this->assertSame(64, strlen($approval->huella_sha256));
+        $this->assertDatabaseHas('revisiones_coordinacion', ['revision_silabo_id' => $revision->id, 'revisado_por' => $this->coordinator->id]);
         $this->assertFalse(InternalNotification::query()->where('tipo', 'silabo.aprobado')->exists());
         Queue::assertPushed(GenerateSyllabusExportJob::class);
 
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertCreated();
-        $this->assertDatabaseCount('aprobaciones', 1);
-
+        $approve()->assertSuccessful();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
+        $this->assertDatabaseCount('aprobaciones', 1);
         $this->assertDatabaseCount('revisiones_coordinacion', 1);
+        $this->assertSame(1, SyllabusSignature::query()->where('firmado_como', 'coordinacion')->count());
+        $this->verifyBibliography($revision);
+        $this->assertDatabaseCount('aprobaciones', 1);
     }
 
-    public function test_la_biblioteca_abre_el_pdf_de_un_silabo_aprobado_pero_no_el_de_uno_sin_enviar_a_ella(): void
+    public function test_la_biblioteca_abre_el_pdf_de_un_silabo_aprobado_pero_no_el_de_uno_sin_aprobar(): void
     {
         [, $revision] = $this->submitValidDraft();
 
-        $this->actingAsLibrarian()->getJson(route('api.v1.documents.show', $revision))->assertForbidden();
+        $this->actingAsLibrarian()->getJson(route('api.v1.documents.show', $revision))->assertNotFound();
         $this->approveThroughChain($revision);
 
         $this->actingAsLibrarian()->getJson(route('api.v1.documents.show', $revision))
@@ -456,10 +462,12 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertSame(ReviewStage::COORDINATION, ReviewStage::ofRevision($revision->fresh()));
         $this->assertDatabaseCount('aprobaciones', 0);
+        $this->assertDatabaseCount('revisiones_coordinacion', 0);
         $this->assertDatabaseCount('exportaciones_silabo', 0);
-        $this->assertDatabaseMissing('firmas_silabo', ['revision_silabo_id' => $revision->id, 'firmado_como' => 'coordinacion']);
-        $this->assertDatabaseMissing('firmas_silabo', ['revision_silabo_id' => $revision->id, 'firmado_como' => 'biblioteca']);
+        $this->assertDatabaseMissing('firmas_silabo', ['silabo_id' => $syllabus->id, 'firmado_como' => 'coordinacion']);
+        $this->assertDatabaseHas('firmas_silabo', ['revision_silabo_id' => $revision->id, 'firmado_como' => 'biblioteca']);
         $this->assertDatabaseHas('firmas_silabo', ['revision_silabo_id' => $revision->id, 'firmado_como' => 'docente']);
+        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id, 'verificado_por' => $this->librarian->id]);
         $this->assertSame(1, AuditEvent::query()->where('accion', 'academico.coordinacion.reemplazada')->firstOrFail()->metadatos['returned_to_review']);
     }
 
@@ -494,6 +502,7 @@ class ReviewWorkflowTest extends TestCase
     public function test_coordinator_deletes_an_approved_syllabus_with_several_revisions(): void
     {
         [$syllabus, $first] = $this->submitValidDraft();
+        $this->verifyBibliography($first);
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $first), [
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
         ])->assertSuccessful();
@@ -504,7 +513,11 @@ class ReviewWorkflowTest extends TestCase
         ])->assertSuccessful();
         $second = SyllabusRevision::query()->where('silabo_id', $syllabus->id)->orderByDesc('numero_revision')->firstOrFail();
         $this->assertSame(2, $second->numero_revision);
-        $this->approveThroughChain($second);
+        $this->assertSame(ReviewStage::COORDINATION, ReviewStage::ofRevision($second));
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $second), ['signature' => $this->revisionSignature($second, 'coordinacion', $this->coordinator),
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
+        $this->assertSame('aprobado', $syllabus->fresh()->estado);
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'El docente cambió de materia y debe empezar otra vez.'])->assertSuccessful();
 
@@ -572,6 +585,12 @@ class ReviewWorkflowTest extends TestCase
     {
         [$syllabus, $revision] = $this->submitValidDraft();
         $convocation = $syllabus->convocation;
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))->assertSuccessful();
+        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertForbidden();
+        $this->actingAsLibrarian()->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertJsonPath('review.can_verify', false)->assertJsonPath('review.decision_block', 'La convocatoria de la carrera está en pausa: las revisiones se retoman cuando se reanude.');
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertSuccessful();
+        $this->verifyBibliography($revision);
         $approve = fn () => $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator), 'idempotency_key' => (string) Str::uuid(),
         ]);
@@ -588,11 +607,7 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$convocation->process, 'reanudar']))->assertSuccessful();
 
         $approve()->assertSuccessful();
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$convocation->process, 'pausar']))->assertSuccessful();
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertForbidden();
-        $this->actingAsLibrarian()->getJson(route('api.v1.library.reviews.show', $revision))
-            ->assertJsonPath('review.can_verify', false)->assertJsonPath('review.decision_block', 'Administración pausó la convocatoria institucional: las revisiones se retoman cuando se reanude.');
-        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertSame('aprobado', $syllabus->fresh()->estado);
     }
 
     public function test_only_the_coordinator_requests_a_correction_on_the_coordination_route(): void
@@ -601,9 +616,6 @@ class ReviewWorkflowTest extends TestCase
         $payload = ['justification' => 'Texto libre fuera de los motivos de biblioteca.'];
 
         $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), $payload)->assertForbidden();
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
-            'signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator), 'idempotency_key' => (string) Str::uuid(),
-        ])->assertSuccessful();
         // En la etapa de biblioteca, el bibliotecario solo usa su ruta con motivos enumerados.
         $this->actingAsLibrarian()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), $payload)->assertForbidden();
 
@@ -614,6 +626,7 @@ class ReviewWorkflowTest extends TestCase
     public function test_a_pause_that_lands_after_authorization_still_blocks_the_decision_under_the_lock(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
+        $this->verifyBibliography($revision);
         $pauseOnNextTransaction = function () use ($syllabus): void {
             $armed = true;
             Event::listen(TransactionBeginning::class, function () use (&$armed, $syllabus): void {
@@ -630,6 +643,7 @@ class ReviewWorkflowTest extends TestCase
             'signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator), 'idempotency_key' => (string) Str::uuid(),
         ])->assertUnprocessable()->assertJsonPath('errors.revision.0', $paused);
         $this->assertDatabaseCount('revisiones_coordinacion', 0);
+        $this->assertDatabaseCount('aprobaciones', 0);
 
         Convocation::query()->whereKey($syllabus->convocatoria_id)->update(['estado' => Convocation::STATE_OPEN]);
         $pauseOnNextTransaction();
@@ -643,8 +657,9 @@ class ReviewWorkflowTest extends TestCase
     {
         [$syllabus, $revision] = $this->submitValidDraft();
 
-        // Coordinación ya no recibe aviso por cada envío: lo ve en Revisión y en el resumen diario.
-        $this->assertNoWorkflowNotification($syllabus->id, 'silabo.enviado');
+        $this->assertFalse(InternalNotification::query()->where('usuario_id', $this->coordinator->id)->where('recurso_id', $syllabus->id)->exists());
+        $this->verifyBibliography($revision);
+        $this->assertTrue(InternalNotification::query()->where('usuario_id', $this->coordinator->id)->where('tipo', 'biblioteca.verificado')->exists());
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
             'justification' => 'Falta alinear los resultados de aprendizaje.',
         ])->assertSuccessful();
@@ -797,6 +812,7 @@ class ReviewWorkflowTest extends TestCase
     public function test_closed_convocation_keeps_the_review_read_only(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
+        $this->verifyBibliography($revision);
         $message = 'La convocatoria está cerrada: la revisión queda solo para consulta y no admite decisiones.';
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']))->assertSuccessful();
@@ -1015,9 +1031,14 @@ class ReviewWorkflowTest extends TestCase
 
     private function approveThroughChain(SyllabusRevision $revision): void
     {
+        $this->verifyBibliography($revision);
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
+    }
+
+    private function verifyBibliography(SyllabusRevision $revision): void
+    {
         $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertCreated();
     }
 }

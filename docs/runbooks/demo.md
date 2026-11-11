@@ -1,8 +1,8 @@
 # Demostración del sistema
 
 Recorrido completo con las cuatro cuentas del seeder: Administración prepara plantilla y
-convocatoria, Coordinación prepara la carrera y revisa, Docente elabora y envía,
-Biblioteca aprueba la bibliografía. Cada uno firma al decidir. Usa solo datos sintéticos y la base
+convocatoria, Coordinación prepara la carrera, Docente elabora y envía, Biblioteca
+verifica la bibliografía y Coordinación da la aprobación final. Cada uno firma al decidir. Usa solo datos sintéticos y la base
 local.
 
 ## 1. Preparación
@@ -112,21 +112,24 @@ con Docente Demo asignado.
 4. Pulse **Firmar y enviar**, elija `docente.p12` (ver «Certificados de prueba») y
    escriba la clave. Si falta algún campo, el sistema lo señala y no envía.
 
-### Coordinación: revisión
-
-1. En **Revisión**, abra la revisión 1.
-2. Pulse **Solicitar corrección** con un comentario. Como Docente, corrija y reenvíe: se
-   reenvía sin volver a firmar: se crea la revisión 2. Como Coordinación, use
-   **Comparar con la anterior**.
-3. Pulse **Firmar y enviar a biblioteca** con `coordinadora.p12`. El sílabo pasa a
-   Biblioteca.
-
 ### Biblioteca: bibliografía
 
-1. Ingrese con `bibliotecario@silabos.test` y abra **Revisiones de biblioteca**.
-2. Pruebe **Devolver al docente** marcando motivos. El docente corrige y reenvía; el
-   sílabo vuelve directo a Biblioteca.
-3. Pulse **Firmar y aprobar** con `bibliotecaria.p12`. El sílabo queda aprobado y el
+1. Ingrese con `bibliotecario@silabos.test` y abra **Revisiones de biblioteca**: todo envío
+   llega primero aquí.
+2. Pruebe **Devolver al docente** marcando motivos. El docente corrige y reenvía sin volver
+   a firmar; el sílabo vuelve a Biblioteca.
+3. Pulse **Firmar y enviar a coordinación** con `bibliotecaria.p12`. El sílabo pasa a
+   Coordinación.
+
+### Coordinación: revisión
+
+1. En **Revisión**, abra la revisión que verificó Biblioteca.
+2. Pulse **Solicitar corrección** con un comentario. Como Docente, corrija algo que no sea
+   la bibliografía y reenvíe: se crea una revisión nueva que vuelve directo a Coordinación,
+   con la verificación de Biblioteca. Si cambia la bibliografía, vuelve a Biblioteca, que la
+   envía de nuevo con **Enviar a coordinación** (ya firmó). Como Coordinación, use
+   **Comparar con la anterior**.
+3. Pulse **Firmar y aprobar** con `coordinadora.p12`. El sílabo queda aprobado y el
    worker genera el PDF en la cola `documentos`.
 
 ### Certificados de prueba

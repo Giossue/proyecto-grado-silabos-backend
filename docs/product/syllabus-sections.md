@@ -16,8 +16,8 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 | 8 | Evaluación de los aprendizajes | Indicadores por parcial; escala de valoración | Institucional | `evaluacion`: tabla de puntos por parcial. Tiene dos variantes, con o sin horas prácticas (APE). |
 | 9 | Perfil de egreso | Resultados de la asignatura frente a los de la carrera | Carrera | — |
 | 10 | Conducta y comportamiento ético | Conducta y comportamiento ético | Institucional | — |
-| 11 | Bibliografía | Básica; complementaria | Carrera | Biblioteca la verifica (`library_sections`). |
-| 12 | Revisión y aprobación | Tabla de firmas | Institucional | Variables de firma (docente, coordinación, biblioteca) y fechas de envío y aprobación. |
+| 11 | Bibliografía | Básica; complementaria; Bibliografía verificada por | Carrera (la tabla de Biblioteca es Institucional) | Biblioteca la verifica (`library_sections`) antes que Coordinación. Debajo de Complementaria, tabla de una columna con firma, nombre y fecha de verificación de Biblioteca; no cuenta al decidir si cambió la bibliografía. |
+| 12 | Revisión y aprobación | Tabla de firmas | Institucional | Variables de firma (docente y coordinación) y fechas de envío y aprobación. |
 
 ## Quién llena
 

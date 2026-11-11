@@ -118,9 +118,9 @@ Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo d
         ],
         '/biblioteca/revisiones' => [
             'title' => 'Revisiones de biblioteca',
-            'content' => 'Aquí llegan, de todas las carreras, los sílabos que Coordinación ya firmó, para que revise sus libros.
+            'content' => 'Aquí llegan, de todas las carreras, los sílabos que envían los docentes, para que revise sus libros antes que Coordinación.
 
-Pulse uno para revisarlo. Si los libros están bien, lo firma y queda aprobado. Si algo falla, lo devuelve al docente.
+Pulse uno para revisarlo. Si los libros están bien, lo firma y pasa a Coordinación, que da la aprobación final. Si algo falla, lo devuelve al docente.
 
 Puede filtrar por facultad si se reparten el trabajo; el sistema recuerda su elección. Lo de convocatorias anteriores está en «Historial».',
         ],
@@ -128,7 +128,7 @@ Puede filtrar por facultad si se reparten el trabajo; el sistema recuerda su ele
             'title' => 'Revisión de bibliografía',
             'content' => 'Revise que los libros del sílabo estén en la biblioteca y que sus datos estén completos y bien escritos.
 
-Si todo está bien, pulse «Firmar y aprobar» y use su archivo de firma electrónica. Si hay un problema, pulse «Devolver al docente» y marque qué debe corregir. Cuando el docente lo corrija, vuelve directo a usted.',
+Si todo está bien, pulse «Firmar y enviar a coordinación» y use su archivo de firma electrónica. Si hay un problema, pulse «Devolver al docente» y marque qué debe corregir. Cuando el docente lo corrija, vuelve directo a usted.',
         ],
         '/coordinacion/configuracion/notificaciones' => [
             'title' => 'Avisos por correo',
@@ -206,13 +206,13 @@ Si hay una convocatoria abierta, no se puede cambiar; primero páusela.',
 
 El botón rojo de check abre «Antes de empezar»: lo que falta preparar antes de abrir la convocatoria.
 
-«Cola de revisión» tiene los sílabos que le enviaron. Pulse uno para revisarlo: puede pedir correcciones o firmarlo y enviarlo a biblioteca. «Seguimiento» muestra cómo va cada sílabo.',
+«Cola de revisión» tiene los sílabos cuya bibliografía ya verificó Biblioteca. Pulse uno para revisarlo: puede pedir correcciones o firmarlo y aprobarlo. «Seguimiento» muestra cómo va cada sílabo.',
         ],
         '/coordinacion/revisiones/:revision' => [
             'title' => 'Detalle de la revisión',
-            'content' => 'Aquí lee el sílabo que envió el docente.
+            'content' => 'Aquí lee el sílabo que envió el docente, con la bibliografía ya verificada por Biblioteca.
 
-Si falta algo, pulse «Solicitar corrección» y escriba qué cambiar. Si está bien, pulse «Firmar y enviar a biblioteca» y use su archivo de firma electrónica.
+Si falta algo, pulse «Solicitar corrección» y escriba qué cambiar. Si está bien, pulse «Firmar y aprobar» y use su archivo de firma electrónica: el sílabo queda aprobado y se genera el PDF.
 
 Con «Historial» y «Comparar» ve qué cambió entre versiones.',
         ],

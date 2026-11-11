@@ -104,13 +104,13 @@ Qué hace el render:
 | Variable | Valor |
 |---|---|
 | `fecha_entrega` | Fecha de envío de la revisión |
-| `nombre_coordinador` | Nombre de quien registró la aprobación (`aprobaciones.aprobado_por`) |
-| `fecha_revision` | Fecha de la aprobación |
+| `nombre_coordinador` | Nombre de quien registró la aprobación final (`aprobaciones.aprobado_por`, Coordinación); en aprobaciones del orden anterior, quien firmó `revisiones_coordinacion` |
+| `fecha_revision` | Fecha de la aprobación de Coordinación |
+| `nombre_bibliotecario`, `fecha_verificacion` | Quién verificó la bibliografía y cuándo (`envios_biblioteca.verificado_por`, `verificado_en`) |
 | `firma_docente`, `firma_coordinador`, `firma_bibliotecario` | Sello visible de la firma de ese rol: «Firmado electrónicamente por NOMBRE · ROL · fecha · certificado N.º · emisor» y debajo la etiqueta «Firma del docente», «Firma de coordinación» o «Firma de biblioteca» (`SignatureAnchor::stamp`). Sin firma de ese rol queda el espacio en blanco con la etiqueta. |
 
-Diferencia conocida: la aprobación la registra Biblioteca. Por eso
-`nombre_coordinador` y `fecha_revision` muestran hoy el nombre y la fecha de Biblioteca,
-no los de `revisiones_coordinacion`.
+Desde 2026-11-11 el orden es Docente → Biblioteca → Coordinación: Biblioteca verifica la
+bibliografía y Coordinación registra la aprobación final.
 
 ## Firma electrónica al decidir (I-227)
 
@@ -119,12 +119,13 @@ Cada persona firma una sola vez por sílabo, en el momento en que decide:
 | Quién | Cuándo | `accion` en la declaración | Huella firmada |
 |---|---|---|---|
 | Docente | Primer envío del sílabo («Firmar y enviar»). Los reenvíos tras una corrección no se firman. | `envio_docente` | Huella SHA-256 de la fotografía que envía (será la `hash_contenido` de la revisión) |
-| Coordinación | «Firmar y enviar a biblioteca» | `aprobacion_coordinacion` | `hash_contenido` de la revisión |
-| Biblioteca | «Firmar y aprobar»: el sílabo queda aprobado | `aprobacion_biblioteca` | `hash_contenido` de la revisión |
+| Biblioteca | «Firmar y enviar a coordinación» | `aprobacion_biblioteca` | `hash_contenido` de la revisión |
+| Coordinación | «Firmar y aprobar»: el sílabo queda aprobado | `aprobacion_coordinacion` | `hash_contenido` de la revisión |
 
-Pedir corrección o devolver al docente no se firma. Si Biblioteca devuelve y el docente
-reenvía, el sílabo vuelve directo a Biblioteca: ni docente ni Coordinación firman otra
-vez. Si cambió la bibliografía tras la firma del docente o de Coordinación, el PDF igual
+Pedir corrección o devolver al docente no se firma. En los reenvíos nadie vuelve a
+firmar: si Biblioteca devolvió, vuelve a Biblioteca; si devolvió Coordinación, vuelve a
+Biblioteca solo si cambió la bibliografía y si no va directo a Coordinación. Quien ya
+firmó decide con «Enviar a coordinación» o «Aprobar», sin firmar otra vez. Si cambió la bibliografía tras la firma del docente o de Coordinación, el PDF igual
 lleva sus sellos.
 
 ### Qué se firma

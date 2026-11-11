@@ -21,11 +21,10 @@ class MailCopyTest extends TestCase
     use RefreshDatabase;
 
     private const SYLLABUS_EVENTS = [
-        'coordinacion.aprobado' => 'Sílabo aprobado por Coordinación',
+        'silabo.enviado' => 'Sílabo enviado',
         'silabo.reenviado_biblioteca' => 'Sílabo corregido para revisar',
         'silabo.correccion_solicitada' => 'Corrección solicitada',
-        'biblioteca.aprobado' => 'Biblioteca aprobó un sílabo',
-        'biblioteca.correccion_solicitada' => 'Biblioteca pidió una corrección',
+        'biblioteca.verificado' => 'Bibliografía verificada por Biblioteca',
         'silabo.aprobado' => 'Sílabo aprobado',
         'silabo.eliminado' => 'Su sílabo volvió a empezar',
         'silabo.devuelto_borrador' => 'Su sílabo volvió a borrador',
@@ -52,11 +51,11 @@ class MailCopyTest extends TestCase
     public function test_the_two_notices_for_library_have_different_titles_and_say_what_to_do(): void
     {
         $syllabus = $this->syllabus('Contabilidad');
-        [$approved, $approvedMessage] = WorkflowNotificationMessages::for('coordinacion.aprobado', $syllabus, 3);
+        [$sent, $sentMessage] = WorkflowNotificationMessages::for('silabo.enviado', $syllabus, 3);
         [$resent, $resentMessage] = WorkflowNotificationMessages::for('silabo.reenviado_biblioteca', $syllabus, 4);
 
-        $this->assertNotSame($approved, $resent);
-        $this->assertSame('Revise la bibliografía del sílabo de Contabilidad, revisión 3.', $approvedMessage);
+        $this->assertNotSame($sent, $resent);
+        $this->assertSame('Revise la bibliografía del sílabo de Contabilidad, revisión 3.', $sentMessage);
         $this->assertSame('El docente atendió su pedido en el sílabo de Contabilidad, revisión 4. Revise de nuevo la bibliografía.', $resentMessage);
     }
 
@@ -68,14 +67,22 @@ class MailCopyTest extends TestCase
         $this->assertSame('Cambiaron datos de la carrera, la malla o el proyecto de carrera que usa el sílabo de Física. Se conservó lo que había escrito; revíselo, envíelo y fírmelo de nuevo.', $message);
     }
 
+    public function test_coordination_is_told_that_the_library_verified_the_bibliography_and_what_to_do(): void
+    {
+        [$title, $message] = WorkflowNotificationMessages::for('biblioteca.verificado', $this->syllabus('Contabilidad'), 2);
+
+        $this->assertSame('Bibliografía verificada por Biblioteca', $title);
+        $this->assertSame('Revise y apruebe el sílabo de Contabilidad, revisión 2.', $message);
+    }
+
     public function test_the_notice_email_uses_the_title_as_subject_and_the_body_only_adds_the_details(): void
     {
-        [$title, $message] = WorkflowNotificationMessages::for('coordinacion.aprobado', $this->syllabus('Programación I'), 2);
+        [$title, $message] = WorkflowNotificationMessages::for('silabo.enviado', $this->syllabus('Programación I'), 2);
         $mail = new WorkflowNotificationMail('Ana', $title, $message, 'https://silabos.ueb.test/');
 
         $html = $mail->render();
         $text = $this->text($html);
-        $this->assertSame('Sílabo aprobado por Coordinación', $mail->envelope()->subject);
+        $this->assertSame('Sílabo enviado', $mail->envelope()->subject);
         $this->assertNull($this->heading($html));
         $this->assertStringNotContainsString($title, $text);
         $this->assertStringContainsString('Hola Ana:', $text);

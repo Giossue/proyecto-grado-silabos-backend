@@ -57,8 +57,10 @@ sequenceDiagram
         API-->>D: 422 con errores por campo
     else válido
         API->>DB: lock sílabo; revisión N con fotografía y hash SHA-256
-        alt la corrección anterior la pidió Biblioteca
-            API->>DB: envios_biblioteca(N) → vuelve directo a Biblioteca
+        alt devolvió Coordinación y la bibliografía es igual a la última verificada
+            API->>DB: envios_biblioteca(N) con la verificación anterior → va directo a Coordinación
+        else primer envío, devolvió Biblioteca o cambió la bibliografía
+            API->>DB: envios_biblioteca(N) sin verificar → Biblioteca
         end
         API->>DB: estado en_revision; auditoría; notificación
         API-->>D: revisión N
@@ -67,19 +69,47 @@ sequenceDiagram
 
 `POST …/validate` ejecuta solo la validación; no cambia el sílabo.
 
-## 3. Revisión de Coordinación
+## 3. Verificación de Biblioteca
+
+Desde 2026-11-11 el orden es Docente → Biblioteca → Coordinación.
+
+```mermaid
+sequenceDiagram
+    actor B as Bibliotecario
+    participant API as VerifyBibliography
+    participant DB as PostgreSQL
+
+    alt verifica la bibliografía
+        B->>API: POST library/reviews/{revision}/verify
+        API->>API: verifica la firma de biblioteca si aún no firmó (SignSyllabusDecision)
+        API->>DB: firmas_silabo; envios_biblioteca(N) verificado_por y verificado_en; auditoría
+        API->>DB: notificación a Coordinación («Bibliografía verificada por Biblioteca»)
+    else comenta
+        B->>API: POST …/comments (motivos)
+        API->>DB: correccion_* con etapa biblioteca; estado correccion_solicitada
+    end
+```
+
+## 4. Aprobación de Coordinación y exportación automática
 
 ```mermaid
 sequenceDiagram
     actor C as Coordinador
-    participant API as API
+    participant API as ApproveSyllabus
     participant DB as PostgreSQL
+    participant Q as Cola documentos
+    participant G as Gotenberg
 
     C->>API: GET coordination/reviews/{revision}
     alt aprueba
         C->>API: POST …/approve
-        API->>DB: revisiones_coordinacion(N) + envios_biblioteca(N)
-        API->>DB: notificación a Biblioteca
+        API->>API: verifica la firma de coordinación si aún no firmó (SignSyllabusDecision)
+        API->>DB: firmas_silabo; revisiones_coordinacion(N); aprobaciones(N); estado aprobado; auditoría
+        API->>DB: exportaciones_silabo pendiente (clave = id de la aprobación)
+        API-->>Q: GenerateSyllabusExportJob (afterCommit)
+        Q->>Q: Word interno con PHPWord desde la fotografía y los sellos de las firmas
+        Q->>G: Word → PDF
+        Q->>DB: archivo PDF; exportación completado; aviso al docente
     else pide corrección
         C->>API: POST …/request-correction (comentario)
         API->>DB: revisión N: correccion_* con etapa coordinacion
@@ -90,31 +120,6 @@ sequenceDiagram
 Solo se decide sobre la revisión más reciente. `GET …/compare/{after}` muestra la
 diferencia entre dos revisiones.
 
-## 4. Verificación de Biblioteca y exportación automática
-
-```mermaid
-sequenceDiagram
-    actor B as Bibliotecario
-    participant API as VerifyBibliography
-    participant DB as PostgreSQL
-    participant Q as Cola documentos
-    participant G as Gotenberg
-
-    alt aprueba la bibliografía
-        B->>API: POST library/reviews/{revision}/verify
-        API->>API: verifica la firma de biblioteca (SignSyllabusDecision)
-        API->>DB: firmas_silabo; aprobaciones(N); estado aprobado; auditoría
-        API->>DB: exportaciones_silabo pendiente (clave = id de la aprobación)
-        API-->>Q: GenerateSyllabusExportJob (afterCommit)
-        Q->>Q: Word interno con PHPWord desde la fotografía y los sellos de las firmas
-        Q->>G: Word → PDF
-        Q->>DB: archivo PDF; exportación completado; aviso al docente
-    else comenta
-        B->>API: POST …/comments (motivos)
-        API->>DB: correccion_* con etapa biblioteca; estado correccion_solicitada
-    end
-```
-
 ## 5. Firma electrónica al decidir (I-227)
 
 ```mermaid
@@ -124,7 +129,7 @@ sequenceDiagram
     participant API as API
     participant DB as PostgreSQL
 
-    U->>SPA: «Firmar y enviar» / «Firmar y enviar a biblioteca» / «Firmar y aprobar»
+    U->>SPA: «Firmar y enviar» / «Firmar y enviar a coordinación» / «Firmar y aprobar»
     SPA->>API: declaración (signing-statement del docente o signing_statement del detalle)
     U->>SPA: Elige su .p12 y escribe la clave
     SPA->>SPA: firma CMS separada SHA-256 de la declaración (la clave no sale del equipo)

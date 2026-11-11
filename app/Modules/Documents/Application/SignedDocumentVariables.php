@@ -6,13 +6,14 @@ use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Documents\Domain\SignatureAnchor;
 use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
+use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 
 /**
- * Variables de la tabla «Revisión y aprobación»: sellos de firma y fechas. Las usan el PDF
- * y la pantalla; la pantalla muestra solo lo que ya ocurrió (sin aprobación, sin sello de biblioteca).
+ * Variables de las firmas: sellos, fechas, quién verificó la bibliografía y quién aprobó. Las usan el PDF
+ * y la pantalla; la pantalla muestra solo lo que ya ocurrió (sin verificación, sin aprobación).
  */
 class SignedDocumentVariables
 {
@@ -41,9 +42,16 @@ class SignedDocumentVariables
             $dates['coordinator'] = $coordinator;
             $dates['approved_on'] = $approvedOn->setTimezone('America/Guayaquil')->format('d-m-Y');
         }
-        if ($approval !== null) {
-            $dates['librarian'] = $approval->approver->nombre;
-            $dates['verified_on'] = $approval->aprobado_en->setTimezone('America/Guayaquil')->format('d-m-Y');
+        $verification = LibrarySubmission::query()
+            ->with('verifier:id,nombre')
+            ->where('revision_silabo_id', $revision->id)
+            ->whereNotNull('verificado_en')
+            ->first();
+        $librarian = $verification?->verifier->nombre ?? $approval?->approver->nombre;
+        $verifiedOn = $verification !== null ? $verification->verificado_en : $approval?->aprobado_en;
+        if ($librarian !== null && $verifiedOn !== null) {
+            $dates['librarian'] = $librarian;
+            $dates['verified_on'] = $verifiedOn->setTimezone('America/Guayaquil')->format('d-m-Y');
         }
 
         return app(TemplateContext::class)->forSnapshot($snapshot, fn (): array => [

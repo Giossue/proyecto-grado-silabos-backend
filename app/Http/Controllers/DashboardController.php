@@ -175,7 +175,7 @@ class DashboardController extends Controller
                 'label' => 'En revisión',
                 'value' => $counts[LibraryReviews::STATE_PENDING],
                 'suffix' => null,
-                'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Aprobados por coordinación; falta la bibliografía',
+                'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Enviados por los docentes; falta verificar la bibliografía',
             ],
             [
                 'key' => 'library_signed',
@@ -246,7 +246,7 @@ class DashboardController extends Controller
             ->first();
 
         if (! $syllabus instanceof Syllabus) {
-            return $this->finalizedTeacherDeadline($user, $careerId);
+            return $this->pausedTeacherDeadline($careerId) ?? $this->finalizedTeacherDeadline($user, $careerId);
         }
 
         $convocation = $syllabus->convocation;
@@ -258,6 +258,26 @@ class DashboardController extends Controller
             $schedule->startsAt($convocation),
             $schedule->draftDeadline($convocation),
         );
+    }
+
+    /**
+     * Sin sílabos, el docente igual ve la pausa: si no, no sabría por qué no tiene nada que hacer.
+     *
+     * @return DeadlinePayload|null
+     */
+    private function pausedTeacherDeadline(?string $careerId): ?array
+    {
+        $process = SyllabusProcess::query()->inProgress()->with('academicPeriod')->first();
+        if ($process === null) {
+            return null;
+        }
+        $convocation = $careerId === null ? null : Convocation::query()
+            ->where('proceso_id', $process->id)
+            ->where('carrera_id', $careerId)
+            ->first();
+        $paused = $process->estado === SyllabusProcess::STATE_PAUSED || $convocation?->estado === Convocation::STATE_PAUSED;
+
+        return $paused ? $this->deadlinePayload($process, $convocation, $process->inicia_en, $process->entrega_en) : null;
     }
 
     /**

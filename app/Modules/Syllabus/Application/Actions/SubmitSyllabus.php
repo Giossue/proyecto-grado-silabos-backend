@@ -12,6 +12,7 @@ use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
+use App\Modules\Syllabus\Application\BibliographySections;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
@@ -106,10 +107,15 @@ class SubmitSyllabus
 
             $this->signing->execute($revision, SyllabusSignature::ROLE_TEACHER, $signature, $actor, $request);
 
-            $toLibrary = $previous?->correccion_etapa === ReviewStage::LIBRARY;
-            if ($toLibrary) {
-                LibrarySubmission::query()->create(['revision_silabo_id' => $revision->id]);
-            }
+            $carried = $previous?->correccion_etapa === ReviewStage::COORDINATION
+                ? $this->unchangedVerification($locked, $snapshot)
+                : null;
+            LibrarySubmission::query()->create([
+                'revision_silabo_id' => $revision->id,
+                'verificado_por' => $carried?->verificado_por,
+                'verificado_en' => $carried?->verificado_en,
+                'verificacion_heredada' => $carried !== null,
+            ]);
 
             $from = $locked->estado;
             $action = $from === 'borrador' ? 'enviar' : 'reenviar';
@@ -131,12 +137,13 @@ class SubmitSyllabus
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision, 'from_state' => $from, 'to_state' => 'en_revision', 'fingerprint' => $revision->huella_sha256],
             );
-            // Coordinación no recibe aviso por cada envío: lo ve en Revisión y en el resumen diario.
-            if ($toLibrary) {
+            if ($carried === null) {
+                $returnedByLibrary = $previous?->correccion_etapa === ReviewStage::LIBRARY;
+                $event = $returnedByLibrary ? 'silabo.reenviado_biblioteca' : 'silabo.enviado';
                 $this->notifications->execute(
                     syllabus: $locked,
-                    eventType: 'silabo.reenviado_biblioteca',
-                    deduplicationKey: "silabo.reenviado_biblioteca:{$revision->id}",
+                    eventType: $event,
+                    deduplicationKey: "{$event}:{$revision->id}",
                     recipientIds: $this->recipients->librarians(),
                     revisionNumber: $revision->numero_revision,
                 );
@@ -144,6 +151,24 @@ class SubmitSyllabus
 
             return $revision;
         });
+    }
+
+    /** @param  array<string, mixed>  $snapshot */
+    private function unchangedVerification(Syllabus $syllabus, array $snapshot): ?LibrarySubmission
+    {
+        $verified = LibrarySubmission::query()
+            ->join('revisiones_silabo as revision', 'revision.revision_silabo_id', '=', 'envios_biblioteca.revision_silabo_id')
+            ->where('revision.silabo_id', $syllabus->id)
+            ->whereNotNull('envios_biblioteca.verificado_en')
+            ->orderByDesc('revision.numero_revision')
+            ->select('envios_biblioteca.*')
+            ->first();
+        if ($verified === null) {
+            return null;
+        }
+        $before = $this->hasher->hash(BibliographySections::answers($verified->revision->fotografia));
+
+        return $before === $this->hasher->hash(BibliographySections::answers($snapshot)) ? $verified : null;
     }
 
     private function assertSubmittable(Syllabus $syllabus, int $expectedLockVersion): void

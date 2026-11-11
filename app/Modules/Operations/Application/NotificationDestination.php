@@ -17,9 +17,9 @@ final class NotificationDestination
     private const ADMINISTRATION_EVENTS = ['documento.exportacion_fallida'];
 
     /** Avisos a Coordinación sobre un sílabo de su carrera: abren la revisión aunque también sea su docente. */
-    private const COORDINATION_EVENTS = ['biblioteca.aprobado', 'biblioteca.correccion_solicitada'];
+    private const COORDINATION_EVENTS = ['biblioteca.verificado', 'biblioteca.aprobado', 'biblioteca.correccion_solicitada'];
 
-    private const LIBRARY_EVENTS = ['coordinacion.aprobado', 'silabo.reenviado_biblioteca'];
+    private const LIBRARY_EVENTS = ['silabo.enviado', 'silabo.reenviado_biblioteca', 'coordinacion.aprobado'];
 
     /** Avisos a Coordinación y Biblioteca sobre todo el proceso: llevan a la bandeja de revisiones. */
     private const PROCESS_STAFF_EVENTS = ['proceso.reanudado'];

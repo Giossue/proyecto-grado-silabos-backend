@@ -14,18 +14,19 @@ final class ReviewStage
 
     public const COORDINATION = 'coordinacion';
 
-    public const ORDER = [self::COORDINATION, self::LIBRARY];
+    public const ORDER = [self::LIBRARY, self::COORDINATION];
 
     public static function ofRevision(SyllabusRevision $revision): ?string
     {
         if (Approval::query()->where('revision_silabo_id', $revision->id)->exists()) {
             return null;
         }
-        $inLibrary = LibrarySubmission::query()
+        $verified = LibrarySubmission::query()
             ->where('revision_silabo_id', $revision->id)
+            ->whereNotNull('verificado_en')
             ->exists();
 
-        return $inLibrary ? self::LIBRARY : self::COORDINATION;
+        return $verified ? self::COORDINATION : self::LIBRARY;
     }
 
     public static function of(Syllabus $syllabus): ?string

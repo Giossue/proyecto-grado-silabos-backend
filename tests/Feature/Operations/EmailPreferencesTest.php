@@ -32,8 +32,8 @@ class EmailPreferencesTest extends TestCase
         $this->assertSame([
             'docente.resumen_diario:si', 'convocatoria.abierta:si', 'convocatoria.reanudada:si', 'silabo.correccion_solicitada:si', 'silabo.devuelto_borrador:si', 'silabo.aprobado:si', 'silabo.reiniciado:si', 'proceso.cierre_proximo:si',
         ], $types('docente@silabos.test'));
-        $this->assertSame(['coordinacion.resumen_diario:si', 'proceso.reanudado:si', 'proceso.cierre_proximo:si'], $types('coordinador@silabos.test'));
-        $this->assertSame(['biblioteca.resumen_diario:si', 'coordinacion.aprobado:si', 'silabo.reenviado_biblioteca:si', 'proceso.reanudado:si'], $types('bibliotecario@silabos.test'));
+        $this->assertSame(['coordinacion.resumen_diario:si', 'biblioteca.verificado:si', 'proceso.reanudado:si', 'proceso.cierre_proximo:si'], $types('coordinador@silabos.test'));
+        $this->assertSame(['biblioteca.resumen_diario:si', 'silabo.enviado:si', 'silabo.reenviado_biblioteca:si', 'proceso.reanudado:si'], $types('bibliotecario@silabos.test'));
         $this->assertSame([], $types('admin@silabos.test'));
         foreach (['docente@silabos.test' => 'si tiene sílabos sin aprobar', 'coordinador@silabos.test' => 'si su carrera tiene sílabos sin aprobar'] as $email => $condition) {
             $closing = collect($this->as($email)->getJson(route('api.v1.notifications.email-preferences.show'))->json('options'))->firstWhere('type', 'proceso.cierre_proximo');
@@ -119,10 +119,19 @@ class EmailPreferencesTest extends TestCase
     {
         $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
 
-        $this->notify('coordinacion.aprobado', $librarian);
+        $this->notify('silabo.enviado', $librarian);
         $this->notify('silabo.reenviado_biblioteca', $librarian);
 
         Mail::assertQueued(WorkflowNotificationMail::class, 2);
+    }
+
+    public function test_coordination_gets_the_library_verification_by_email(): void
+    {
+        $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
+
+        $this->notify('biblioteca.verificado', $coordinator);
+
+        Mail::assertQueued(WorkflowNotificationMail::class, fn (WorkflowNotificationMail $mail): bool => $mail->hasTo('coordinador@silabos.test'));
     }
 
     public function test_the_coordinator_can_turn_off_the_daily_summary(): void

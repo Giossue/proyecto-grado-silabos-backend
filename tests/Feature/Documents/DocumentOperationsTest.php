@@ -652,6 +652,16 @@ class DocumentOperationsTest extends TestCase
                     ]],
                 ]],
             ], [
+                'key' => 'bibliografia',
+                'title' => 'Bibliografía',
+                'blocks' => [[
+                    'key' => 'verificacion_bibliografia',
+                    'title' => '',
+                    'content_type' => 'fixed',
+                    'document' => TemplateDocumentDefaults::libraryVerification(),
+                    'fields' => [],
+                ]],
+            ], [
                 'key' => 'revision',
                 'title' => 'Revisión y aprobación',
                 'blocks' => [[

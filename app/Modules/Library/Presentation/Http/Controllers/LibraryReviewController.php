@@ -70,7 +70,7 @@ class LibraryReviewController extends Controller
         $faculty = $request->validated('faculty');
         $faculty = is_string($faculty) ? $faculty : null;
         $page = $this->reviews->query(is_string($state) ? $state : null, $search, $faculty, $period, $periodId, $handledBy, latestOnly: true)
-            ->with(['revision.submitter:id,nombre', 'revision.approval.approver:id,nombre'])
+            ->with(['revision.submitter:id,nombre', 'verifier:id,nombre'])
             ->paginate(20)
             ->withQueryString();
         $syllabi = $this->syllabi(array_values(collect($page->items())->pluck('silabo_id')->all()));
@@ -87,7 +87,7 @@ class LibraryReviewController extends Controller
                 'revision_id' => $submission->getAttribute('revision_id'),
                 'sent_at' => $submission->revision->enviado_en->toIso8601String(),
                 'sent_by' => $submission->revision->submitter->nombre,
-                'signed_by' => $submission->revision->approval?->approver->nombre,
+                'signed_by' => $submission->verifier?->nombre,
                 'responsible' => $responsibleNames->get($submission->getAttribute('responsable_id')),
                 'state' => $submission->getAttribute('estado_envio'),
                 'outcome' => LibraryReviews::outcome((string) $submission->getAttribute('estado_envio'), $submission->getAttribute('resultado_envio')),
@@ -99,7 +99,7 @@ class LibraryReviewController extends Controller
     {
         $submission = LibrarySubmission::query()
             ->where('revision_silabo_id', $revision->id)
-            ->with(['revision.submitter:id,nombre', 'revision.approval.approver:id,nombre'])
+            ->with(['revision.submitter:id,nombre', 'verifier:id,nombre'])
             ->first();
         abort_if($submission === null, 404);
         $syllabus = $this->syllabi([$revision->silabo_id])->get($revision->silabo_id);
@@ -132,8 +132,9 @@ class LibraryReviewController extends Controller
                 ? SigningStatement::for($syllabus->id, SyllabusSignature::ROLE_LIBRARY, $revision->huella_sha256)
                 : null,
             'signatures' => $this->signatures->summary($syllabus->id),
-            'verified_at' => $revision->approval?->aprobado_en->toIso8601String(),
-            'verified_by' => $revision->approval?->approver->nombre,
+            'verified_at' => $submission->verificado_en?->toIso8601String(),
+            'verified_by' => $submission->verifier?->nombre,
+            'approved_at' => $revision->approval?->aprobado_en->toIso8601String(),
             'presentation' => TemplatePresentation::presentation($definition, [
                 'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
                 'faculty' => $this->logos->facultyUrl(data_get($syllabus->contexto_academico, 'career.faculty_id')),
@@ -165,7 +166,7 @@ class LibraryReviewController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->execute($revision, DecisionSignature::from($request->input('signature')), $actor, $request);
 
-        return response()->json(['message' => 'Sílabo firmado y aprobado.'], 201);
+        return response()->json(['message' => 'Sílabo firmado y enviado a coordinación.'], 201);
     }
 
     /**

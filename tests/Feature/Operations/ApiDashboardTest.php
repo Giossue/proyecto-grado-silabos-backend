@@ -174,6 +174,29 @@ class ApiDashboardTest extends TestCase
         }
     }
 
+    public function test_a_teacher_without_syllabi_still_learns_that_the_convocation_is_paused(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        SyllabusProcess::query()->update(['estado' => SyllabusProcess::STATE_CLOSED]);
+        $process = SyllabusProcess::query()->create([
+            'periodo_academico_id' => AcademicPeriod::query()->firstOrFail()->id,
+            'inicia_en' => now()->subDay(),
+            'entrega_en' => now()->addDays(3),
+            'estado' => SyllabusProcess::STATE_PAUSED,
+        ]);
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $deadline = fn () => $this->actingAs($teacher)
+            ->withSession(['active_role_assignment_id' => $teacher->roleAssignments()->firstOrFail()->id])
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.dashboard.deadline'))
+            ->assertOk();
+
+        $deadline()->assertJsonPath('deadline.state', 'paused')->assertJsonPath('deadline.paused_by', 'administracion')->assertJsonPath('deadline.convocation_id', null);
+
+        $process->update(['estado' => SyllabusProcess::STATE_OPEN]);
+        $deadline()->assertJsonPath('deadline', null);
+    }
+
     public function test_without_a_convocation_in_progress_no_career_counts_as_pending_to_convene(): void
     {
         $this->seed(DatabaseSeeder::class);

@@ -58,7 +58,7 @@ class ReviewController extends Controller
                     ->limit(1),
             ]);
         $query->where('estado', 'en_revision')->whereHas('revisions', fn ($revision) => $revision
-            ->whereDoesntHave('librarySubmission')
+            ->whereHas('librarySubmission', fn ($submission) => $submission->whereNotNull('verificado_en'))
             ->whereDoesntHave('approval')
             ->whereRaw('numero_revision = (select max(latest.numero_revision) from revisiones_silabo latest where latest.silabo_id = revisiones_silabo.silabo_id)'));
         if ($search !== '') {
@@ -128,7 +128,7 @@ class ReviewController extends Controller
         abort_unless($actor instanceof User, 401);
         $approve->execute($revision, DecisionSignature::from($request->input('signature')), $actor, $request);
 
-        $message = 'Sílabo firmado y enviado a biblioteca.';
+        $message = 'Sílabo firmado y aprobado.';
 
         return response()->json(['message' => $message]);
     }
@@ -182,6 +182,7 @@ class ReviewController extends Controller
             'syllabus.revisions.correctionRequester:id,nombre',
             'syllabus.revisions.approval.approver:id,nombre',
             'syllabus.revisions.coordinationReview.reviewer:id,nombre',
+            'syllabus.revisions.librarySubmission.verifier:id,nombre',
         ]);
         $syllabus = $revision->syllabus;
         $latest = $syllabus->revisions->sortByDesc('numero_revision')->first();
@@ -271,7 +272,21 @@ class ReviewController extends Controller
                 'comment' => null,
                 'previous_id' => $revisions->get($index - 1)?->id,
             ];
-            if ($item->coordinationReview !== null) {
+            $verification = $item->librarySubmission;
+            if ($verification !== null && $verification->verified() && ! $verification->verificacion_heredada) {
+                $events[] = [
+                    'kind' => 'biblioteca_verifico',
+                    'at' => $verification->verificado_en?->toIso8601String(),
+                    'revision_id' => $item->id,
+                    'revision_number' => $item->numero_revision,
+                    'by' => $verification->verifier?->nombre,
+                    'comment' => null,
+                    'previous_id' => null,
+                ];
+            }
+            $approvedHere = $item->approval !== null && $item->coordinationReview !== null
+                && $item->approval->aprobado_por === $item->coordinationReview->revisado_por;
+            if ($item->coordinationReview !== null && ! $approvedHere) {
                 $events[] = [
                     'kind' => 'coordinacion_aprobo',
                     'at' => $item->coordinationReview->revisado_en->toIso8601String(),
@@ -300,13 +315,13 @@ class ReviewController extends Controller
                     'at' => $item->approval->aprobado_en->toIso8601String(),
                     'revision_id' => $item->id,
                     'revision_number' => $item->numero_revision,
-                    'by' => null,
+                    'by' => $approvedHere ? $item->coordinationReview->reviewer->nombre : null,
                     'comment' => null,
                     'previous_id' => null,
                 ];
             }
         }
-        $weight = ['enviado' => 0, 'coordinacion_aprobo' => 1, 'correccion' => 2, 'devuelto_biblioteca' => 2, 'aprobado' => 3];
+        $weight = ['enviado' => 0, 'coordinacion_aprobo' => 1, 'biblioteca_verifico' => 2, 'correccion' => 3, 'devuelto_biblioteca' => 3, 'aprobado' => 4];
         usort($events, fn (array $left, array $right): int => [(string) $right['at'], $right['revision_number'], $weight[$right['kind']]]
             <=> [(string) $left['at'], $left['revision_number'], $weight[$left['kind']]]);
 

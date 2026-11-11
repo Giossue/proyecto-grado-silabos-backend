@@ -33,9 +33,7 @@ final class LibraryReviews
 
     private const OUTCOME_SQL = <<<'SQL'
         CASE
-            WHEN EXISTS (
-                SELECT 1 FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
-            ) THEN 'firmado'
+            WHEN envios_biblioteca.verificado_en IS NOT NULL THEN 'firmado'
             WHEN revision.correccion_etapa = 'biblioteca' THEN 'devuelto'
             WHEN EXISTS (
                 SELECT 1 FROM revisiones_silabo posterior
@@ -45,14 +43,16 @@ final class LibraryReviews
         END
         SQL;
 
-    // Quien atiende el sílabo: quien lo aprobó, quien lo devolvió o, en un reenvío, quien lo devolvió antes.
+    // Quien atiende el sílabo: quien lo verificó, quien lo devolvió o, en un reenvío, quien lo verificó o devolvió antes.
     private const RESPONSIBLE_SQL = <<<'SQL'
         COALESCE(
-            (SELECT aprobacion.aprobado_por FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id LIMIT 1),
+            envios_biblioteca.verificado_por,
             CASE WHEN revision.correccion_etapa = 'biblioteca' THEN revision.correccion_solicitada_por END,
             (
-                SELECT anterior.correccion_solicitada_por FROM revisiones_silabo anterior
-                WHERE anterior.silabo_id = revision.silabo_id AND anterior.numero_revision < revision.numero_revision AND anterior.correccion_etapa = 'biblioteca'
+                SELECT COALESCE(envio_anterior.verificado_por, anterior.correccion_solicitada_por) FROM revisiones_silabo anterior
+                LEFT JOIN envios_biblioteca envio_anterior ON envio_anterior.revision_silabo_id = anterior.revision_silabo_id
+                WHERE anterior.silabo_id = revision.silabo_id AND anterior.numero_revision < revision.numero_revision
+                  AND (envio_anterior.verificado_por IS NOT NULL OR anterior.correccion_etapa = 'biblioteca')
                 ORDER BY anterior.numero_revision DESC LIMIT 1
             )
         )
@@ -69,6 +69,7 @@ final class LibraryReviews
         ?string $periodId = null,
         ?string $handledBy = null,
         bool $latestOnly = false,
+        bool $withCarried = false,
     ): Builder {
         return LibrarySubmission::query()
             ->join('revisiones_silabo as revision', 'revision.revision_silabo_id', '=', 'envios_biblioteca.revision_silabo_id')
@@ -77,9 +78,12 @@ final class LibraryReviews
             ->selectRaw(self::STATE_SQL.' AS estado_envio')
             ->selectRaw(self::OUTCOME_SQL.' AS resultado_envio')
             ->selectRaw(self::RESPONSIBLE_SQL.' AS responsable_id')
-            // Un sílabo aparece una sola vez: con su envío más reciente.
+            ->when(! $withCarried, fn (Builder $query) => $query->where('envios_biblioteca.verificacion_heredada', false))
+            // Un sílabo aparece una sola vez: con su envío más reciente que pasó por biblioteca.
             ->when($latestOnly, fn (Builder $query) => $query->whereNotExists(
                 fn ($later) => $later->selectRaw('1')->from('revisiones_silabo as posterior')
+                    ->join('envios_biblioteca as envio_posterior', 'envio_posterior.revision_silabo_id', '=', 'posterior.revision_silabo_id')
+                    ->where('envio_posterior.verificacion_heredada', false)
                     ->whereColumn('posterior.silabo_id', 'revision.silabo_id')
                     ->whereColumn('posterior.numero_revision', '>', 'revision.numero_revision'),
             ))
@@ -121,9 +125,7 @@ final class LibraryReviews
             ))
             ->when($handledBy !== null, fn (Builder $query) => $query->where(
                 fn (Builder $handled) => $handled
-                    ->whereExists(fn ($approval) => $approval->selectRaw('1')->from('aprobaciones as aprobacion')
-                        ->whereColumn('aprobacion.revision_silabo_id', 'envios_biblioteca.revision_silabo_id')
-                        ->where('aprobacion.aprobado_por', $handledBy))
+                    ->where('envios_biblioteca.verificado_por', $handledBy)
                     ->orWhere(fn (Builder $returned) => $returned
                         ->where('revision.correccion_etapa', 'biblioteca')
                         ->where('revision.correccion_solicitada_por', $handledBy)),
@@ -134,17 +136,17 @@ final class LibraryReviews
     /** @return array{state: string, outcome: string|null} */
     public function statusOf(LibrarySubmission $submission): array
     {
-        $row = $this->query()->where('envios_biblioteca.id', $submission->id)->first();
+        $row = $this->query(withCarried: true)->where('envios_biblioteca.id', $submission->id)->first();
         $state = $row?->getAttribute('estado_envio');
         $state = is_string($state) ? $state : self::STATE_PENDING;
 
         return ['state' => $state, 'outcome' => self::outcome($state, $row?->getAttribute('resultado_envio'))];
     }
 
-    /** Bibliotecario que lo atiende (el que devolvió antes el sílabo); null si todavía nadie. Es un aviso, no un bloqueo. */
+    /** Bibliotecario que lo atiende (el que lo verificó o devolvió antes); null si todavía nadie. Es un aviso, no un bloqueo. */
     public function responsibleOf(SyllabusRevision $revision): ?string
     {
-        $row = $this->query()->where('envios_biblioteca.revision_silabo_id', $revision->id)->first();
+        $row = $this->query(withCarried: true)->where('envios_biblioteca.revision_silabo_id', $revision->id)->first();
         $id = $row?->getAttribute('responsable_id');
 
         return is_string($id) ? $id : null;

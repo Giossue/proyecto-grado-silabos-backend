@@ -112,7 +112,11 @@ Reglas:
   plantilla congelada. El PDF se genera desde ahí.
 - `aprobaciones`, `revisiones_coordinacion`, `firmas_silabo`, `archivos` y
   `eventos_auditoria` no admiten `UPDATE` ni `DELETE` (`proteger_registro_append_only`).
-- `envios_biblioteca` tampoco se modifica (`proteger_envio_biblioteca`).
+- `envios_biblioteca` solo admite registrar una vez la verificación de Biblioteca
+  (`verificado_por` y `verificado_en`, juntos o ninguno); nada más cambia ni se borra
+  (`proteger_envio_biblioteca`). `verificacion_heredada` marca la verificación copiada de una
+  revisión anterior cuando Coordinación devolvió y la bibliografía no cambió (migración
+  000269, 2026-11-11).
 - Una revisión tiene como máximo una revisión de coordinación, un envío a biblioteca y
   una aprobación (índices únicos por `revision_silabo_id`).
 - Una exportación completada no cambia y ninguna exportación se borra

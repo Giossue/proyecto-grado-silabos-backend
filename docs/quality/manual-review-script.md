@@ -99,7 +99,7 @@ Con los certificados de prueba de `docs/runbooks/demo.md`.
 
 - [ ] El archivo `.p12` y la clave se eligen y escriben con teclado.
 - [ ] El docente firma en el primer envío y reenvía sin firmar tras una corrección.
-- [ ] Coordinación firma al enviar a biblioteca; Biblioteca firma al aprobar.
+- [ ] Biblioteca firma al enviar a coordinación; Coordinación firma al aprobar.
 - [ ] Una clave incorrecta o un certificado vencido muestran un mensaje junto al campo.
 - [ ] Un certificado cuyo titular no coincide con la cuenta es rechazado.
 - [ ] El PDF se descarga apenas se genera; no hay descarga de Word.

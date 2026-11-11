@@ -239,7 +239,7 @@ class AuditEventController extends Controller
             'fuente.actualizada' => 'Fuente académica actualizada',
             'fuente.contenido_actualizado' => 'Contenido de fuente actualizado',
             'silabo.aprobado' => 'Sílabo aprobado',
-            'biblioteca.verificado' => 'Biblioteca aprobó la bibliografía',
+            'biblioteca.verificado' => 'Biblioteca verificó la bibliografía',
             'silabo.revisado_coordinacion' => 'Coordinación revisó y aprobó el sílabo',
             'silabo.correccion_solicitada' => 'Corrección solicitada',
             'silabo.eliminado' => 'Sílabo eliminado',

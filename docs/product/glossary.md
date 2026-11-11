@@ -20,13 +20,13 @@
 | Sílabo | Expediente de un paralelo dentro de una convocatoria. Estados: sin iniciar, borrador, en revisión, corrección solicitada, aprobado. |
 | Borrador | Contenido editable aún no enviado. Se guarda solo. |
 | Revisión | Copia inmutable del sílabo creada en cada envío o reenvío. |
-| Etapa | Quién tiene la revisión: coordinación o biblioteca. Se deduce de los registros; no es una columna. |
+| Etapa | Quién tiene la revisión: biblioteca (primero) o coordinación. Se deduce de los registros; no es una columna. |
 | Revisión de coordinación | Registro de que Coordinación aprobó su etapa. |
-| Envío a biblioteca | Registro que pone una revisión en la bandeja de Biblioteca. |
+| Envío a biblioteca | Registro que pone una revisión en la bandeja de Biblioteca y guarda quién verificó la bibliografía y cuándo. |
 | Corrección solicitada | Devolución al docente. Coordinación deja un comentario general; Biblioteca elige motivos predefinidos. |
-| Aprobación | Decisión final sobre una revisión concreta, registrada cuando Biblioteca aprueba la bibliografía. Guarda la huella del contenido. |
+| Aprobación | Decisión final sobre una revisión concreta, registrada cuando Coordinación aprueba tras la verificación de Biblioteca. Guarda la huella del contenido. |
 | Exportación | PDF generado desde la revisión aprobada, con los sellos de las firmas. |
-| Firma | Firma electrónica con un certificado `.p12` de una declaración que da el servidor, al decidir: docente al primer envío, Coordinación y Biblioteca al aprobar. Una por persona y sílabo. |
+| Firma | Firma electrónica con un certificado `.p12` de una declaración que da el servidor, al decidir: docente al primer envío, Biblioteca al verificar y Coordinación al aprobar. Una por persona y sílabo. |
 | Huella | SHA-256 que permite comprobar que un contenido o archivo no cambió. |
 | Pausa | Estado que detiene la edición y el envío. Permite corregir plantilla, malla o proyectos de carrera. |
 | Rehacer sílabos | Borrar y volver a crear sin iniciar los sílabos afectados por un cambio confirmado durante una pausa. |
