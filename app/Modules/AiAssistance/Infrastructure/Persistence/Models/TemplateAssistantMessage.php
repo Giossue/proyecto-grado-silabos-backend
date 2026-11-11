@@ -2,6 +2,7 @@
 
 namespace App\Modules\AiAssistance\Infrastructure\Persistence\Models;
 
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -103,7 +104,7 @@ class TemplateAssistantMessage extends Model
                     $fields[] = [
                         'key' => (string) ($field['key'] ?? ''),
                         'label' => (string) ($field['label'] ?? ''),
-                        'quien_llena' => (string) ($field['quien_llena'] ?? ''),
+                        'quien_llena' => (string) FieldDefinition::responsible($field['quien_llena'] ?? ''),
                         'content' => array_filter($field['content'], is_string(...), ARRAY_FILTER_USE_KEY),
                     ];
                 }

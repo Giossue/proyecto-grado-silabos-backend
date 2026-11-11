@@ -47,7 +47,7 @@ class TemplateStructureApiTest extends TestCase
             ])->assertCreated()->assertJsonPath('field.quien_llena', $responsible)->assertJsonMissingPath('field.type');
         }
         $this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk()
-            ->assertJsonCount(3, 'template.sections.0.fields')->assertJsonPath('template.sections.0.fields.0.content.type', 'doc');
+            ->assertJsonCount(2, 'template.sections.0.fields')->assertJsonPath('template.sections.0.fields.0.content.type', 'doc');
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.campo_creado']);
     }
 
@@ -55,7 +55,7 @@ class TemplateStructureApiTest extends TestCase
     {
         $section = $this->section();
         $url = route('api.v1.admin.template.structure.fields.store', [$this->template, $section]);
-        $data = ['key' => 'dato', 'label' => '', 'quien_llena' => 'docente', 'content' => FieldDocument::empty()];
+        $data = ['key' => 'dato', 'label' => '', 'quien_llena' => 'carrera', 'content' => FieldDocument::empty()];
         $this->postJson($url, [...$data, 'type' => 'texto'])->assertJsonValidationErrors('type');
         $this->postJson($url, [...$data, 'config' => ['rows' => []]])->assertJsonValidationErrors('config');
         $this->postJson($url, [...$data, 'quien_llena' => 'otro'])->assertJsonValidationErrors('quien_llena');
@@ -67,11 +67,11 @@ class TemplateStructureApiTest extends TestCase
     {
         $section = $this->section();
         $field = $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $section]), [
-            'key' => 'dato', 'label' => '', 'quien_llena' => 'docente', 'content' => FieldDocument::empty(),
+            'key' => 'dato', 'label' => '', 'quien_llena' => 'carrera', 'content' => FieldDocument::empty(),
         ])->assertCreated()->json('field.id');
         $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$this->template, $field]), [
-            'quien_llena' => 'coordinacion', 'content' => FreeText::fromText('Desde la ficha'),
-        ])->assertOk()->assertJsonPath('field.quien_llena', 'coordinacion');
+            'quien_llena' => 'institucional', 'content' => FreeText::fromText('Desde la ficha'),
+        ])->assertOk()->assertJsonPath('field.quien_llena', 'institucional');
         $this->patchJson(route('api.v1.admin.template.structure.sections.update', [$this->template, $section]), [
             'title' => 'Planificación', 'orientation' => 'landscape',
         ])->assertOk();
@@ -84,7 +84,7 @@ class TemplateStructureApiTest extends TestCase
         $ids = [];
         foreach (['primero', 'segundo'] as $key) {
             $ids[] = $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $section]), [
-                'key' => $key, 'label' => $key, 'quien_llena' => 'docente', 'content' => FieldDocument::empty(),
+                'key' => $key, 'label' => $key, 'quien_llena' => 'carrera', 'content' => FieldDocument::empty(),
             ])->assertCreated()->json('field.id');
         }
         $this->patchJson(route('api.v1.admin.template.structure.fields.reorder', [$this->template, $section]), ['field_ids' => array_reverse($ids)])->assertOk();

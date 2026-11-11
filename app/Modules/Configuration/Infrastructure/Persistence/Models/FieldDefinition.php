@@ -23,13 +23,13 @@ class FieldDefinition extends Model
 {
     use HasUuids, MapsLegacyColumnNames;
 
-    public const TEACHER = 'docente';
-
-    public const COORDINATION = 'coordinacion';
+    public const CAREER = 'carrera';
 
     public const INSTITUTIONAL = 'institucional';
 
-    public const RESPONSIBLES = [self::TEACHER, self::COORDINATION, self::INSTITUTIONAL];
+    public const RESPONSIBLES = [self::CAREER, self::INSTITUTIONAL];
+
+    public const LEGACY_RESPONSIBLES = ['docente', 'coordinacion'];
 
     protected const LEGACY_COLUMN_ALIASES = [
         'id' => 'definicion_campo_id',
@@ -44,7 +44,7 @@ class FieldDefinition extends Model
     protected $primaryKey = 'definicion_campo_id';
 
     protected $attributes = [
-        'quien_llena_definicion_campo' => 'docente',
+        'quien_llena_definicion_campo' => self::CAREER,
         'contenido_definicion_campo' => '{"type":"doc","content":[{"type":"paragraph"}]}',
     ];
 
@@ -95,14 +95,14 @@ class FieldDefinition extends Model
         return parent::resolveRouteBindingQuery($query, $value, $field)->withoutGlobalScope('vigente_en_plantilla');
     }
 
-    public function fromProfile(): bool
+    public static function responsible(mixed $value): mixed
     {
-        return $this->quien_llena === self::COORDINATION;
+        return in_array($value, self::LEGACY_RESPONSIBLES, true) ? self::CAREER : $value;
     }
 
-    public function teacherEditable(): bool
+    public function career(): bool
     {
-        return $this->quien_llena === self::TEACHER;
+        return $this->quien_llena !== self::INSTITUTIONAL;
     }
 
     /**

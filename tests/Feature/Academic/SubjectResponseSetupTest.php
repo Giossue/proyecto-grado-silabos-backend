@@ -17,7 +17,7 @@ class SubjectResponseSetupTest extends TestCase
 {
     use BuildsResponseKinds, ConfiguresFacultyLogos, CreatesSyllabusProcess, RefreshDatabase;
 
-    private const FIXED = 'En los campos del docente solo puede elegir el tipo de respuesta y escribir sus opciones. El texto, los encabezados y la estructura los define Administración.';
+    private const FIXED = 'Complete solo los espacios de respuesta. El texto, los encabezados y la estructura los define Administración.';
 
     private Subject $subject;
 
@@ -34,18 +34,17 @@ class SubjectResponseSetupTest extends TestCase
         return FieldValue::query()->where('asignatura_id', $this->subject->id)->where('definicion_campo_id', $this->responseField->id)->first();
     }
 
-    public function test_the_career_project_shows_the_teacher_fields_only_to_build_their_responses(): void
+    public function test_the_career_project_shows_each_career_field_once_with_its_template(): void
     {
         $this->templateWithResponseField();
         $profile = $this->asUser('coordinador@silabos.test')->getJson(route('api.v1.academic.subjects.profile.show', $this->subject))->assertOk();
 
-        $this->assertNotContains('metodologia', array_column($profile->json('fields'), 'key'));
-        $field = collect($profile->json('response_fields'))->firstWhere('key', 'metodologia');
-        $this->assertSame('docente', $field['quien_llena']);
+        $field = collect($profile->json('fields'))->firstWhere('key', 'metodologia');
+        $this->assertSame('carrera', $field['quien_llena']);
         $this->assertSame('Estrategias de la asignatura', $field['template']['content'][0]['content'][0]['text']);
-        $this->assertNotContains('bibliografia', array_column($profile->json('response_fields'), 'key'));
-        $this->assertNotContains('descripcion', array_column($profile->json('response_fields'), 'key'));
-        $positions = array_column([...$profile->json('fields'), ...$profile->json('response_fields')], 'position');
+        $this->assertNotContains('bibliografia', array_column($profile->json('fields'), 'key'));
+        $this->assertContains('descripcion', array_column($profile->json('fields'), 'key'));
+        $positions = array_column($profile->json('fields'), 'position');
         $this->assertSame(count($positions), count(array_unique($positions)));
     }
 
@@ -69,19 +68,16 @@ class SubjectResponseSetupTest extends TestCase
         $this->assertNull($this->setupRow());
     }
 
-    public function test_the_teacher_fields_do_not_count_for_a_complete_career_project(): void
+    public function test_only_a_choice_without_options_keeps_the_career_project_incomplete(): void
     {
-        $this->templateWithResponseField();
-        $this->fillSubjectProfiles();
-        $this->asUser('coordinador@silabos.test')->getJson(route('api.v1.academic.subjects.profile.show', $this->subject))->assertOk()->assertJsonPath('complete', true);
-
-        $this->saveSetup($this->withResponses($this->response('varias', ['A', 'B'])))->assertOk()->assertJsonPath('complete', true);
-
-        FieldValue::query()->where('asignatura_id', $this->subject->id)->where('definicion_campo_id', '!=', $this->responseField->id)->delete();
+        $this->templateWithResponseField($this->response('una'));
         $this->asUser('coordinador@silabos.test')->getJson(route('api.v1.academic.subjects.profile.show', $this->subject))->assertOk()->assertJsonPath('complete', false);
+
+        $this->saveSetup($this->withResponses($this->response('una', ['A', 'B'])))->assertOk()->assertJsonPath('complete', true);
+        $this->saveSetup($this->withResponses($this->response('una'), $this->response('varias')))->assertOk()->assertJsonPath('complete', false);
     }
 
-    public function test_coordination_cannot_change_the_fixed_format_nor_fill_the_teacher_field(): void
+    public function test_coordination_writes_in_the_spaces_but_cannot_change_the_fixed_format(): void
     {
         $this->templateWithResponseField();
         $base = $this->withResponses();
@@ -99,10 +95,14 @@ class SubjectResponseSetupTest extends TestCase
         $textNextToResponse = $this->withResponses();
         $textNextToResponse['content'][1]['content'] = [...$text, $this->response('numero')];
 
-        foreach ([$changedText, $changedHeader, $addedRow, $filledSlot, $filledCell, $textNextToResponse] as $document) {
+        foreach ([$changedText, $changedHeader] as $document) {
             $this->saveSetup($document)->assertUnprocessable()->assertJsonValidationErrors(["values.{$this->responseField->id}" => self::FIXED]);
         }
         $this->assertNull($this->setupRow());
+        foreach ([$addedRow, $filledSlot, $filledCell, $textNextToResponse] as $document) {
+            $this->saveSetup($document)->assertOk();
+            $this->assertNotNull($this->setupRow());
+        }
     }
 
     public function test_coordination_writes_the_options_the_administrator_left_empty_but_not_the_ones_already_written(): void
@@ -143,12 +143,12 @@ class SubjectResponseSetupTest extends TestCase
         $this->assertNull($this->setupRow());
     }
 
-    public function test_coordination_answers_the_responses_of_its_own_fields_and_an_unanswered_one_keeps_the_project_incomplete(): void
+    public function test_coordination_answers_the_responses_the_administrator_placed(): void
     {
         $this->templateWithResponseField($this->response('una', ['Básica', 'Profesional']), 'descripcion');
         $this->fillSubjectProfiles();
-        $this->assertSame('coordinacion', $this->responseField->quien_llena);
-        $fields = collect($this->asUser('coordinador@silabos.test')->getJson(route('api.v1.academic.subjects.profile.show', $this->subject))->assertOk()->assertJsonPath('complete', false)->json('fields'));
+        $this->assertSame('carrera', $this->responseField->quien_llena);
+        $fields = collect($this->asUser('coordinador@silabos.test')->getJson(route('api.v1.academic.subjects.profile.show', $this->subject))->assertOk()->assertJsonPath('complete', true)->json('fields'));
         $this->assertSame('una', $fields->firstWhere('key', 'descripcion')['template']['content'][1]['content'][0]['attrs']['kind']);
 
         $answer = fn (mixed $value, array $options = ['Básica', 'Profesional']): array => $this->withResponses($this->response('una', $options, $value), base: $this->filledTemplateValue($this->responseField, 'Texto de Coordinación'));

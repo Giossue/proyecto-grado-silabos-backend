@@ -29,7 +29,7 @@ class SubjectProfileTest extends TestCase
         $this->postJson(route('api.v1.admin.template.format', SyllabusTemplate::query()->firstOrFail()))->assertSuccessful();
     }
 
-    public function test_the_profile_form_is_built_from_the_template_fields_marked_from_profile(): void
+    public function test_the_profile_form_lists_every_career_field_with_a_space_to_write(): void
     {
         $subject = Subject::query()->firstOrFail();
         $this->asRole('coordinador@silabos.test');
@@ -37,16 +37,19 @@ class SubjectProfileTest extends TestCase
         $response = $this->getJson(route('api.v1.academic.subjects.profile.show', $subject))->assertOk();
         $keys = array_column($response->json('fields'), 'key');
         $this->assertContains('descripcion', $keys);
+        $this->assertContains('recursos_medios', $keys);
         $this->assertNotContains('bibliografia', $keys);
-        $this->assertNotContains('recursos_medios', $keys);
-        $this->assertFalse($response->json('complete'));
+        $this->assertNotContains('unidades', $keys);
+        $this->assertSame(['carrera'], array_values(array_unique(array_column($response->json('fields'), 'quien_llena'))));
+        $this->assertTrue($response->json('complete'));
         $this->assertSame([], $response->json('values'));
+        $this->assertArrayNotHasKey('response_fields', $response->json());
     }
 
     public function test_coordinator_and_administrator_save_values_and_the_profile_completes(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $fields = FieldDefinition::query()->where('quien_llena', 'coordinacion')->get();
+        $fields = $this->careerProjectFields();
         $values = $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->id => $this->filledTemplateValue($field, "Texto de {$field->clave}")])->all();
 
         $this->asRole('coordinador@silabos.test');
@@ -58,21 +61,21 @@ class SubjectProfileTest extends TestCase
         $this->asRole('admin@silabos.test');
         $first = $fields->first();
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$first->id => null]])
-            ->assertOk()->assertJsonPath('complete', false);
+            ->assertOk()->assertJsonPath('complete', true);
         $this->assertSame($fields->count() - 1, FieldValue::query()->where('asignatura_id', $subject->id)->count());
     }
 
-    public function test_an_empty_field_keeps_the_profile_incomplete_and_the_teacher_toggle_no_longer_exists(): void
+    public function test_an_empty_field_is_left_for_the_teacher_and_the_teacher_toggle_no_longer_exists(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $fields = FieldDefinition::query()->where('quien_llena', 'coordinacion')->get();
+        $fields = $this->careerProjectFields();
         $open = $fields->first();
         $values = $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->id => $field->is($open) ? null : $this->filledTemplateValue($field, "Texto de {$field->clave}")])->all();
 
         $this->asRole('coordinador@silabos.test');
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => $values, 'editable' => [$open->id => true]])
             ->assertOk()
-            ->assertJsonPath('complete', false)
+            ->assertJsonPath('complete', true)
             ->assertJsonMissingPath('editable');
         $this->assertFalse(FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $open->id)->exists());
     }
@@ -101,8 +104,8 @@ class SubjectProfileTest extends TestCase
     public function test_the_preview_shows_the_syllabus_with_curriculum_data_and_the_saved_profile_only(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $description = FieldDefinition::query()->where('quien_llena', 'coordinacion')->where('clave', 'descripcion')->firstOrFail();
-        $teacherField = FieldDefinition::query()->where('quien_llena', 'docente')->firstOrFail();
+        $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
+        $teacherField = $this->teacherFields()->firstOrFail();
         $this->asRole('coordinador@silabos.test');
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$description->id => $this->filledTemplateValue($description, 'Descripción del proyecto de carrera')]])->assertOk();
 
@@ -117,12 +120,12 @@ class SubjectProfileTest extends TestCase
     public function test_only_profile_fields_and_valid_documents_are_accepted(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $profileField = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
-        $teacherField = FieldDefinition::query()->where('clave', 'recursos_medios')->firstOrFail();
+        $profileField = $this->careerProjectFields()->firstOrFail();
+        $blockField = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
         $this->asRole('coordinador@silabos.test');
 
-        $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$teacherField->id => FreeText::fromText('No')]])
-            ->assertUnprocessable()->assertJsonValidationErrors("values.{$teacherField->id}");
+        $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$blockField->id => FreeText::fromText('No')]])
+            ->assertUnprocessable()->assertJsonValidationErrors('values');
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [Str::uuid()->toString() => FreeText::fromText('No')]])
             ->assertUnprocessable()->assertJsonValidationErrors('values');
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$profileField->id => ['type' => 'html']]])
@@ -136,7 +139,7 @@ class SubjectProfileTest extends TestCase
         $this->asRole('admin@silabos.test');
         $this->postJson(route('api.v1.admin.template.structure.fields.store', [$template, $section->id]), [
             'section_id' => $section->id, 'key' => 'vinculacion', 'label' => 'Vinculación con la sociedad',
-            'quien_llena' => 'coordinacion', 'content' => FreeText::fromText(''),
+            'quien_llena' => 'carrera', 'content' => FreeText::fromText(''),
         ])->assertSuccessful();
 
         $subject = Subject::query()->firstOrFail();
@@ -150,7 +153,7 @@ class SubjectProfileTest extends TestCase
         $template = SyllabusTemplate::query()->firstOrFail();
         $field = FieldDefinition::query()->where('clave', 'tecnicas_ensenanza')->firstOrFail();
         $this->asRole('admin@silabos.test');
-        $payload = ['label' => $field->etiqueta, 'quien_llena' => 'docente'];
+        $payload = ['label' => $field->etiqueta, 'quien_llena' => 'carrera'];
         $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$template, $field]), [...$payload, 'content' => FreeText::fromText('Texto inicial sugerido')])->assertSuccessful();
         $this->assertSame('Texto inicial sugerido', FreeText::plainText($field->fresh()->contenido));
         $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$template, $field]), [...$payload, 'content' => FreeText::fromText('')])->assertSuccessful();
@@ -160,7 +163,7 @@ class SubjectProfileTest extends TestCase
     public function test_a_value_belongs_to_exactly_one_owner(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $field = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
+        $field = $this->careerProjectFields()->firstOrFail();
 
         $this->expectException(QueryException::class);
         FieldValue::query()->create(['definicion_campo_id' => $field->id, 'valor' => FreeText::fromText('Sin dueño')]);
@@ -170,7 +173,7 @@ class SubjectProfileTest extends TestCase
     public function test_one_value_per_subject_and_field_is_enforced_by_postgresql(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $field = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
+        $field = $this->careerProjectFields()->firstOrFail();
         FieldValue::query()->create(['asignatura_id' => $subject->id, 'definicion_campo_id' => $field->id, 'valor' => FreeText::fromText('Uno')]);
 
         $this->expectException(QueryException::class);

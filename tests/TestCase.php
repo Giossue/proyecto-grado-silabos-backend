@@ -9,11 +9,14 @@ use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Laravel\Fortify\Features;
 
 abstract class TestCase extends BaseTestCase
 {
+    protected const CAREER_PROJECT_KEYS = ['descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje', 'habilidades_blandas', 'contribucion_perfil'];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -52,7 +55,7 @@ abstract class TestCase extends BaseTestCase
     protected function fillSubjectProfiles(): void
     {
         User::query()->update(['formacion_experiencia_usuario' => 'Formación de prueba del docente.']);
-        $fields = app(SubjectProfileFields::class)->fields();
+        $fields = app(SubjectProfileFields::class)->fields()->filter(fn (FieldDefinition $field): bool => in_array($field->clave, self::CAREER_PROJECT_KEYS, true));
         foreach (Subject::query()->get() as $subject) {
             foreach ($fields as $field) {
                 FieldValue::query()->updateOrCreate(
@@ -61,5 +64,19 @@ abstract class TestCase extends BaseTestCase
                 );
             }
         }
+    }
+
+    /** @return Collection<int, FieldDefinition> */
+    protected function teacherFields(): Collection
+    {
+        return FieldDefinition::query()->where('quien_llena', FieldDefinition::CAREER)->get()
+            ->reject(fn (FieldDefinition $field): bool => in_array($field->clave, self::CAREER_PROJECT_KEYS, true))->values();
+    }
+
+    /** @return Collection<int, FieldDefinition> */
+    protected function careerProjectFields(): Collection
+    {
+        return FieldDefinition::query()->where('quien_llena', FieldDefinition::CAREER)->get()
+            ->filter(fn (FieldDefinition $field): bool => in_array($field->clave, self::CAREER_PROJECT_KEYS, true))->values();
     }
 }

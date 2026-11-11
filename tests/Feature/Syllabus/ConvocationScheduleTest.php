@@ -154,7 +154,7 @@ class ConvocationScheduleTest extends TestCase
     public function test_once_the_deadline_passes_the_teacher_can_only_read_and_an_extension_reopens_editing(): void
     {
         $syllabus = $this->createValidDraft();
-        $field = FieldDefinition::query()->where('quien_llena', 'docente')->firstOrFail();
+        $field = $this->teacherFields()->firstOrFail();
         $convocation = $this->expireDeadline($syllabus);
 
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
@@ -366,9 +366,7 @@ class ConvocationScheduleTest extends TestCase
         $syllabus = Syllabus::query()->firstOrFail();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
 
-        $fields = FieldDefinition::query()
-            ->where('quien_llena', 'docente')
-            ->get();
+        $fields = $this->teacherFields();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(
                 route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),

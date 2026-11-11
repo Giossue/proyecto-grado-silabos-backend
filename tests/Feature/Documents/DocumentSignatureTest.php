@@ -3,7 +3,6 @@
 namespace Tests\Feature\Documents;
 
 use App\Models\User;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Application\DocumentBundleValidator;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
@@ -278,7 +277,7 @@ class DocumentSignatureTest extends TestCase
         $this->assertSame(1, Convocation::query()->count());
         $syllabus = Syllabus::query()->firstOrFail();
         $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        foreach (FieldDefinition::query()->where('quien_llena', 'docente')->get() as $field) {
+        foreach ($this->teacherFields() as $field) {
             $this->as('teacher')->patchJson(
                 route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
                 ['version_bloqueo' => $syllabus->fresh()?->version_bloqueo, 'value' => $this->answeredValue($field, "Contenido {$field->clave}")],

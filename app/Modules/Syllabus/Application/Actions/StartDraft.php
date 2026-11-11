@@ -74,16 +74,17 @@ class StartDraft
 
     private function inherit(Syllabus $syllabus, Syllabus $source): void
     {
+        $setups = $this->profiles->templates((string) $syllabus->parallel()->value('asignatura_id'));
         $fields = FieldDefinition::query()
             ->where('plantilla_id', SyllabusTemplate::institutional()->id)
-            ->where('quien_llena', FieldDefinition::TEACHER)
+            ->where('quien_llena', '!=', FieldDefinition::INSTITUTIONAL)
             ->get()
+            ->filter(fn (FieldDefinition $field): bool => SubjectProfileFields::teacherEditable($field, $setups))
             ->keyBy('id');
         $previous = FieldValue::query()
             ->where('silabo_id', $source->id)
             ->whereIn('definicion_campo_id', $fields->keys())
             ->get();
-        $setups = $this->profiles->setups((string) $syllabus->parallel()->value('asignatura_id'));
         foreach ($previous as $value) {
             $setup = $setups[$value->definicion_campo_id] ?? null;
             FieldValue::query()->updateOrCreate(

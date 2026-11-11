@@ -5,7 +5,6 @@ namespace Tests\Feature\Syllabus;
 use App\Models\User;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
@@ -58,7 +57,7 @@ class ResponseKindAnswersTest extends TestCase
         ])->assertSuccessful();
         $this->syllabus = Syllabus::query()->firstOrFail();
         $this->asUser('docente@silabos.test')->postJson(route('api.v1.teacher.syllabi.start', $this->syllabus))->assertSuccessful();
-        foreach (FieldDefinition::query()->where('quien_llena', 'docente')->get() as $field) {
+        foreach ($this->teacherFields() as $field) {
             if ($field->is($this->responseField)) {
                 continue;
             }
@@ -163,7 +162,7 @@ class ResponseKindAnswersTest extends TestCase
     {
         $this->draft(fn (): array => $this->built());
         $name = $this->responseField->displayName();
-        $pending = ['field_id' => $this->responseField->id, 'code' => 'respuesta_faltante', 'severity' => 'error', 'message' => "«{$name}» tiene una respuesta sin contestar. Elija una opción o escriba el número antes de enviar."];
+        $pending = ['field_id' => $this->responseField->id, 'code' => 'respuesta_faltante', 'severity' => 'error', 'message' => "«{$name}» tiene una respuesta sin contestar. Elija una opción o escriba la respuesta antes de enviar."];
 
         $this->assertSame(['campo_obligatorio_faltante'], array_column($this->issues(), 'code'));
         foreach ([$this->answers(number: ''), $this->answers(technique: null), $this->answers(places: [])] as $document) {
@@ -180,7 +179,10 @@ class ResponseKindAnswersTest extends TestCase
 
     public function test_a_choice_without_written_options_asks_for_the_coordinator(): void
     {
-        $this->draft(null, $this->response('una'));
+        $this->draft(null);
+        $this->responseField->update(['contenido' => $this->withResponses($this->response('una'))]);
+        FieldValue::query()->where('silabo_id', $this->syllabus->id)->where('definicion_campo_id', $this->responseField->id)
+            ->update(['valor' => json_encode($this->withResponses($this->response('una')))]);
         $name = $this->responseField->displayName();
 
         $this->assertContains(

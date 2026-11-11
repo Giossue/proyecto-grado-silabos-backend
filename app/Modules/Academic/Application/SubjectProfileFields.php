@@ -18,40 +18,45 @@ class SubjectProfileFields
      */
     public function fields(): Collection
     {
-        return $this->templateFields()->filter(fn (FieldDefinition $field): bool => $field->fromProfile())->values();
-    }
-
-    /**
-     * @return Collection<int, FieldDefinition>
-     */
-    public function teacherFields(): Collection
-    {
-        return $this->templateFields()
-            ->filter(fn (FieldDefinition $field): bool => $field->teacherEditable() && FieldResponse::configurable($field->contenido))
-            ->values();
+        return $this->templateFields()->filter(fn (FieldDefinition $field): bool => $field->career() && FieldResponse::writable($field->contenido))->values();
     }
 
     /**
      * @return array<string, array<string, mixed>>
      */
-    public function setups(string $subjectId): array
+    public function templates(string $subjectId): array
     {
-        if (! FieldResponse::enabled()) {
-            return [];
-        }
         $stored = FieldValue::query()->where('asignatura_id', $subjectId)->get()->keyBy('definicion_campo_id');
         if ($stored->isEmpty()) {
             return [];
         }
-        $setups = [];
-        foreach (FieldDefinition::query()->whereKey($stored->keys()->all())->where('quien_llena', FieldDefinition::TEACHER)->get() as $field) {
-            $setup = FieldResponse::templateFor($field->contenido, $stored->get($field->id)?->valor);
-            if ($setup !== $field->contenido) {
-                $setups[(string) $field->id] = $setup;
+        $templates = [];
+        foreach (FieldDefinition::query()->whereKey($stored->keys()->all())->where('quien_llena', '!=', FieldDefinition::INSTITUTIONAL)->get() as $field) {
+            $template = self::templateOf($field, $stored->get($field->id)?->valor);
+            if ($template !== null) {
+                $templates[(string) $field->id] = $template;
             }
         }
 
-        return $setups;
+        return $templates;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function templateOf(FieldDefinition $field, mixed $stored): ?array
+    {
+        $template = FieldResponse::templateFor($field->contenido, $stored);
+
+        return $template == $field->contenido || $template == FieldResponse::template(FieldDocument::normalize($field->contenido)) ? null : $template;
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $templates
+     */
+    public static function teacherEditable(FieldDefinition $field, array $templates): bool
+    {
+        return $field->career() && (! isset($templates[$field->id]) || FieldResponse::open($templates[$field->id]));
     }
 
     /**
@@ -92,7 +97,7 @@ class SubjectProfileFields
 
     /**
      * @param  array<int, string>  $subjectIds
-     * @return array<string, bool> ficha completa por materia: todos los campos de la ficha tienen texto
+     * @return array<string, bool> proyecto de carrera completo por materia: ningún espacio de elegir quedó sin opciones
      */
     public function completeBySubject(array $subjectIds): array
     {
@@ -105,28 +110,29 @@ class SubjectProfileFields
      */
     public function progressBySubject(array $subjectIds): array
     {
-        $definitions = $this->fields()->keyBy('id');
-        $fieldIds = $definitions->keys()->all();
-        $filled = [];
-        if ($fieldIds !== [] && $subjectIds !== []) {
-            FieldValue::query()
-                ->whereIn('asignatura_id', $subjectIds)
-                ->whereIn('definicion_campo_id', $fieldIds)
-                ->get()
-                ->each(function (FieldValue $value) use (&$filled, $definitions): void {
-                    if (! FreeText::isDocument($value->valor)) {
-                        return;
-                    }
-                    $document = FieldDocument::normalize($value->valor);
-                    if (! FieldResponse::isEmpty($definitions->get($value->definicion_campo_id)->contenido, $document) && array_sum(ResponseKind::pending($document)) === 0) {
-                        $filled[$value->asignatura_id][$value->definicion_campo_id] = true;
-                    }
-                });
+        $fields = $this->fields();
+        $missing = [];
+        foreach ($fields as $field) {
+            if (ResponseKind::pending(FieldDocument::normalize($field->contenido))['without_options'] > 0) {
+                $missing[(string) $field->id] = true;
+            }
         }
-
+        $stored = $fields->isEmpty() || $subjectIds === [] ? collect() : FieldValue::query()
+            ->whereIn('asignatura_id', $subjectIds)
+            ->whereIn('definicion_campo_id', $fields->pluck('id')->all())
+            ->get()
+            ->groupBy('asignatura_id');
         $progress = [];
         foreach ($subjectIds as $subjectId) {
-            $progress[$subjectId] = ['filled' => count($filled[$subjectId] ?? []), 'total' => count($fieldIds)];
+            $rows = ($stored->get($subjectId) ?? collect())->keyBy('definicion_campo_id');
+            $pending = 0;
+            foreach ($fields as $field) {
+                $template = self::templateOf($field, $rows->get($field->id)?->valor);
+                if ($template !== null ? ResponseKind::pending($template)['without_options'] > 0 : isset($missing[(string) $field->id])) {
+                    $pending++;
+                }
+            }
+            $progress[$subjectId] = ['filled' => $fields->count() - $pending, 'total' => $fields->count()];
         }
 
         return $progress;

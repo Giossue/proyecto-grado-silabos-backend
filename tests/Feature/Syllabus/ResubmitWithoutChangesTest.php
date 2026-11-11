@@ -80,7 +80,7 @@ class ResubmitWithoutChangesTest extends TestCase
         ])->assertSuccessful();
         $syllabus = Syllabus::query()->firstOrFail();
         $this->asTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        foreach (FieldDefinition::query()->where('quien_llena', 'docente')->get() as $field) {
+        foreach ($this->teacherFields() as $field) {
             $this->asTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
                 'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
                 'value' => $this->answeredValue($field, "Contenido académico {$field->clave}"),

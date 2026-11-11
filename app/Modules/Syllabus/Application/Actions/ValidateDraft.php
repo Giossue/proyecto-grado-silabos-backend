@@ -22,7 +22,7 @@ use Illuminate\Validation\ValidationException;
 
 class ValidateDraft
 {
-    public const RULE_VERSION = 'field-document-v10';
+    public const RULE_VERSION = 'field-document-v11';
 
     public function __construct(
         private readonly ActiveRole $roles,
@@ -38,30 +38,27 @@ class ValidateDraft
             $values = $locked->values()->get()->keyBy('definicion_campo_id');
             $issues = [];
             $variables = TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($locked)]);
-            $setups = $this->profiles->setups((string) $locked->parallel()->value('asignatura_id'));
+            $templates = $this->profiles->templates((string) $locked->parallel()->value('asignatura_id'));
             foreach ($fields as $field) {
-                if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
+                if (! SubjectProfileFields::teacherEditable($field, $templates)) {
                     continue;
                 }
-                $template = $field->teacherEditable() ? ($setups[$field->id] ?? $field->contenido) : $field->contenido;
-                $fromCareer = ! $field->teacherEditable();
+                $template = $templates[$field->id] ?? $field->contenido;
                 $empty = FieldResponse::isEmpty($template, $values->get($field->id)?->valor);
                 $pending = ResponseKind::pending(FreeText::isDocument($values->get($field->id)?->valor) ? $values->get($field->id)?->valor : $template);
-                if ($empty || ($fromCareer && array_sum($pending) > 0)) {
+                if ($empty) {
                     $issues[] = [
                         'field_id' => $field->id,
-                        'code' => $fromCareer ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
+                        'code' => 'campo_obligatorio_faltante',
                         'severity' => 'error',
-                        'message' => $fromCareer
-                            ? 'La asignatura no tiene proyecto de carrera: pídalo al coordinador.'
-                            : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
+                        'message' => "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
                     ];
                 }
-                if (! $fromCareer && $pending['without_options'] > 0) {
+                if ($pending['without_options'] > 0) {
                     $issues[] = ['field_id' => $field->id, 'code' => 'respuesta_sin_opciones', 'severity' => 'error', 'message' => "«{$field->displayName()}» tiene una respuesta sin opciones para elegir: pídalas al coordinador."];
                 }
-                if (! $fromCareer && ! $empty && $pending['unanswered'] > 0) {
-                    $issues[] = ['field_id' => $field->id, 'code' => 'respuesta_faltante', 'severity' => 'error', 'message' => "«{$field->displayName()}» tiene una respuesta sin contestar. Elija una opción o escriba el número antes de enviar."];
+                if (! $empty && $pending['unanswered'] > 0) {
+                    $issues[] = ['field_id' => $field->id, 'code' => 'respuesta_faltante', 'severity' => 'error', 'message' => "«{$field->displayName()}» tiene una respuesta sin contestar. Elija una opción o escriba la respuesta antes de enviar."];
                 }
                 $stored = $values->get($field->id)?->valor;
                 if (FieldResponse::enabled() && is_array($stored)) {

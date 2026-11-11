@@ -23,6 +23,22 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
     /** @var list<string>|null */
     private ?array $definitionErrors = null;
 
+    protected function prepareForValidation(): void
+    {
+        $sections = $this->input('sections');
+        if (! is_array($sections)) {
+            return;
+        }
+        foreach ($sections as $index => $section) {
+            foreach (is_array($section['fields'] ?? null) ? $section['fields'] : [] as $position => $field) {
+                if (is_array($field) && array_key_exists('quien_llena', $field)) {
+                    $sections[$index]['fields'][$position]['quien_llena'] = FieldDefinition::responsible($field['quien_llena']);
+                }
+            }
+        }
+        $this->merge(['sections' => $sections]);
+    }
+
     /**
      * @return array<string, list<mixed>>
      */

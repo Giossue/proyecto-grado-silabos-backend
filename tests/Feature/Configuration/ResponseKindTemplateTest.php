@@ -71,14 +71,14 @@ class ResponseKindTemplateTest extends TestCase
     private function rejected(array $attrs, string $message): void
     {
         $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $this->section()]), [
-            'key' => 'tutorias', 'label' => 'Tutorías', 'quien_llena' => 'docente',
+            'key' => 'tutorias', 'label' => 'Tutorías', 'quien_llena' => 'carrera',
             'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [$this->response($attrs)]]]],
         ])->assertUnprocessable()->assertJsonFragment([$message]);
     }
 
     public function test_the_administrator_places_a_number_and_a_choice_in_a_field_and_in_a_table_cell(): void
     {
-        foreach (['docente', 'coordinacion'] as $responsible) {
+        foreach ([FieldDefinition::CAREER] as $responsible) {
             $content = $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $this->section()]), [
                 'key' => "tutorias_{$responsible}", 'label' => 'Tutorías', 'quien_llena' => $responsible,
                 'content' => $this->document(['kind' => 'numero', 'value' => '12'], ['kind' => 'varias', 'options' => [['const' => 'o1', 'title' => '  Presencial '], ['const' => 'o2', 'title' => 'En línea']], 'value' => ['o2']]),
@@ -87,7 +87,7 @@ class ResponseKindTemplateTest extends TestCase
             $this->assertSame(['kind' => 'numero', 'options' => [], 'value' => ''], $content['content'][0]['content'][1]['attrs']);
             $this->assertSame(['kind' => 'varias', 'options' => self::OPTIONS, 'value' => []], $content['content'][1]['content'][1]['content'][0]['content'][0]['content'][0]['attrs']);
         }
-        $this->assertSame(['numero', 'una', 'varias'], array_keys(ResponseKind::KINDS));
+        $this->assertSame(['texto', 'numero', 'una', 'varias'], array_keys(ResponseKind::KINDS));
     }
 
     public function test_a_fixed_field_does_not_take_response_kinds(): void
@@ -95,19 +95,19 @@ class ResponseKindTemplateTest extends TestCase
         $content = $this->document(['kind' => 'numero'], ['kind' => 'una', 'options' => self::OPTIONS]);
         $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $this->section()]), [
             'key' => 'tutorias', 'label' => 'Tutorías', 'quien_llena' => 'institucional', 'content' => $content,
-        ])->assertUnprocessable()->assertJsonValidationErrors(['content' => 'Un campo Fijo no lleva tipos de respuesta. Cambie quién lo llena o quite la respuesta.']);
+        ])->assertUnprocessable()->assertJsonValidationErrors(['content' => 'Un campo Institucional no lleva tipos de respuesta. Cambie quién lo llena o quite la respuesta.']);
 
         $field = $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $this->section()]), [
-            'key' => 'tutorias', 'label' => 'Tutorías', 'quien_llena' => 'docente', 'content' => $content,
+            'key' => 'tutorias', 'label' => 'Tutorías', 'quien_llena' => 'carrera', 'content' => $content,
         ])->assertCreated()->json('field.id');
         $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$this->template, $field]), ['quien_llena' => 'institucional'])
             ->assertUnprocessable()->assertJsonValidationErrors('content');
-        $this->assertSame('docente', FieldDefinition::query()->findOrFail($field)->quien_llena);
+        $this->assertSame('carrera', FieldDefinition::query()->findOrFail($field)->quien_llena);
     }
 
     public function test_the_kind_comes_from_the_catalog_and_the_options_are_written_once_each(): void
     {
-        $this->rejected(['kind' => 'fecha'], 'Elija un tipo de respuesta: Número, Elegir una o Elegir varias.');
+        $this->rejected(['kind' => 'fecha'], 'Elija un tipo de respuesta: Texto libre, Número, Elegir una o Elegir varias.');
         $this->rejected(['kind' => 'una', 'options' => [['const' => 'o1', 'title' => 'Sí'], ['const' => 'o2', 'title' => 'Sí']]], 'Hay opciones repetidas. Deje cada opción una sola vez.');
         $this->rejected(['kind' => 'una', 'options' => [['const' => 'o1', 'title' => '  ']]], 'Escriba el texto de cada opción, de hasta 120 caracteres.');
         $this->rejected(['kind' => 'una', 'options' => [['const' => 'o1', 'title' => str_repeat('a', 121)]]], 'Escriba el texto de cada opción, de hasta 120 caracteres.');

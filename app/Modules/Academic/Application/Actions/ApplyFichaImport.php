@@ -70,10 +70,10 @@ final class ApplyFichaImport
                         continue;
                     }
                     $document = $this->values->document($this->values->clean($value, $this->values->schema($field)['columns']), $field->contenido);
-                    $document = FieldResponse::normalize($field->contenido, $document);
-                    if (FieldResponse::isEmpty($field->contenido, $document)) {
+                    if (FieldResponse::isEmpty($field->contenido, FieldResponse::normalize($field->contenido, $document))) {
                         continue;
                     }
+                    $document = FieldResponse::career($field->contenido, $document);
                     FieldValue::query()->updateOrCreate(
                         ['asignatura_id' => $entry['subject_id'], 'definicion_campo_id' => $field->id],
                         ['valor' => FreeText::normalize($document)],

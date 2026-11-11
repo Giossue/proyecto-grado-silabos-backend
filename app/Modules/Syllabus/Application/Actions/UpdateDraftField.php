@@ -43,11 +43,12 @@ class UpdateDraftField
                 throw ValidationException::withMessages(['field' => 'El campo no pertenece a la plantilla vigente.']);
             }
             $current = FieldValue::query()->where('silabo_id', $locked->id)->where('definicion_campo_id', $field->id)->first();
-            if (! $field->teacherEditable()) {
+            $templates = $this->profiles->templates((string) $locked->parallel()->value('asignatura_id'));
+            if (! SubjectProfileFields::teacherEditable($field, $templates)) {
                 throw ValidationException::withMessages(['field' => 'Este campo pertenece a Coordinación o a la institución y el docente no puede cambiarlo.']);
             }
 
-            $template = $this->profiles->setups((string) $locked->parallel()->value('asignatura_id'))[$field->id] ?? $field->contenido;
+            $template = $templates[$field->id] ?? $field->contenido;
             $document = FieldResponse::normalize($template, $data['value'] ?? FieldDocument::empty(), 'value');
             if (! DocumentBlock::sameStructure(FieldDocument::normalize($field->contenido), $document)) {
                 throw ValidationException::withMessages(['value' => 'Los bloques de este campo los define la plantilla; el docente solo los responde.']);

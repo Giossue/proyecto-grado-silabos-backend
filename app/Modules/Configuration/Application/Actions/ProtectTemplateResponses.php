@@ -56,7 +56,7 @@ final readonly class ProtectTemplateResponses
                 }
             }
             $presets = array_values(array_filter(array_map(fn (array $preset): array => $preset['field'] === 'unidades'
-                ? [...$preset, 'content' => $planning['content'], 'quien_llena' => FieldDefinition::TEACHER] : $preset, $current->presets()),
+                ? [...$preset, 'content' => $planning['content'], 'quien_llena' => FieldDefinition::CAREER] : $preset, $current->presets()),
                 fn (array $preset): bool => $preset['key'] !== 'unidades_curriculares' && $preset['field'] !== 'unidades_curriculares'));
             $blocks = $current->blocks();
             unset($blocks['planificacion_semanal']);
@@ -78,7 +78,7 @@ final readonly class ProtectTemplateResponses
             if ($catalog instanceof FieldDefinition) {
                 $locked->removeBlockDocument($catalog->campo_plantilla_id);
             }
-            $units->update(['quien_llena' => FieldDefinition::TEACHER, 'contenido' => $planningContent]);
+            $units->update(['quien_llena' => FieldDefinition::CAREER, 'contenido' => $planningContent]);
             $locked->updateBlockDocument($units->campo_plantilla_id, ['titulo' => $planning['label'] ?? 'Unidades']);
             $locked->saveDefinition($definition);
             $this->audit->execute(

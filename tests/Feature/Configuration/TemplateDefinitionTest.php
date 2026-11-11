@@ -65,7 +65,7 @@ class TemplateDefinitionTest extends TestCase
         $file = json_decode((string) file_get_contents(base_path(OfficialTemplate::PATH)), true, 512, JSON_THROW_ON_ERROR);
         $file['blocks']['practicas'] = $this->practices();
         $file['sections'][] = ['key' => 'practicas', 'title' => '12. Prácticas', 'fields' => [
-            ['key' => 'practicas', 'label' => '', 'quien_llena' => 'docente', 'content' => ['<div data-block="practicas"></div>']],
+            ['key' => 'practicas', 'label' => '', 'quien_llena' => 'carrera', 'content' => ['<div data-block="practicas"></div>']],
         ]];
 
         return array_replace_recursive($file, $override);

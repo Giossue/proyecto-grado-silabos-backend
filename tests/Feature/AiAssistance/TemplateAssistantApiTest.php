@@ -42,7 +42,7 @@ class TemplateAssistantApiTest extends TestCase
     {
         $this->script([...$this->addField('Competencias'), ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Propongo **Competencias**.'])]);
         $draft = $this->draft();
-        $draft[1]['fields'][] = ['key' => 'sin_guardar', 'label' => 'Sin guardar', 'quien_llena' => 'docente', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]];
+        $draft[1]['fields'][] = ['key' => 'sin_guardar', 'label' => 'Sin guardar', 'quien_llena' => 'carrera', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]];
 
         $this->ask('Agrega Competencias', null, $draft, 'sesion-1:7')->assertAccepted();
 
@@ -221,7 +221,7 @@ class TemplateAssistantApiTest extends TestCase
     private function addField(string $name): array
     {
         return [
-            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'resultados', 'nombre' => $name, 'quien_llena' => 'docente', 'contenido_html' => '<p></p>', 'despues_de' => '(final)']),
+            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'resultados', 'nombre' => $name, 'quien_llena' => 'carrera', 'contenido_html' => '<p></p>', 'despues_de' => '(final)']),
         ];
     }
 

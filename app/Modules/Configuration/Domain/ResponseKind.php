@@ -14,7 +14,13 @@ final class ResponseKind
 
     public const OPTION_LENGTH = 120;
 
+    public const TEXT_LENGTH = 3000;
+
     public const KINDS = [
+        'texto' => [
+            'label' => 'Texto libre',
+            'schema' => ['type' => 'string', 'maxLength' => self::TEXT_LENGTH, 'multiline' => true, 'errorMessage' => 'Escriba una respuesta de hasta 3000 caracteres.'],
+        ],
         'numero' => [
             'label' => 'Número',
             'schema' => ['type' => 'number', 'multipleOf' => 0.01, 'maximum' => 999999999.99, 'errorMessage' => 'Escriba solo un número, por ejemplo 12 o 12,5.'],
@@ -57,6 +63,9 @@ final class ResponseKind
         $value = ValueSchema::normalize(['respuesta' => $schema], ['respuesta' => $raw], [])['respuesta'];
         if (is_array($value)) {
             $value = array_values(array_unique(array_filter($value, is_string(...))));
+        }
+        if ($schema['type'] === 'string' && ! self::hasOptions($kind) && is_string($value)) {
+            $value = trim($value);
         }
 
         return ['kind' => $kind, 'options' => $options, 'value' => $value];
@@ -103,7 +112,7 @@ final class ResponseKind
             return [];
         }
         if (! self::hasOptions($kind)) {
-            return is_scalar($value) ? [(string) $value] : [];
+            return is_scalar($value) ? (preg_split('/\R/u', (string) $value) ?: []) : [];
         }
         $choice = ['type' => 'string', 'oneOf' => $options];
 
@@ -124,6 +133,17 @@ final class ResponseKind
         }
 
         return ($template['options'] ?? []) === ($value['options'] ?? []) || ($optionsPending && self::needsOptions($template));
+    }
+
+    /**
+     * @param  array<string, mixed>  $template
+     * @param  array<string, mixed>  $value
+     */
+    public static function sameAnswer(array $template, array $value): bool
+    {
+        return ($template['kind'] ?? null) === ($value['kind'] ?? null)
+            && ($template['options'] ?? []) == ($value['options'] ?? [])
+            && ($template['value'] ?? null) == ($value['value'] ?? null);
     }
 
     /**
@@ -173,7 +193,7 @@ final class ResponseKind
     public static function forField(string $responsible, array $content): array
     {
         if ($responsible === FieldDefinition::INSTITUTIONAL && self::within($content)) {
-            throw ValidationException::withMessages(['content' => 'Un campo Fijo no lleva tipos de respuesta. Cambie quién lo llena o quite la respuesta.']);
+            throw ValidationException::withMessages(['content' => 'Un campo Institucional no lleva tipos de respuesta. Cambie quién lo llena o quite la respuesta.']);
         }
 
         return self::unanswered($content);
@@ -224,6 +244,7 @@ final class ResponseKind
         return match (self::KINDS[$kind]['schema']['type'] ?? null) {
             'number' => '',
             'array' => [],
+            'string' => self::hasOptions($kind) ? null : '',
             default => null,
         };
     }

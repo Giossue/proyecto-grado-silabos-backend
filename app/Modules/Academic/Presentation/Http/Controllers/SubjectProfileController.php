@@ -51,19 +51,11 @@ class SubjectProfileController extends Controller
     public function preview(Subject $asignatura, Request $request, SaveSubjectProfile $action, SubjectProfileFields $profile, AcademicContextSnapshot $context, InstitutionalLogos $logos): JsonResponse
     {
         $action->authorize($asignatura, $request);
-        $values = $profile->values($asignatura->id);
         $academic = $context->forSubject($asignatura);
         $identification = IdentificationCard::build($academic, [], [], []);
         $template = SyllabusTemplate::institutional();
-        $setups = $profile->setups($asignatura->id);
-        $stored = function (FieldDefinition $field) use ($setups, $values): mixed {
-            if ($field->teacherEditable()) {
-                return $setups[$field->id] ?? $field->contenido;
-            }
-            $inherited = $field->fromProfile() ? ($values[$field->id] ?? null) : null;
-
-            return $inherited === null || FieldDocument::isEmpty($inherited) ? $field->contenido : $inherited;
-        };
+        $templates = $profile->templates($asignatura->id);
+        $stored = fn (FieldDefinition $field): mixed => $templates[$field->id] ?? $field->contenido;
 
         return response()->json([
             'presentation' => TemplatePresentation::presentation($template->definition(), [
@@ -71,7 +63,7 @@ class SubjectProfileController extends Controller
                 'faculty' => $logos->facultyUrl(data_get($academic, 'career.faculty_id')),
             ]),
             'sections' => $template->sections
-                ->map(fn (TemplateSection $section): array => SyllabusSectionPayload::build($section, $stored, ['identification' => $identification]))
+                ->map(fn (TemplateSection $section): array => SyllabusSectionPayload::build($section, $stored, ['identification' => $identification], $templates))
                 ->values(),
         ]);
     }
@@ -89,17 +81,15 @@ class SubjectProfileController extends Controller
             'label' => $field->etiqueta,
             'quien_llena' => $field->quien_llena,
             'content' => $field->contenido,
-            ...(FieldResponse::enabled() ? ['template' => FieldResponse::template($field->teacherEditable() ? FieldDocument::normalize($field->contenido) : $field->contenido)] : []),
+            ...(FieldResponse::enabled() ? ['template' => FieldResponse::template(FieldDocument::normalize($field->contenido))] : []),
             'section' => $field->block?->section?->titulo,
             'position' => $positions[$field->id] ?? 0,
         ];
-        $responseFields = $profile->teacherFields();
-        $values = [...array_diff_key($values, array_flip($responseFields->pluck('id')->all())), ...array_intersect_key($profile->setups($subjectId), array_flip($responseFields->pluck('id')->all()))];
+        $fields = $profile->fields();
 
         return [
-            'fields' => $profile->fields()->map($present)->all(),
-            'response_fields' => $responseFields->map($present)->all(),
-            'values' => (object) $values,
+            'fields' => $fields->map($present)->all(),
+            'values' => (object) array_intersect_key($values, array_flip($fields->pluck('id')->all())),
             'complete' => $profile->completeBySubject([$subjectId])[$subjectId] ?? false,
             'definition' => TemplatePresentation::definition(TemplateContext::active()),
             'variables' => (object) array_column(TemplateVariables::catalog(), 'sample', 'key'),

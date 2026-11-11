@@ -5,6 +5,7 @@ namespace Tests\Feature\Academic;
 use App\Models\User;
 use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Application\FichaWorkbookContext;
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
@@ -44,7 +45,8 @@ class FichaImportTest extends TestCase
         $this->context = $this->coordinator->roleAssignments()->firstOrFail();
     }
 
-    private function workbook(string $subjectId, bool $table = false): UploadedFile
+    /** @param  array<string, string>  $texts */
+    private function workbook(string $subjectId, bool $table = false, array $texts = []): UploadedFile
     {
         $definition = app(FichaWorkbookContext::class)->for((string) $this->context->carrera_id);
         $book = app(FichaWorkbook::class)->create($definition);
@@ -52,7 +54,9 @@ class FichaImportTest extends TestCase
         foreach ($definition->fields as $field) {
             $sheet = $book->getSheetByName($field['sheet']);
             $row = 4 + $subjectIndex * ($field['columns'] === [] ? 1 : 40);
-            if ($table && $field['key'] === 'contribucion_perfil') {
+            if (isset($texts[$field['key']])) {
+                $sheet->setCellValue('D'.$row, $texts[$field['key']]);
+            } elseif ($table && $field['key'] === 'contribucion_perfil') {
                 $sheet->fromArray([['Resuelve sistemas lineales', 'X', '', '', 'Resuelve problemas matemáticos']], null, 'D'.$row);
             } elseif (! $table && in_array($field['key'], ['descripcion', 'objetivos_especificos'], true)) {
                 $sheet->setCellValue('D'.$row, $field['key'] === 'descripcion' ? 'Ficha completada en Excel' : "- Analizar.\n- Aplicar.");
@@ -113,14 +117,28 @@ class FichaImportTest extends TestCase
         $this->assertSame(['Analizar.', 'Aplicar.'], $entry['values']['objetivos_especificos']);
         $this->assertArrayNotHasKey('objetivo_general', $entry['values']);
         $this->assertSame(2, $entry['coverage']['found']);
-        $this->assertSame(6, $entry['coverage']['total']);
-        $this->assertCount(4, $entry['missing']);
+        $this->assertSame(11, $entry['coverage']['total']);
+        $this->assertCount(9, $entry['missing']);
 
         $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.apply'), ['file' => $file, 'fingerprint' => $detail['fingerprint'], 'file_hash' => $detail['file_hash'], 'subjects' => [$subject->id]], ['Accept' => 'application/json'])->assertOk();
 
         $description = FieldValue::query()->where('asignatura_id', $subject->id)
             ->whereIn('definicion_campo_id', FieldDefinition::query()->where('clave', 'descripcion')->select('definicion_campo_id'))->firstOrFail();
         $this->assertStringContainsString('Ficha completada en Excel', json_encode($description->valor, JSON_UNESCAPED_UNICODE));
+    }
+
+    public function test_the_workbook_writes_a_career_field_that_the_teacher_used_to_fill(): void
+    {
+        $subject = Subject::query()->where('carrera_id', $this->context->carrera_id)->where('activo', true)->firstOrFail();
+        $file = $this->workbook($subject->id, texts: ['tecnicas_ensenanza' => 'Técnicas acordadas por la carrera']);
+        $detail = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.spreadsheet'), ['file' => $file], ['Accept' => 'application/json'])->assertOk()->json('preview');
+
+        $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.apply'), ['file' => $file, 'fingerprint' => $detail['fingerprint'], 'file_hash' => $detail['file_hash'], 'subjects' => [$subject->id]], ['Accept' => 'application/json'])->assertOk();
+
+        $field = FieldDefinition::query()->where('clave', 'tecnicas_ensenanza')->firstOrFail();
+        $templates = app(SubjectProfileFields::class)->templates($subject->id);
+        $this->assertSame('Técnicas acordadas por la carrera', FreeText::plainText($templates[$field->id]));
+        $this->assertFalse(SubjectProfileFields::teacherEditable($field, $templates));
     }
 
     public function test_the_template_download_matches_the_current_fields_and_subjects(): void
@@ -139,7 +157,7 @@ class FichaImportTest extends TestCase
             array_column($definition->fields, 'sheet'),
             array_values(array_diff($book->getSheetNames(), ['Indicaciones', '_estructura'])),
         );
-        $this->assertCount(6, $definition->fields);
+        $this->assertCount(11, $definition->fields);
         $this->assertSame(
             Subject::query()->where('carrera_id', $this->context->carrera_id)->where('activo', true)->where('genera_silabo', true)->count(),
             count($definition->subjects),

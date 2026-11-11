@@ -62,15 +62,15 @@ class SyllabusTemplateSeederTest extends TestCase
         $template = SyllabusTemplate::query()->firstOrFail();
         app(TemplateStructureValidator::class)->assertUsable($template);
         $fields = $template->fields()->get()->keyBy('clave');
-        $this->assertSame(['coordinacion' => 6, 'docente' => 9, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
+        $this->assertSame(['carrera' => 15, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
         foreach ($fields as $field) {
             $this->assertEquals($field->contenido, FieldDocument::normalize($field->contenido));
         }
         foreach (['descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje', 'habilidades_blandas', 'contribucion_perfil'] as $key) {
-            $this->assertSame('coordinacion', $fields[$key]->quien_llena);
+            $this->assertSame('carrera', $fields[$key]->quien_llena);
         }
         foreach (['bibliografia', 'bibliografia_complementaria', 'asignatura', 'metodologia', 'unidades'] as $key) {
-            $this->assertSame('docente', $fields[$key]->quien_llena);
+            $this->assertSame('carrera', $fields[$key]->quien_llena);
         }
         $this->assertSame('landscape', $template->sections->firstWhere('clave', 'planificacion')->orientacion);
         $this->assertSame('portrait', $template->sections->firstWhere('clave', 'descripcion')->orientacion);

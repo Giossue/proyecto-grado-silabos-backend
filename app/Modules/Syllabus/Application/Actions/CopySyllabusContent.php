@@ -59,9 +59,12 @@ class CopySyllabusContent
                 throw new DraftConflictException($locked->version_bloqueo);
             }
 
+            $setups = $this->profiles->templates((string) $locked->parallel()->value('asignatura_id'));
             $fieldIds = FieldDefinition::query()
                 ->where('plantilla_id', SyllabusTemplate::institutional()->id)
-                ->where('quien_llena', FieldDefinition::TEACHER)
+                ->where('quien_llena', '!=', FieldDefinition::INSTITUTIONAL)
+                ->get()
+                ->filter(fn (FieldDefinition $field): bool => SubjectProfileFields::teacherEditable($field, $setups))
                 ->pluck('id');
             $sourceValues = FieldValue::query()
                 ->where('silabo_id', $source->id)
@@ -72,7 +75,6 @@ class CopySyllabusContent
                 ->where('silabo_id', $locked->id)
                 ->whereIn('definicion_campo_id', $fieldIds)
                 ->delete();
-            $setups = $this->profiles->setups((string) $locked->parallel()->value('asignatura_id'));
             foreach ($sourceValues as $value) {
                 FieldValue::query()->create([
                     'silabo_id' => $locked->id,

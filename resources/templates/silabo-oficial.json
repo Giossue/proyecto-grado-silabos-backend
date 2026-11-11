@@ -695,7 +695,7 @@
                 {
                     "key": "asignatura",
                     "label": "",
-                    "quien_llena": "docente",
+                    "quien_llena": "carrera",
                     "content": [
                         "<div data-block=\"identificacion\" data-props=\"{}\" data-value=\"{}\"></div>"
                     ]
@@ -710,7 +710,7 @@
                 {
                     "key": "descripcion",
                     "label": "Descripción",
-                    "quien_llena": "coordinacion",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -725,7 +725,7 @@
                 {
                     "key": "objetivo_general",
                     "label": "Objetivo general",
-                    "quien_llena": "coordinacion",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -733,7 +733,7 @@
                 {
                     "key": "objetivos_especificos",
                     "label": "Objetivos específicos",
-                    "quien_llena": "coordinacion",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -748,7 +748,7 @@
                 {
                     "key": "resultados_aprendizaje",
                     "label": "Resultados de aprendizaje",
-                    "quien_llena": "coordinacion",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -763,7 +763,7 @@
                 {
                     "key": "habilidades_blandas",
                     "label": "Habilidades blandas",
-                    "quien_llena": "coordinacion",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -778,7 +778,7 @@
                 {
                     "key": "unidades",
                     "label": "Unidades",
-                    "quien_llena": "docente",
+                    "quien_llena": "carrera",
                     "content": [
                         "<div data-block=\"unidades\" data-props=\"{}\" data-value=\"{}\"></div>"
                     ]
@@ -793,7 +793,7 @@
                 {
                     "key": "metodologia",
                     "label": "7.1 Métodos de enseñanza – aprendizaje",
-                    "quien_llena": "docente",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -801,7 +801,7 @@
                 {
                     "key": "tecnicas_ensenanza",
                     "label": "7.2 Técnicas de enseñanza",
-                    "quien_llena": "docente",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -809,7 +809,7 @@
                 {
                     "key": "recursos_medios",
                     "label": "7.3 Recursos y medios didácticos",
-                    "quien_llena": "docente",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -817,7 +817,7 @@
                 {
                     "key": "herramientas_tic",
                     "label": "7.4 Herramientas pedagógicas, tecnologías de aprendizaje y conocimiento e inteligencia artificial en los procesos de enseñanza-aprendizaje",
-                    "quien_llena": "docente",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -825,7 +825,7 @@
                 {
                     "key": "ambientes_aprendizaje",
                     "label": "7.5 Ambientes o escenarios de aprendizaje",
-                    "quien_llena": "docente",
+                    "quien_llena": "carrera",
                     "content": [
                         "<p></p>"
                     ]
@@ -870,7 +870,7 @@
                 {
                     "key": "contribucion_perfil",
                     "label": "Resultados de la asignatura frente a los de la carrera",
-                    "quien_llena": "coordinacion",
+                    "quien_llena": "carrera",
                     "content": [
                         "<table>",
                         "<tr><th rowspan=\"2\" style=\"background:#C3D4EA;font-weight:bold\">Resultados de aprendizaje de la asignatura</th><th colspan=\"3\" style=\"background:#C3D4EA;font-weight:bold\">Nivel de contribución (resultados de aprendizaje del perfil de egreso de la carrera)</th><th rowspan=\"2\" style=\"background:#C3D4EA;font-weight:bold\">Resultados de aprendizaje que aportan al perfil de egreso de la carrera</th></tr>",
@@ -928,7 +928,7 @@
                 {
                     "key": "bibliografia",
                     "label": "Básica",
-                    "quien_llena": "docente",
+                    "quien_llena": "carrera",
                     "content": [
                         "<div data-block=\"bibliografia\"></div>"
                     ]
@@ -936,7 +936,7 @@
                 {
                     "key": "bibliografia_complementaria",
                     "label": "Complementaria",
-                    "quien_llena": "docente",
+                    "quien_llena": "carrera",
                     "content": [
                         "<div data-block=\"bibliografia\"></div>"
                     ]

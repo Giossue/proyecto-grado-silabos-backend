@@ -107,10 +107,8 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
         $bibliography = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
-        $this->assertSame('coordinacion', $description->quien_llena);
-        $this->assertFalse($description->teacherEditable());
-        $this->assertSame('docente', $bibliography->quien_llena);
-        $this->assertTrue($bibliography->teacherEditable());
+        $this->assertSame('carrera', $description->quien_llena);
+        $this->assertSame('carrera', $bibliography->quien_llena);
         $this->assertSame('Ficha de prueba: descripcion', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail()->valor));
         $this->assertSame($bibliography->contenido, $syllabus->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor);
 
@@ -178,12 +176,12 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $payload = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()->json('syllabus');
         $fields = collect($payload['sections'])->flatMap(fn ($section) => $section['fields'])->keyBy('key');
-        $this->assertSame('docente', $fields['asignatura']['quien_llena']);
+        $this->assertSame('carrera', $fields['asignatura']['quien_llena']);
         $this->assertSame('documentBlock', $fields['asignatura']['value']['content'][0]['type']);
         $this->assertSame('table', $fields['asignatura']['document']['content'][0]['type']);
-        $this->assertSame('coordinacion', $fields['descripcion']['quien_llena']);
+        $this->assertSame('carrera', $fields['descripcion']['quien_llena']);
         $this->assertFalse($fields['descripcion']['teacher_editable']);
-        $this->assertSame('docente', $fields['bibliografia']['quien_llena']);
+        $this->assertSame('carrera', $fields['bibliografia']['quien_llena']);
         $this->assertTrue($fields['bibliografia']['teacher_editable']);
         foreach ($fields as $field) {
             $this->assertSame('doc', $field['value']['type']);
@@ -272,9 +270,9 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame(9, $snapshot['schema_version']);
         $fields = collect($snapshot['sections'])->flatMap(fn ($section) => $section['fields']);
         $this->assertNotEmpty($fields);
-        $this->assertSame([], $fields->filter(fn ($field) => ! in_array($field['quien_llena'], ['docente', 'coordinacion', 'institucional'], true))->all());
+        $this->assertSame([], $fields->filter(fn ($field) => ! in_array($field['quien_llena'], ['carrera', 'institucional'], true))->all());
         $description = $fields->firstWhere('key', 'descripcion');
-        $this->assertSame('coordinacion', $description['quien_llena']);
+        $this->assertSame('carrera', $description['quien_llena']);
         $this->assertEquals(
             $syllabus->values()->where('definicion_campo_id', $description['definition_id'])->firstOrFail()->valor,
             $description['value'],
@@ -352,7 +350,7 @@ class ConvocationAndDraftTest extends TestCase
     public function test_convocation_cannot_open_while_a_subject_profile_is_incomplete(): void
     {
         $convocation = $this->createPreparedConvocation();
-        FieldValue::query()->whereNotNull('asignatura_id')->delete();
+        $this->leaveAChoiceWithoutOptions();
 
         $this->assertOpeningFails($convocation, 'Falta completar el proyecto de carrera de 1 materia.');
         $this->assertSame(0, Syllabus::query()->count());
@@ -361,7 +359,7 @@ class ConvocationAndDraftTest extends TestCase
     public function test_opening_lists_every_blocker_at_once(): void
     {
         $convocation = $this->createPreparedConvocation();
-        FieldValue::query()->whereNotNull('asignatura_id')->delete();
+        $this->leaveAChoiceWithoutOptions();
         $convocation->process->update(['inicia_en' => now()->subDays(2), 'entrega_en' => now()->subDay()]);
 
         try {
@@ -612,7 +610,7 @@ class ConvocationAndDraftTest extends TestCase
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
         $field = FieldDefinition::query()->where('clave', 'tecnicas_ensenanza')->firstOrFail();
-        $this->assertSame('docente', $field->quien_llena);
+        $this->assertSame('carrera', $field->quien_llena);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $url = route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]);
         $paragraph = fn (string $text, array $marks = []): array => ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text, 'marks' => $marks]]];
@@ -690,16 +688,14 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
-        $inherited = FieldDefinition::query()
-            ->where('quien_llena', 'coordinacion')->firstOrFail();
+        $inherited = $this->careerProjectFields()->firstOrFail();
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $inherited]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => $this->freeTextValue('Intento de sobrescritura'),
         ])->assertUnprocessable()->assertJsonValidationErrors('field');
 
-        $editable = FieldDefinition::query()
-            ->where('quien_llena', 'docente')->firstOrFail();
+        $editable = $this->teacherFields()->firstOrFail();
         $this->actingAsCoordinator()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $editable]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => 'PV-16 no autorizado',
@@ -715,7 +711,7 @@ class ConvocationAndDraftTest extends TestCase
         $field = FieldDefinition::query()
             ->where('clave', 'recursos_medios')
             ->firstOrFail();
-        $field->update(['quien_llena' => 'docente']);
+        $field->update(['quien_llena' => 'carrera']);
         $syllabus->values()->where('definicion_campo_id', $field->id)->delete();
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
@@ -740,9 +736,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertGreaterThan(0, $first->json('validation.blocking_errors'));
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.validado', 'recurso_id' => $syllabus->id]);
 
-        $requiredEditable = FieldDefinition::query()
-            ->where('quien_llena', 'docente')
-            ->get();
+        $requiredEditable = $this->teacherFields();
         foreach ($requiredEditable as $field) {
             $payload = ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->answeredValue($field, "Contenido {$field->clave}")];
             $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), $payload)->assertOk();
@@ -836,13 +830,13 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('«'.$empty->displayName().'» está vacío. Complétalo antes de enviar.', $messages[$empty->id]->first()['message']);
     }
 
-    public function test_validation_skips_non_editable_and_automatic_parts_and_sends_a_missing_profile_to_coordination(): void
+    public function test_validation_skips_non_editable_and_automatic_parts_and_the_fields_written_by_the_career(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
-        $locked = FieldDefinition::query()->where('quien_llena', 'docente')->where('clave', 'tecnicas_ensenanza')->firstOrFail();
+        $locked = $this->teacherFields()->where('clave', 'tecnicas_ensenanza')->firstOrFail();
         $locked->update(['quien_llena' => 'institucional']);
-        $inherited = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
+        $inherited = $this->careerProjectFields()->firstOrFail();
         $automatic = FieldDefinition::query()->where('clave', 'conducta_etica')->firstOrFail();
         $syllabus->values()->where('definicion_campo_id', $inherited->id)->delete();
 
@@ -851,8 +845,14 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->assertArrayNotHasKey($automatic->id, $messages->all());
         $this->assertArrayNotHasKey($locked->id, $messages->all());
-        $this->assertSame('La asignatura no tiene proyecto de carrera: pídalo al coordinador.', $messages[$inherited->id]->first()['message']);
-        $this->assertSame('error', $messages[$inherited->id]->first()['severity']);
+        $this->assertArrayNotHasKey($inherited->id, $messages->all());
+    }
+
+    private function leaveAChoiceWithoutOptions(): void
+    {
+        $field = $this->careerProjectFields()->firstWhere('clave', 'descripcion');
+        $field->update(['contenido' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'response', 'attrs' => ['kind' => 'una', 'options' => [], 'value' => null]]]]]]]);
+        FieldValue::query()->whereNotNull('asignatura_id')->where('definicion_campo_id', $field->id)->delete();
     }
 
     public function test_role_navigation_endpoints_do_not_mix_coordinator_and_teacher_privileges(): void

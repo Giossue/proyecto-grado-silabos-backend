@@ -7,6 +7,10 @@ use Illuminate\Validation\ValidationException;
 
 final class FieldResponse
 {
+    private const ANSWER = 'answer';
+
+    private const CAREER = 'career';
+
     public static function enabled(): bool
     {
         return (TemplateContext::active()->toArray()['response_policy'] ?? null) === 'protected';
@@ -48,36 +52,58 @@ final class FieldResponse
      * @param  array<string, mixed>  $definition
      * @return array<string, mixed>
      */
-    public static function setup(array $definition, mixed $value, string $attribute = 'value'): array
+    public static function career(array $definition, mixed $value, string $attribute = 'value'): array
     {
-        $document = ResponseKind::unanswered(FieldDocument::normalize($value, $attribute));
-        if (! self::enabled() || ! self::matches(self::template(FieldDocument::normalize($definition)), $document, true)) {
-            throw ValidationException::withMessages([$attribute => 'En los campos del docente solo puede elegir el tipo de respuesta y escribir sus opciones. El texto, los encabezados y la estructura los define Administración.']);
+        $document = FieldDocument::normalize($value, $attribute);
+        $template = self::template(FieldDocument::normalize($definition));
+        if (self::blank($document)) {
+            return $template;
+        }
+        if (! self::enabled()) {
+            return self::withoutBlankLines($document);
+        }
+        if (! self::matches($template, $document, self::CAREER)) {
+            throw ValidationException::withMessages([$attribute => 'Complete solo los espacios de respuesta. El texto, los encabezados y la estructura los define Administración.']);
         }
 
-        return $document;
+        return self::seal($template, $document);
     }
 
     /**
      * @param  array<string, mixed>  $definition
      * @return array<string, mixed>
      */
-    public static function templateFor(array $definition, mixed $setup): array
+    public static function templateFor(array $definition, mixed $stored): array
     {
-        if (! FreeText::isDocument($setup)) {
+        if (! FreeText::isDocument($stored)) {
             return $definition;
         }
         try {
-            return self::setup($definition, $setup);
+            return self::career($definition, $stored);
         } catch (ValidationException) {
             return $definition;
         }
     }
 
     /** @param array<string, mixed> $definition */
-    public static function configurable(array $definition): bool
+    public static function writable(array $definition): bool
     {
-        return self::enabled() && self::setupSlots(self::template(FieldDocument::normalize($definition)));
+        return self::spaces(self::template(FieldDocument::normalize($definition)));
+    }
+
+    /** @param array<string, mixed> $template */
+    public static function open(array $template): bool
+    {
+        $type = $template['type'] ?? '';
+        if ($type === 'tableHeader') {
+            return false;
+        }
+        if ($type === ResponseKind::NODE) {
+            return ! ResponseKind::answered($template['attrs'] ?? []);
+        }
+
+        return self::blank($template) || $type === 'documentBlock'
+            || array_any($template['content'] ?? [], fn (array $child): bool => self::open($child));
     }
 
     /**
@@ -166,27 +192,74 @@ final class FieldResponse
     }
 
     /** @param array<string, mixed> $node */
-    private static function setupSlots(array $node): bool
+    private static function spaces(array $node): bool
     {
         if (($node['type'] ?? '') === 'tableHeader') {
             return false;
         }
-        if (($node['type'] ?? '') === ResponseKind::NODE) {
-            return ResponseKind::needsOptions($node['attrs'] ?? []);
-        }
 
-        return self::blank($node) || array_any($node['content'] ?? [], fn (array $child): bool => self::setupSlots($child));
+        return self::blank($node) || ($node['type'] ?? '') === ResponseKind::NODE
+            || array_any($node['content'] ?? [], fn (array $child): bool => self::spaces($child));
     }
 
-    /** @param array<string, mixed> $node */
-    private static function setupOnly(array $node): bool
+    /**
+     * @param  array<string, mixed>  $template
+     * @param  array<string, mixed>  $value
+     * @return array<string, mixed>
+     */
+    private static function seal(array $template, array $value): array
     {
-        $content = $node['content'] ?? [];
-        if (($node['type'] ?? '') === 'paragraph') {
-            return $content === [] || (count($content) === 1 && ($content[0]['type'] ?? '') === ResponseKind::NODE);
+        $type = $template['type'] ?? '';
+        if (in_array($type, ['tableHeader', 'documentBlock', ResponseKind::NODE], true)) {
+            return $value;
+        }
+        if (self::blank($template)) {
+            return self::blank($value) ? $value : ResponseKind::unanswered(self::withoutBlankLines($value));
+        }
+        $expected = $template['content'] ?? [];
+        $actual = $value['content'] ?? [];
+        if ($type === 'table' && self::listTable($template)) {
+            $row = end($expected);
+            while (count($expected) < count($actual)) {
+                $expected[] = $row;
+            }
+        }
+        if ($expected === [] || count($expected) !== count($actual)) {
+            return $value;
         }
 
-        return array_all($content, fn (array $child): bool => ($child['type'] ?? '') === 'paragraph' && self::setupOnly($child));
+        return [...$value, 'content' => array_map(fn (array $child, array $current): array => self::seal($child, $current), $expected, $actual)];
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return array<string, mixed>
+     */
+    private static function withoutBlankLines(array $node): array
+    {
+        $type = $node['type'] ?? '';
+        if (! is_array($node['content'] ?? null) || $type === 'paragraph') {
+            return $node;
+        }
+        $children = array_values($node['content']);
+        if ($type === 'listItem') {
+            if (array_all($children, fn (array $child): bool => ($child['type'] ?? '') === 'paragraph' && self::blank($child))) {
+                return [...$node, 'content' => []];
+            }
+            $first = array_shift($children);
+            $children = [$first, ...array_filter($children, fn (array $child): bool => ! (($child['type'] ?? '') === 'paragraph' && self::blank($child)))];
+        } elseif (! in_array($type, ['table', 'tableRow'], true)) {
+            $children = array_filter($children, fn (array $child): bool => ! (($child['type'] ?? '') === 'paragraph' && self::blank($child)));
+        }
+        $children = array_values(array_filter(
+            array_map(fn (array $child): array => self::withoutBlankLines($child), $children),
+            fn (array $child): bool => ! in_array($child['type'] ?? '', ['listItem', 'bulletList', 'orderedList'], true) || ($child['content'] ?? []) !== [],
+        ));
+        if ($children === [] && in_array($type, ['doc', 'tableCell', 'tableHeader'], true)) {
+            $children = [['type' => 'paragraph']];
+        }
+
+        return [...$node, 'content' => $children];
     }
 
     /**
@@ -201,7 +274,7 @@ final class FieldResponse
             return $template;
         }
         if ($type === ResponseKind::NODE) {
-            return [...$template, 'attrs' => ResponseKind::carry($template['attrs'] ?? [], $value['attrs'] ?? [])];
+            return ResponseKind::answered($template['attrs'] ?? []) ? $template : [...$template, 'attrs' => ResponseKind::carry($template['attrs'] ?? [], $value['attrs'] ?? [])];
         }
         if ($type === 'documentBlock') {
             return self::matches($template, $value) ? $value : $template;
@@ -238,7 +311,7 @@ final class FieldResponse
     /** @param array<string, mixed> $template
      * @param  array<string, mixed>  $value
      */
-    private static function matches(array $template, array $value, bool $setup = false): bool
+    private static function matches(array $template, array $value, string $mode = self::ANSWER): bool
     {
         if (($template['type'] ?? '') !== ($value['type'] ?? '')) {
             return false;
@@ -247,22 +320,27 @@ final class FieldResponse
             return $template === $value;
         }
         if (($template['type'] ?? '') === ResponseKind::NODE) {
-            return ($template['marks'] ?? []) === ($value['marks'] ?? [])
-                && ResponseKind::sameQuestion($template['attrs'] ?? [], $value['attrs'] ?? [], $setup);
+            if (($template['marks'] ?? []) !== ($value['marks'] ?? [])) {
+                return false;
+            }
+
+            return $mode === self::ANSWER && ResponseKind::answered($template['attrs'] ?? [])
+                ? ResponseKind::sameAnswer($template['attrs'] ?? [], $value['attrs'] ?? [])
+                : ResponseKind::sameQuestion($template['attrs'] ?? [], $value['attrs'] ?? [], $mode === self::CAREER);
         }
         if (($template['type'] ?? '') === 'documentBlock') {
-            return $setup ? $template == $value : ($template['attrs']['kind'] ?? '') === ($value['attrs']['kind'] ?? '')
+            return ($template['attrs']['kind'] ?? '') === ($value['attrs']['kind'] ?? '')
                 && ($template['attrs']['props'] ?? []) === ($value['attrs']['props'] ?? []);
         }
         if (($template['attrs'] ?? []) !== ($value['attrs'] ?? [])) {
             return false;
         }
         if (self::blank($template)) {
-            return $setup ? self::setupOnly($value) : self::answerOnly($value);
+            return $mode === self::CAREER ? self::careerOnly($value) : self::answerOnly($value);
         }
         $expected = $template['content'] ?? [];
         $actual = $value['content'] ?? [];
-        if (! $setup && ($template['type'] ?? '') === 'table' && self::listTable($template)) {
+        if (($template['type'] ?? '') === 'table' && self::listTable($template)) {
             $row = array_pop($expected);
             if (count($actual) < count($expected) + 1) {
                 return false;
@@ -278,12 +356,19 @@ final class FieldResponse
             return $template === $value;
         }
         foreach ($expected as $index => $child) {
-            if (! self::matches($child, $actual[$index], $setup)) {
+            if (! self::matches($child, $actual[$index], $mode)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /** @param array<string, mixed> $node */
+    private static function careerOnly(array $node): bool
+    {
+        return ! in_array($node['type'] ?? '', ['documentBlock', 'variable'], true)
+            && array_all($node['content'] ?? [], fn (array $child): bool => self::careerOnly($child));
     }
 
     /** @param array<string, mixed> $node */
@@ -299,7 +384,7 @@ final class FieldResponse
     private static function answered(array $template, array $value): bool
     {
         if (($template['type'] ?? '') === ResponseKind::NODE) {
-            return ResponseKind::answered($value['attrs'] ?? []);
+            return ! ResponseKind::answered($template['attrs'] ?? []) && ResponseKind::answered($value['attrs'] ?? []);
         }
         if (self::blank($template) || ($template['type'] ?? '') === 'documentBlock') {
             return ! FieldDocument::isEmpty(['type' => 'doc', 'content' => [$value]]);

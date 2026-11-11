@@ -737,9 +737,7 @@ class ReviewWorkflowTest extends TestCase
     private function createValidDraft(): Syllabus
     {
         $syllabus = $this->createStartedDraft();
-        $fields = FieldDefinition::query()
-            ->where('quien_llena', 'docente')
-            ->get();
+        $fields = $this->teacherFields();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(
                 route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
@@ -847,8 +845,7 @@ class ReviewWorkflowTest extends TestCase
         ])->assertOk();
         $pendingRevision = $pending->revisions()->firstOrFail()->id;
         $this->restorePreviousFieldColumns();
-        $migration = require database_path('migrations/2026_10_13_000219_replace_template_with_field_documents.php');
-        $migration->up();
+        $this->replayFieldDocumentsMigration();
         $this->assertDatabaseHas('silabos', ['silabo_id' => $approved->id, 'estado_silabo' => 'aprobado']);
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
         $this->assertSame($fingerprint, $revision->fresh()->huella_sha256);
@@ -876,8 +873,7 @@ class ReviewWorkflowTest extends TestCase
         DB::statement("SET LOCAL app.reinicio_institucional = 'off'");
         $field = $this->editableScalarField($syllabus);
         $this->restorePreviousFieldColumns();
-        $migration = require database_path('migrations/2026_10_13_000219_replace_template_with_field_documents.php');
-        $migration->up();
+        $this->replayFieldDocumentsMigration();
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertFalse($field->fresh()->getAttribute('vigente_en_plantilla'));
@@ -923,6 +919,27 @@ class ReviewWorkflowTest extends TestCase
             SQL);
     }
 
+    private function replayFieldDocumentsMigration(): void
+    {
+        DB::unprepared(<<<'SQL'
+            CREATE FUNCTION responsable_anterior() RETURNS trigger AS $$
+            BEGIN
+                IF NEW.quien_llena_definicion_campo = 'carrera' THEN
+                    NEW.quien_llena_definicion_campo := CASE WHEN (SELECT clave_campo_plantilla FROM campos_plantilla WHERE campo_plantilla_id = NEW.campo_plantilla_id)
+                        IN ('descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje', 'habilidades_blandas', 'contribucion_perfil')
+                        THEN 'coordinacion' ELSE 'docente' END;
+                END IF;
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+            CREATE TRIGGER responsable_anterior BEFORE INSERT OR UPDATE ON definiciones_campo
+                FOR EACH ROW EXECUTE FUNCTION responsable_anterior();
+            SQL);
+        (require database_path('migrations/2026_10_13_000219_replace_template_with_field_documents.php'))->up();
+        DB::unprepared('DROP TRIGGER responsable_anterior ON definiciones_campo; DROP FUNCTION responsable_anterior();');
+        (require database_path('migrations/2026_11_10_000268_career_field_replaces_teacher_and_coordination.php'))->up();
+    }
+
     private function assertNoWorkflowNotification(string $syllabusId, string $eventType): void
     {
         $this->assertFalse(InternalNotification::query()->where('tipo', $eventType)->where('recurso_id', $syllabusId)->exists());
@@ -963,8 +980,7 @@ class ReviewWorkflowTest extends TestCase
     private function editableScalarField(Syllabus $syllabus): FieldDefinition
     {
         return FieldDefinition::query()
-            ->where('quien_llena', 'docente')
-            ->where('quien_llena', 'docente')
+            ->where('quien_llena', 'carrera')
             ->where('clave', 'tecnicas_ensenanza')
             ->firstOrFail();
     }

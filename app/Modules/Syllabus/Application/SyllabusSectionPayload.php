@@ -2,6 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
@@ -16,7 +17,7 @@ final class SyllabusSectionPayload
     /**
      * @param  Closure(FieldDefinition): mixed  $stored  valor guardado del campo (sin variables resueltas)
      * @param  array<string, mixed>  $context
-     * @param  array<string, array<string, mixed>>  $templates  lo que Coordinación armó en campos del docente, por definición de campo
+     * @param  array<string, array<string, mixed>>  $templates  plantilla de cada campo de Carrera en la materia, por definición de campo
      * @return array<string, mixed>
      */
     public static function build(TemplateSection $section, Closure $stored, array $context, array $templates = []): array
@@ -30,14 +31,16 @@ final class SyllabusSectionPayload
             'orientation' => $section->orientacion,
             'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($stored, $templates, $variables): array {
                 $document = FieldDocument::normalize($field->quien_llena === FieldDefinition::INSTITUTIONAL ? $field->contenido : $stored($field));
+                $editable = SubjectProfileFields::teacherEditable($field, $templates);
+                $template = FieldDocument::normalize($templates[$field->id] ?? $field->contenido);
 
                 return [
                     'id' => $field->id,
                     'key' => $field->clave,
                     'label' => $field->etiqueta,
                     'quien_llena' => $field->quien_llena,
-                    ...(FieldResponse::enabled() && $field->quien_llena !== FieldDefinition::INSTITUTIONAL ? ['template' => FieldResponse::template(FieldDocument::normalize($templates[$field->id] ?? $field->contenido))] : []),
-                    'teacher_editable' => $field->teacherEditable(),
+                    ...(FieldResponse::enabled() && $field->quien_llena !== FieldDefinition::INSTITUTIONAL ? ['template' => $editable ? FieldResponse::template($template) : $template] : []),
+                    'teacher_editable' => $editable,
                     'required' => $field->quien_llena !== FieldDefinition::INSTITUTIONAL,
                     'value' => $document,
                     'document' => FieldDocument::resolve($document, $variables),

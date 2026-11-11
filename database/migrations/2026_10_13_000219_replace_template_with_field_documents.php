@@ -3,7 +3,6 @@
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Infrastructure\Rendering\HistoricalFieldDocument;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
@@ -119,7 +118,7 @@ return new class extends Migration
 
         $template->update(['documento' => ['version_esquema' => 1, 'secciones' => []]]);
         $template = app(SyllabusTemplateProvisioner::class)->format($template->fresh());
-        $fields = $template->fields()->where('quien_llena', FieldDefinition::COORDINATION)->get()->keyBy('clave');
+        $fields = $template->fields()->where('quien_llena', 'coordinacion')->get()->keyBy('clave');
         foreach ($profiles as $profile) {
             $field = $fields->get($profile->clave_definicion_campo);
             $value = is_string($profile->valor_campo) ? json_decode($profile->valor_campo, true, 512, JSON_THROW_ON_ERROR) : $profile->valor_campo;

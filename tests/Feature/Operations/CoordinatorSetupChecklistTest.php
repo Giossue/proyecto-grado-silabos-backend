@@ -31,6 +31,7 @@ class CoordinatorSetupChecklistTest extends TestCase
     public function test_the_career_project_must_be_complete_before_opening_the_convocation(): void
     {
         app(SyllabusTemplateProvisioner::class)->createWithOfficialFormat();
+        $this->careerProjectFields()->firstWhere('clave', 'descripcion')->update(['contenido' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'response', 'attrs' => ['kind' => 'una', 'options' => [], 'value' => null]]]]]]]);
         $careerId = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail()->roleAssignments()->firstOrFail()->carrera_id;
         $subjects = Subject::query()->where('activo', true)->where('genera_silabo', true)->where('carrera_id', $careerId)->count();
         $step = collect($this->dashboard()->json('setup.steps'))->firstWhere('key', 'career_project');

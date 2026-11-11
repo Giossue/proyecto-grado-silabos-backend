@@ -59,7 +59,7 @@ class TemplateAssistantTest extends TestCase
 
         $this->putJson(route('api.v1.admin.template.json.import', $this->template), $outcome->proposal['payload'] ?? [])->assertOk();
         $field = collect(TemplateDraft::fromTemplate($this->template->fresh())->overview())->firstWhere('clave', 'resultados')['campos'][1] ?? null;
-        $this->assertSame(['posicion' => 2, 'clave' => 'competencias', 'nombre' => 'Competencias', 'quien_llena' => 'docente', 'resumen' => 'Describa las competencias:'], $field);
+        $this->assertSame(['posicion' => 2, 'clave' => 'competencias', 'nombre' => 'Competencias', 'quien_llena' => 'carrera', 'resumen' => 'Describa las competencias:'], $field);
     }
 
     public function test_required_sections_cannot_be_removed_and_the_reason_goes_back_to_the_model(): void
@@ -210,7 +210,7 @@ class TemplateAssistantTest extends TestCase
         $outcome = $this->run_('Pedido');
 
         $field = $outcome->proposal['payload']['sections'][1]['fields'][0] ?? [];
-        $this->assertSame('docente', $field['quien_llena'] ?? null);
+        $this->assertSame('carrera', $field['quien_llena'] ?? null);
         $this->assertSame(['documentBlock', 'bibliografia'], [$field['content']['content'][0]['type'] ?? null, $field['content']['content'][0]['attrs']['kind'] ?? null]);
     }
 

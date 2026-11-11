@@ -313,8 +313,7 @@ class LibraryReviewTest extends TestCase
         $this->assertNull($returned['by']);
         $this->assertNull($returned['comment']);
 
-        $other = FieldDefinition::query()->where('quien_llena', 'docente')
-            ->where('clave', '!=', 'bibliografia')->firstOrFail();
+        $other = $this->teacherFields()->where('clave', '!=', 'bibliografia')->firstOrFail();
         $this->as('teacher')->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $other]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->answeredValue($other, 'Ajuste general'),
         ])->assertOk();
@@ -533,7 +532,7 @@ class LibraryReviewTest extends TestCase
         $this->assertSame(1, Convocation::query()->count());
         $syllabus = Syllabus::query()->firstOrFail();
         $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        foreach (FieldDefinition::query()->where('quien_llena', 'docente')->get() as $field) {
+        foreach ($this->teacherFields() as $field) {
             $this->as('teacher')->patchJson(
                 route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
                 ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->valueFor($field)],

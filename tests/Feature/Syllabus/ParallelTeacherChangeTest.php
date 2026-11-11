@@ -370,9 +370,7 @@ class ParallelTeacherChangeTest extends TestCase
     {
         $syllabus = $this->openedSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        $fields = FieldDefinition::query()
-            ->where('quien_llena', 'docente')
-            ->get();
+        $fields = $this->teacherFields();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(
                 route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),

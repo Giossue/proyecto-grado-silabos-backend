@@ -719,11 +719,11 @@ class FinalizedProcessFrozenTest extends TestCase
         $fields = collect($syllabus['sections'])->flatMap(fn (array $section): array => $section['fields']);
 
         $this->assertFalse($syllabus['editable']);
-        $this->assertNotEmpty($fields->where('quien_llena', 'docente'));
+        $this->assertNotEmpty($fields->where('quien_llena', 'carrera'));
         $this->assertTrue(collect($syllabus['sections'])->every(fn (array $section): bool => is_string($section['id'] ?? null) && $section['id'] !== ''));
-        $this->assertTrue($fields->where('quien_llena', 'docente')->every(fn (array $field): bool => $field['teacher_editable'] === true));
+        $this->assertTrue($fields->where('quien_llena', 'carrera')->every(fn (array $field): bool => $field['teacher_editable'] === true));
         $this->assertTrue($fields->where('quien_llena', 'institucional')->every(fn (array $field): bool => $field['teacher_editable'] === false));
-        $this->assertTrue($fields->where('quien_llena', 'docente')->every(fn (array $field): bool => is_array($field['template'] ?? null)));
+        $this->assertTrue($fields->where('quien_llena', 'carrera')->every(fn (array $field): bool => is_array($field['template'] ?? null)));
     }
 
     /** @return array{SyllabusProcess, Syllabus} */

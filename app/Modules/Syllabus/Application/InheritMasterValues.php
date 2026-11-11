@@ -4,7 +4,6 @@ namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -20,26 +19,15 @@ class InheritMasterValues
     public function execute(Syllabus $syllabus, Collection $fields, Parallel $parallel): void
     {
         $parallel->loadMissing('subject');
-        $profile = $this->profiles->values($parallel->subject->id);
-        $setups = $this->profiles->setups($parallel->subject->id);
+        $templates = $this->profiles->templates($parallel->subject->id);
         foreach ($fields as $field) {
-            if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
+            if (! $field->career()) {
                 continue;
             }
-            if ($field->teacherEditable()) {
-                FieldValue::query()->create([
-                    'silabo_id' => $syllabus->id,
-                    'definicion_campo_id' => $field->id,
-                    'valor' => $setups[$field->id] ?? $field->contenido,
-                ]);
-
-                continue;
-            }
-            $inherited = $field->fromProfile() ? ($profile[$field->id] ?? null) : null;
             FieldValue::query()->create([
                 'silabo_id' => $syllabus->id,
                 'definicion_campo_id' => $field->id,
-                'valor' => $inherited === null || FieldDocument::isEmpty($inherited) ? $field->contenido : $inherited,
+                'valor' => $templates[$field->id] ?? $field->contenido,
             ]);
         }
     }

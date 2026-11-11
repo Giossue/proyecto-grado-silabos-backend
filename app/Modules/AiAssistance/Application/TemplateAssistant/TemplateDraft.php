@@ -37,9 +37,8 @@ final class TemplateDraft
     public const END = '(final)';
 
     public const RESPONSIBLE_LABELS = [
-        FieldDefinition::TEACHER => 'Docente',
-        FieldDefinition::COORDINATION => 'Carrera',
-        FieldDefinition::INSTITUTIONAL => 'Fijo',
+        FieldDefinition::CAREER => 'Carrera',
+        FieldDefinition::INSTITUTIONAL => 'Institucional',
     ];
 
     /** @var list<DraftSection> */
@@ -547,8 +546,9 @@ final class TemplateDraft
     private function responsible(string $value): string
     {
         $value = strtolower(trim($value));
+        $value = (string) FieldDefinition::responsible($value);
         if (! in_array($value, FieldDefinition::RESPONSIBLES, true)) {
-            throw new TemplateDraftError('quien_llena debe ser «docente», «coordinacion» o «institucional».');
+            throw new TemplateDraftError('quien_llena debe ser «carrera» o «institucional».');
         }
 
         return $value;

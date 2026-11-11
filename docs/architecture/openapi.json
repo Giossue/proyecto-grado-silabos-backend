@@ -7776,8 +7776,7 @@
                     },
                     "quien_llena": {
                         "enum": [
-                            "docente",
-                            "coordinacion",
+                            "carrera",
                             "institucional"
                         ]
                     },
@@ -7820,8 +7819,7 @@
                     },
                     "quien_llena": {
                         "enum": [
-                            "docente",
-                            "coordinacion",
+                            "carrera",
                             "institucional"
                         ]
                     },
@@ -7888,8 +7886,7 @@
                     },
                     "quien_llena": {
                         "enum": [
-                            "docente",
-                            "coordinacion",
+                            "carrera",
                             "institucional"
                         ]
                     },
@@ -8006,7 +8003,7 @@
                                     ]
                                 },
                                 "quien_llena": {
-                                    "const": "coordinacion"
+                                    "const": "carrera"
                                 },
                                 "content": {
                                     "$ref": "#/components/schemas/FieldDocument"

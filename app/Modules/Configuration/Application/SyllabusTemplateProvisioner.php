@@ -86,7 +86,7 @@ final class SyllabusTemplateProvisioner
             ->where('definiciones_campo.plantilla_id', $templateId)
             ->where('definiciones_campo.vigente_en_plantilla', true)
             ->where('campos_plantilla.vigente_en_plantilla', true)
-            ->whereIn('definiciones_campo.quien_llena_definicion_campo', [FieldDefinition::COORDINATION, FieldDefinition::TEACHER])
+            ->where('definiciones_campo.quien_llena_definicion_campo', '!=', FieldDefinition::INSTITUTIONAL)
             ->pluck('definiciones_campo.definicion_campo_id', 'campos_plantilla.clave_campo_plantilla')
             ->map(fn (mixed $id): string => (string) $id)
             ->all();

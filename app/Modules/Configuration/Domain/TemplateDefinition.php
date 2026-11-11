@@ -5,6 +5,7 @@ namespace App\Modules\Configuration\Domain;
 use App\Modules\Configuration\Domain\Blocks\BlockDefinition;
 use App\Modules\Configuration\Domain\Blocks\BlockDefinitionError;
 use App\Modules\Configuration\Domain\Blocks\ValueSchema;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 
 final class TemplateDefinition
 {
@@ -306,7 +307,7 @@ final class TemplateDefinition
             if ($field === null) {
                 BlockDefinitionError::fail("presets.{$index}.field: «{$preset['field']}» no es un campo de la plantilla.");
             }
-            $clean[] = ['key' => $preset['key'], 'label' => $preset['label'], 'field' => $preset['field'], 'quien_llena' => (string) $field['quien_llena'], 'content' => $field['content']];
+            $clean[] = ['key' => $preset['key'], 'label' => $preset['label'], 'field' => $preset['field'], 'quien_llena' => (string) FieldDefinition::responsible($field['quien_llena']), 'content' => $field['content']];
         }
 
         return $clean;

@@ -299,13 +299,13 @@ class SyllabusController extends Controller
         if ($archivedView !== null) {
             foreach ($archivedView['sections'] as &$section) {
                 foreach ($section['fields'] as &$field) {
-                    $field['teacher_editable'] = $field['quien_llena'] === 'docente';
+                    $field['teacher_editable'] = in_array($field['quien_llena'], ['docente', FieldDefinition::CAREER], true);
                     $field['required'] = $field['quien_llena'] !== 'institucional';
                 }
             }
         }
         $definition = $snapshot !== null ? TemplateContext::fromSnapshot($snapshot) : $template->definition();
-        $setups = $frozen === null && $archivedView === null ? app(SubjectProfileFields::class)->setups((string) $syllabus->parallel()->value('asignatura_id')) : [];
+        $setups = $frozen === null && $archivedView === null ? app(SubjectProfileFields::class)->templates((string) $syllabus->parallel()->value('asignatura_id')) : [];
         $variables = $frozen['template_variables'] ?? TemplateVariables::resolve(['identification' => $identification]);
 
         return [
@@ -414,7 +414,7 @@ class SyllabusController extends Controller
         foreach ($sections as &$section) {
             $section['id'] ??= $section['key'];
             foreach ($section['fields'] as &$field) {
-                $field['teacher_editable'] = $field['quien_llena'] === FieldDefinition::TEACHER;
+                $field['teacher_editable'] = in_array($field['quien_llena'], ['docente', FieldDefinition::CAREER], true);
                 $field['required'] = $field['quien_llena'] !== FieldDefinition::INSTITUTIONAL;
                 $definition = $definitions->get($field['definition_id'] ?? '');
                 if ($definition instanceof FieldDefinition && $field['required'] && FieldResponse::enabled()) {

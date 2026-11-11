@@ -76,7 +76,7 @@ Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo d
             'title' => 'Plantilla del sílabo',
             'content' => 'Es el formato del sílabo, el mismo para todas las carreras.
 
-«Editar» abre el editor y pide escribir «editar plantilla». Ahí escribe directo en la hoja, elige quién llena cada campo (docente, carrera o texto fijo) y pulsa «Guardar». El logo de la universidad y «Editar JSON» se guardan al instante, sin pasar por «Guardar».
+«Editar» abre el editor y pide escribir «editar plantilla». Ahí escribe directo en la hoja, elige quién llena cada campo (Institucional o Carrera) y pulsa «Guardar». El logo de la universidad y «Editar JSON» se guardan al instante, sin pasar por «Guardar».
 
 Con una convocatoria abierta la plantilla está bloqueada. Para cambiarla, pause la convocatoria. Al reanudar se le pedirá confirmación: los sílabos de este período se adaptan a la plantilla nueva, porque el formato es único para toda la universidad. Se conserva lo escrito en los campos que siguen encajando; los enviados o aprobados vuelven a borrador para enviarse y firmarse de nuevo.
 
@@ -182,11 +182,21 @@ Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo d
         ],
         '/coordinacion/proyecto-carrera' => [
             'title' => 'Proyecto de carrera',
-            'content' => 'Aquí llena lo que le toca a la carrera en el sílabo de cada materia. El docente lo recibe ya escrito.
+            'content' => 'Aquí escribe los campos de Carrera del sílabo de cada materia. Lo que escriba le llega fijo al docente; un campo que deje vacío lo escribe el docente.
 
-Pulse una materia para llenarla, o llene varias a la vez con «Importar desde Excel».
+Pulse una materia para abrir su página, o llene varias a la vez con «Importar desde Excel».
 
 En «Documentos de apoyo» suba archivos para que sus docentes conozcan mejor sus materias.
+
+Si hay una convocatoria abierta, no se puede cambiar; primero páusela.',
+        ],
+        '/coordinacion/proyecto-carrera/:subject' => [
+            'title' => 'Proyecto de carrera de una materia',
+            'content' => 'Elija una sección a la izquierda y escriba sus campos a la derecha. Lo que escriba le llega fijo al docente.
+
+Con «Espacio para el docente» deja un espacio para que él responda: texto libre, un número o elegir de una lista que usted escribe ahí mismo. Un campo que deje vacío lo escribe el docente completo.
+
+El ojo muestra cómo recibirá el sílabo el docente. Pulse «Guardar proyecto de carrera» antes de salir.
 
 Si hay una convocatoria abierta, no se puede cambiar; primero páusela.',
         ],

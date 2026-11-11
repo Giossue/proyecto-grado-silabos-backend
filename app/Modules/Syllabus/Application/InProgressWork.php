@@ -293,8 +293,7 @@ final class InProgressWork
                 $previous[$key] = $value->valor;
             }
         }
-        $profile = $this->profiles->values((string) $syllabus->parallel->asignatura_id);
-        $setups = $this->profiles->setups((string) $syllabus->parallel->asignatura_id);
+        $templates = $this->profiles->templates((string) $syllabus->parallel->asignatura_id);
 
         if (in_array($syllabus->estado, self::SENT_STATES, true)) {
             $this->clearHistory([(string) $syllabus->id]);
@@ -302,13 +301,13 @@ final class InProgressWork
         }
         FieldValue::query()->where('silabo_id', $syllabus->id)->delete();
         foreach (FieldDefinition::query()->get() as $field) {
-            if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
+            if (! $field->career()) {
                 continue;
             }
-            $template = $field->fromProfile() ? $field->contenido : ($setups[$field->id] ?? $field->contenido);
-            $document = $field->fromProfile()
-                ? ($profile[$field->id] ?? null)
-                : $this->stillFits($field, $previous[$field->clave] ?? null, $template);
+            $template = $templates[$field->id] ?? $field->contenido;
+            $document = SubjectProfileFields::teacherEditable($field, $templates)
+                ? $this->stillFits($field, $previous[$field->clave] ?? null, $template)
+                : $template;
             FieldValue::query()->create([
                 'silabo_id' => $syllabus->id,
                 'definicion_campo_id' => $field->id,
@@ -530,24 +529,20 @@ final class InProgressWork
             ->with('convocation.process.academicPeriod')
             ->lockForUpdate()
             ->get();
-        $fields = $this->profiles->fields()->keyBy('id');
-        $teacherFields = $profilesBefore === [] ? [] : $this->profiles->teacherFields()->keyBy('id')->all();
+        $fields = $profilesBefore === [] ? [] : $this->profiles->fields()->keyBy('id')->all();
         $profilesAfter = $this->profilesFor(array_map('strval', array_keys($profilesBefore)));
-        $pending = $this->pendingChanges($syllabi, function (Parallel $parallel, Syllabus $syllabus) use ($fields, $profilesAfter, $profilesBefore, $teacherFields): array {
+        $pending = $this->pendingChanges($syllabi, function (Parallel $parallel, Syllabus $syllabus) use ($fields, $profilesAfter, $profilesBefore): array {
             $documents = [];
             foreach ($fields as $fieldId => $field) {
                 $before = $profilesBefore[$parallel->asignatura_id][$fieldId] ?? null;
                 $after = $profilesAfter[$parallel->asignatura_id][$fieldId] ?? null;
-                if ($before != $after) {
-                    $documents[$fieldId] = $after === null || FieldDocument::isEmpty($after) ? $field->contenido : $after;
+                if ($before == $after) {
+                    continue;
                 }
-            }
-            foreach ($teacherFields as $fieldId => $field) {
-                $before = $profilesBefore[$parallel->asignatura_id][$fieldId] ?? null;
-                $after = $profilesAfter[$parallel->asignatura_id][$fieldId] ?? null;
-                if ($before != $after) {
-                    $documents += $this->rebuilt($syllabus, $field, FieldResponse::templateFor($field->contenido, $after));
-                }
+                $template = SubjectProfileFields::templateOf($field, $after);
+                $documents += $template === null || FieldResponse::open($template)
+                    ? $this->rebuilt($syllabus, $field, $template ?? $field->contenido)
+                    : [(string) $fieldId => $template];
             }
 
             return $documents;
@@ -635,13 +630,10 @@ final class InProgressWork
     private function heldDocuments(): Closure
     {
         $fields = $this->profiles->fields();
-        $teacherFields = $this->profiles->teacherFields();
-        $profiles = [];
-        $setups = [];
+        $templates = [];
 
-        return function (Parallel $parallel, Syllabus $syllabus) use ($fields, $teacherFields, &$profiles, &$setups): array {
-            $profile = $profiles[$parallel->asignatura_id] ??= $this->profiles->values((string) $parallel->asignatura_id);
-            $built = $setups[$parallel->asignatura_id] ??= $this->profiles->setups((string) $parallel->asignatura_id);
+        return function (Parallel $parallel, Syllabus $syllabus) use ($fields, &$templates): array {
+            $built = $templates[$parallel->asignatura_id] ??= $this->profiles->templates((string) $parallel->asignatura_id);
             $held = FieldValue::query()->where('silabo_id', $syllabus->id)->get()->keyBy('definicion_campo_id');
             $documents = [];
             foreach ($fields as $field) {
@@ -649,16 +641,16 @@ final class InProgressWork
                 if (! $value instanceof FieldValue) {
                     continue;
                 }
-                $current = $profile[$field->id] ?? null;
-                $expected = $current === null || FieldDocument::isEmpty($current) ? $field->contenido : $current;
-                if (FieldDocument::normalize($value->valor) != FieldDocument::normalize($expected)) {
-                    $documents[$field->id] = $expected;
+                $template = $built[$field->id] ?? $field->contenido;
+                if (! SubjectProfileFields::teacherEditable($field, $built)) {
+                    if (FieldResponse::templateFor($field->contenido, $value->valor) != $template) {
+                        $documents[(string) $field->id] = $template;
+                    }
+
+                    continue;
                 }
-            }
-            foreach ($teacherFields as $field) {
-                $value = $held->get($field->id);
-                if ($value instanceof FieldValue && (isset($built[$field->id]) || ResponseKind::within($value->valor))) {
-                    $documents += $this->rebuilt($syllabus, $field, $built[$field->id] ?? $field->contenido, $value);
+                if (isset($built[$field->id]) || ResponseKind::within($value->valor)) {
+                    $documents += $this->rebuilt($syllabus, $field, $template, $value);
                 }
             }
 

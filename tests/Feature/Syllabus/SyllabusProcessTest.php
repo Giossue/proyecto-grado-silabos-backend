@@ -873,7 +873,7 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful();
         $createdSection = $template->fresh()->sections()->firstWhere('clave', 'anexos');
         $createdField = $this->postJson(route('api.v1.admin.template.structure.fields.store', [$template, $createdSection]), [
-            'key' => 'anexo', 'label' => 'Anexo', 'quien_llena' => 'docente', 'content' => FreeText::fromText('Contenido inicial'),
+            'key' => 'anexo', 'label' => 'Anexo', 'quien_llena' => 'carrera', 'content' => FreeText::fromText('Contenido inicial'),
         ])->assertCreated()->json('field.id');
         $field = FieldDefinition::query()->findOrFail($createdField);
         $value = FieldValue::query()->create([
@@ -1293,7 +1293,7 @@ class SyllabusProcessTest extends TestCase
         $convocation = $this->openedConvocation();
         $syllabus = Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail();
         $subjectId = $syllabus->subject->id;
-        $field = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
+        $field = $this->careerProjectFields()->firstOrFail();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))->assertSuccessful();
         Syllabus::query()->whereKey($syllabus->id)->update(['estado' => 'aprobado']);
 
@@ -1384,9 +1384,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
-        $editableField = FieldDefinition::query()
-            ->where('quien_llena', 'docente')
-            ->firstOrFail();
+        $editableField = $this->teacherFields()->firstOrFail();
 
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))
@@ -1442,7 +1440,7 @@ class SyllabusProcessTest extends TestCase
     private function submitSyllabus(Syllabus $syllabus): void
     {
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        $fields = FieldDefinition::query()->where('quien_llena', 'docente')->get();
+        $fields = $this->teacherFields();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
                 'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
