@@ -99,14 +99,9 @@ y el botón «Documentos» (DOC-10).
     celda, quitar). El fondo de celda solo ofrece los colores de la tabla de
     identificación: «Celeste» (en negrita) y «Azul institucional» (texto blanco y negrita),
     o «Sin fondo»;
-  - «Tipo de respuesta» (ícono con ayuda): con el cursor en un párrafo o una celda de un campo
-    Carrera, abre un cuadro para elegir Texto libre, Elegir una o Elegir varias y, si es de
-    elegir, escribir las opciones ahí mismo («Agregar opción»); «Insertar» pone la respuesta
-    donde está el cursor. Se ve como una etiqueta con el tipo y sus opciones. Las opciones se
-    pueden dejar vacías para que Coordinación las escriba en cada materia. En un campo
-    Institucional el botón queda deshabilitado («Tipo de respuesta: no va en campos
-    Institucionales») (2026-11-10);
-  - con un campo elegido: «Quién llena» (Institucional o Carrera), «Plantilla» (inserta
+  - con un campo elegido: «¿Se puede editar?» («No editable» es Institucional y «Editable» es
+    Carrera; los espacios para el docente los pone Coordinación en cada materia, no la
+    plantilla) (2026-11-11), «Plantilla» (inserta
     Identificación institucional, Distribución y planificación, Bibliografía básica o
     complementaria, o Firmas), nombre, subir, bajar y eliminar;
   - con una sección elegida: vertical u horizontal, subir, bajar y eliminar;
