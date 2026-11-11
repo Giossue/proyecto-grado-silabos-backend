@@ -436,7 +436,7 @@ El catálogo de tipos está en un solo lugar por capa: `ResponseKind::KINDS` (ba
 `RESPONSE_KINDS` en `src/lib/responseKinds.ts` (frontend). Cada tipo es un nombre y un esquema
 del mismo motor de valores de los bloques (`ValueSchema`: número, elección `oneOf`, lista), de
 modo que validar, mostrar el control e imprimir leen del catálogo. Agregar un tipo es agregar su
-entrada en cada catálogo (y su ícono en la cinta de Coordinación).
+entrada en cada catálogo (y su ícono en el menú de cada espacio, `ResponseSlotSetup.vue`).
 
 ### HTML permitido en el contenido
 

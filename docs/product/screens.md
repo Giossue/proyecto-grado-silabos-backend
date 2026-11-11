@@ -207,16 +207,17 @@ y el botón «Documentos» (DOC-10).
   «Incompleta». Filtros por materia, ciclo y estado.
 - Un clic abre «Proyecto de carrera de {materia}»: pestañas por sección, un editor por campo y
   «Guardar proyecto de carrera». Un campo vacío muestra «Sin llenar».
-- También aparecen, en su lugar de la plantilla, los campos que llena el docente y que tienen
-  espacios de respuesta, con la etiqueta «Lo llena el docente» y la nota «Elija solo el tipo de
-  respuesta de cada espacio: texto libre, número o elegir entre opciones. El docente lo llena en
-  su sílabo». No se escriben ni cuentan como «Sin llenar». Cada uno tiene su cinta «Texto libre»,
-  «Número», «Elegir una» y «Elegir varias»: se hace clic en un espacio o en una celda de la tabla
-  («Haga clic en un espacio y elija su tipo de respuesta») y el botón de la cinta lo convierte;
-  si es de elegir, las opciones se escriben debajo («Agregar opción»). El texto fijo, los
-  encabezados y la estructura de las tablas no se pueden cambiar. Una respuesta que puso
-  Administración sale como «{tipo} (lo definió Administración)» y solo admite escribir las
-  opciones que falten (2026-11-10).
+- Los campos que llena el docente y que tienen espacios de respuesta van juntos en la última
+  pestaña, «Respuestas del docente», agrupados por sección, con una sola nota arriba: «Estos
+  campos los llena el docente. Si quiere que en un espacio elija de una lista o escriba un
+  número, haga clic en él». No se escriben ni cuentan como «Sin llenar». Cada espacio o celda
+  vacía se ve como un recuadro punteado «Lo escribe el docente»; al hacer clic se abre un menú
+  pequeño «¿Cómo responde el docente?» con «Texto libre», «Número», «Elegir una» y «Elegir
+  varias». Si es de elegir, las opciones se escriben ahí mismo («Agregar opción») sin cerrar el
+  menú. Un espacio ya armado se ve como una etiqueta corta, por ejemplo «Elegir varias · 4
+  opciones», que vuelve a abrir el menú. El texto fijo, los encabezados y la estructura de las
+  tablas no se pueden cambiar. Una respuesta que puso Administración sale como «{tipo} (lo
+  definió Administración)» y solo admite escribir las opciones que falten (2026-11-10).
 - En los campos de Coordinación, una respuesta que puso Administración se contesta ahí mismo
   (número u opciones para marcar); sin contestar, el campo sigue «Sin llenar».
 - En la esquina del modal, junto a la X, un ojo («Vista previa») alterna con la edición y muestra el sílabo de la materia como lo
