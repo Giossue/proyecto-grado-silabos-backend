@@ -88,10 +88,15 @@ class SubjectProfileFields
      */
     public function values(string $subjectId): array
     {
-        return FieldValue::query()
-            ->where('asignatura_id', $subjectId)
-            ->get()
-            ->mapWithKeys(fn (FieldValue $value): array => [$value->definicion_campo_id => FreeText::isDocument($value->valor) ? FieldDocument::normalize($value->valor) : null])
+        $rows = FieldValue::query()->where('asignatura_id', $subjectId)->get();
+        $definitions = FieldDefinition::query()->whereKey($rows->pluck('definicion_campo_id')->all())->get()->keyBy('id');
+
+        return $rows
+            ->mapWithKeys(fn (FieldValue $value): array => [$value->definicion_campo_id => match (true) {
+                ! FreeText::isDocument($value->valor) => null,
+                $definitions->has($value->definicion_campo_id) => FieldResponse::followTemplate($definitions->get($value->definicion_campo_id)->contenido, $value->valor),
+                default => FieldDocument::normalize($value->valor),
+            }])
             ->all();
     }
 

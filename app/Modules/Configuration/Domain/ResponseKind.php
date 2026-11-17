@@ -49,6 +49,8 @@ final class ResponseKind
 
     public const COMMON_SETTINGS = ['required', 'help'];
 
+    public const OWN_OPTIONS = 'customOptions';
+
     private const OPTION_KEY = '/^[a-z][a-z0-9_]{0,40}$/';
 
     /**
@@ -72,6 +74,7 @@ final class ResponseKind
 
             return ['kind' => $kind, 'options' => $options, 'value' => self::emptyValue($kind), ...$settings];
         }
+        $own = ($attrs[self::OWN_OPTIONS] ?? null) === true ? [self::OWN_OPTIONS => true] : [];
         $limit = $settings['maxLength'] ?? null;
         if (is_int($limit)) {
             $schema['maxLength'] = $limit;
@@ -91,7 +94,7 @@ final class ResponseKind
             self::assertChoices(count($value), self::setting($settings, 'minChoices'), self::setting($settings, 'maxChoices'));
         }
 
-        return ['kind' => $kind, 'options' => $options, 'value' => $value, ...$settings];
+        return ['kind' => $kind, 'options' => $options, 'value' => $value, ...$settings, ...(self::hasOptions($kind) ? $own : [])];
     }
 
     /**
@@ -184,7 +187,7 @@ final class ResponseKind
      * @param  array<string, mixed>  $template
      * @param  array<string, mixed>  $value
      */
-    public static function sameQuestion(array $template, array $value, bool $optionsPending = false): bool
+    public static function sameQuestion(array $template, array $value, bool $career = false): bool
     {
         if (($template['kind'] ?? null) !== ($value['kind'] ?? null)) {
             return false;
@@ -194,7 +197,84 @@ final class ResponseKind
             return false;
         }
 
-        return ($template['options'] ?? []) === ($value['options'] ?? []) || ($optionsPending && self::needsOptions($template));
+        return ($template['options'] ?? []) === ($value['options'] ?? [])
+            || ($career && (self::needsOptions($template) || (($value[self::OWN_OPTIONS] ?? null) === true && self::adjustable($template))));
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $attrs
+     */
+    public static function adjustable(array $attrs): bool
+    {
+        return self::hasOptions(is_string($attrs['kind'] ?? null) ? $attrs['kind'] : '') && ($attrs['options'] ?? []) !== [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $template
+     * @param  array<string, mixed>  $value
+     * @return array<string, mixed>
+     */
+    public static function ownOptions(array $template, array $value, bool $saving): array
+    {
+        $own = ($value[self::OWN_OPTIONS] ?? null) === true;
+        unset($value[self::OWN_OPTIONS]);
+        if (! self::adjustable($template) || ($template['kind'] ?? null) !== ($value['kind'] ?? null) || self::chosenSettings($template) !== self::chosenSettings($value)) {
+            return $value;
+        }
+        $differs = ($value['options'] ?? []) !== ($template['options'] ?? []);
+        if ($saving) {
+            if (($value['options'] ?? []) === []) {
+                TemplateDocument::fail('Deje al menos una opción en la respuesta de la plantilla.');
+            }
+
+            return $differs ? [...$value, self::OWN_OPTIONS => true] : $value;
+        }
+        if (! $differs) {
+            return $value;
+        }
+
+        return $own ? [...$value, self::OWN_OPTIONS => true] : self::carry($template, $value);
+    }
+
+    /**
+     * @return array<string, mixed>|list<mixed>|mixed
+     */
+    public static function withoutOwnOptions(mixed $node): mixed
+    {
+        if (! is_array($node)) {
+            return $node;
+        }
+        if (($node['type'] ?? null) === self::NODE && is_array($node['attrs'] ?? null)) {
+            unset($node['attrs'][self::OWN_OPTIONS]);
+        }
+        if (is_array($node['content'] ?? null)) {
+            $node['content'] = array_map(self::withoutOwnOptions(...), $node['content']);
+        }
+
+        return $node;
+    }
+
+    public static function assertEnoughOptions(mixed $node): void
+    {
+        if (! is_array($node)) {
+            return;
+        }
+        $attrs = ($node['type'] ?? null) === self::NODE && is_array($node['attrs'] ?? null) ? $node['attrs'] : null;
+        if ($attrs !== null && self::hasOptions(is_string($attrs['kind'] ?? null) ? $attrs['kind'] : '')) {
+            $count = is_array($attrs['options'] ?? null) ? count($attrs['options']) : 0;
+            $plural = fn (int $limit): string => $limit === 1 ? '1 opción' : "{$limit} opciones";
+            $min = $attrs['minChoices'] ?? null;
+            $max = $attrs['maxChoices'] ?? null;
+            if (is_int($min) && $min > $count) {
+                TemplateDocument::fail("Esta respuesta pide elegir al menos {$min}: deje al menos {$plural($min)}.");
+            }
+            if (is_int($max) && $max > $count) {
+                TemplateDocument::fail("Esta respuesta permite elegir hasta {$max}: deje al menos {$plural($max)}.");
+            }
+        }
+        foreach (is_array($node['content'] ?? null) ? $node['content'] : [] as $child) {
+            self::assertEnoughOptions($child);
+        }
     }
 
     /**
@@ -259,7 +339,10 @@ final class ResponseKind
             throw ValidationException::withMessages(['content' => 'Un campo Institucional no lleva tipos de respuesta. Cambie quién lo llena o quite la respuesta.']);
         }
 
-        return self::unanswered($content);
+        /** @var array<string, mixed> $content */
+        $content = self::withoutOwnOptions(self::unanswered($content));
+
+        return $content;
     }
 
     /**

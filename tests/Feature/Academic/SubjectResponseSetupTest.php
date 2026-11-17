@@ -105,7 +105,7 @@ class SubjectResponseSetupTest extends TestCase
         }
     }
 
-    public function test_coordination_writes_the_options_the_administrator_left_empty_but_not_the_ones_already_written(): void
+    public function test_coordination_writes_the_options_the_administrator_left_empty_and_adjusts_the_ones_already_written(): void
     {
         $this->templateWithResponseField($this->response('una'));
         $this->saveSetup($this->withResponses($this->response('una', ['Sí', 'No'])))->assertOk();
@@ -117,7 +117,9 @@ class SubjectResponseSetupTest extends TestCase
             'content' => $this->withResponses($this->response('una', ['Presencial', 'Virtual'])),
         ])->assertOk();
         $this->responseField->refresh();
-        $this->saveSetup($this->withResponses($this->response('una', ['Presencial', 'Otra'])))->assertUnprocessable()
+        $this->saveSetup($this->withResponses($this->response('una', ['Presencial', 'Otra'])))->assertOk();
+        $this->assertTrue($this->setupRow()?->valor['content'][1]['content'][0]['attrs']['customOptions']);
+        $this->saveSetup($this->withResponses($this->response('varias', ['Presencial', 'Virtual'])))->assertUnprocessable()
             ->assertJsonValidationErrors(["values.{$this->responseField->id}" => self::FIXED]);
     }
 
@@ -154,7 +156,8 @@ class SubjectResponseSetupTest extends TestCase
         $answer = fn (mixed $value, array $options = ['Básica', 'Profesional']): array => $this->withResponses($this->response('una', $options, $value), base: $this->filledTemplateValue($this->responseField, 'Texto de Coordinación'));
         $this->saveSetup($answer('o2'))->assertOk()->assertJsonPath('complete', true);
         $this->assertSame('o2', $this->setupRow()?->valor['content'][1]['content'][0]['attrs']['value']);
-        $this->saveSetup($answer('o1', ['Básica', 'Otra']))->assertUnprocessable();
+        $this->saveSetup($answer('o1', ['Básica', 'Otra']))->assertOk();
+        $this->assertSame(['Básica', 'Otra'], array_column($this->setupRow()?->valor['content'][1]['content'][0]['attrs']['options'], 'title'));
         $this->saveSetup($answer('o9'))->assertUnprocessable()->assertJsonValidationErrors(["values.{$this->responseField->id}" => 'Elija solo entre las opciones de la respuesta.']);
     }
 

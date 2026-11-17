@@ -477,7 +477,22 @@ Reglas:
   espacios con «Espacio para el docente» (texto libre, elegir una o varias, con las
   opciones escritas ahí mismo). Puede contestar una respuesta que puso Administración (queda fija
   para el docente) o dejarla para el docente, y escribe las opciones que Administración dejó
-  vacías. No cambia el formato fijo de la plantilla. Lo escrito se guarda como fila de
+  vacías. No cambia el formato fijo de la plantilla.
+- **Opciones propias de la materia** (2026-11-16): en una respuesta de elegir que Administración
+  dejó con opciones, Coordinación puede agregar, quitar o cambiar opciones para esa materia, pero
+  no el tipo, los ajustes, el lugar ni quitar la respuesta (mismo `422` del formato fijo). Debe
+  quedar al menos una opción («Deje al menos una opción en la respuesta de la plantilla.») y no
+  menos de las que piden los ajustes («Esta respuesta pide elegir al menos {n}: deje al menos {n}
+  opciones.» · «Esta respuesta permite elegir hasta {n}: deje al menos {n} opciones.»); el
+  servidor no recorta los ajustes. Al guardar, el servidor marca la respuesta con
+  `"customOptions": true` en la fila de `valores_campo` de la materia si sus opciones difieren de
+  las de la plantilla, y quita la marca si son iguales («Restablecer opciones de la plantilla»).
+  La marca no la manda el cliente ni la acepta la plantilla. Al leer: una respuesta marcada
+  conserva sus opciones aunque Administración cambie después las de la plantilla; una sin marca
+  sigue las opciones actuales de la plantilla (lo elegido que ya no existe se suelta). Si
+  Administración cambia el tipo o los ajustes, la fila deja de encajar y se usa la plantilla,
+  como antes. El docente de esa materia responde con sus opciones; las demás materias siguen con
+  las de la plantilla. Lo escrito se guarda como fila de
   `valores_campo` de la asignatura y sigue el bloqueo de la convocatoria abierta. Reemplazar la
   plantilla lo conserva por clave de campo mientras siga encajando.
 - **El sílabo** del docente parte de esa fila; esa es la `template` que recibe y contra la que el

@@ -52,8 +52,11 @@ final class FieldResponse
      * @param  array<string, mixed>  $definition
      * @return array<string, mixed>
      */
-    public static function career(array $definition, mixed $value, string $attribute = 'value'): array
+    public static function career(array $definition, mixed $value, string $attribute = 'value', bool $saving = true): array
     {
+        if ($saving) {
+            self::within($attribute, fn () => ResponseKind::assertEnoughOptions($value));
+        }
         $document = FieldDocument::normalize($value, $attribute);
         $template = self::template(FieldDocument::normalize($definition));
         if (self::blank($document)) {
@@ -62,6 +65,11 @@ final class FieldResponse
         if (! self::enabled()) {
             return self::withoutBlankLines($document);
         }
+        if ($saving) {
+            /** @var array<string, mixed> $document */
+            $document = ResponseKind::withoutOwnOptions($document);
+        }
+        $document = self::within($attribute, fn (): array => self::adopt($template, $document, $saving));
         if (! self::matches($template, $document, self::CAREER)) {
             throw ValidationException::withMessages([$attribute => 'Complete solo los espacios de respuesta. El texto, los encabezados y la estructura los define Administración.']);
         }
@@ -79,10 +87,27 @@ final class FieldResponse
             return $definition;
         }
         try {
-            return self::career($definition, $stored);
+            return self::career($definition, $stored, saving: false);
         } catch (ValidationException) {
             return $definition;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $definition
+     * @return array<string, mixed>|null
+     */
+    public static function followTemplate(array $definition, mixed $stored): ?array
+    {
+        if (! FreeText::isDocument($stored)) {
+            return null;
+        }
+        $document = FieldDocument::normalize($stored);
+        if (! self::enabled()) {
+            return $document;
+        }
+
+        return self::adopt(self::template(FieldDocument::normalize($definition)), $document, false);
     }
 
     /** @param array<string, mixed> $definition */
@@ -246,6 +271,53 @@ final class FieldResponse
         }
 
         return [...$value, 'content' => array_map(fn (array $child, array $current): array => self::seal($child, $current), $expected, $actual)];
+    }
+
+    /**
+     * @template T
+     *
+     * @param  callable(): T  $check
+     * @return T
+     */
+    private static function within(string $attribute, callable $check): mixed
+    {
+        try {
+            return $check();
+        } catch (ValidationException $exception) {
+            throw ValidationException::withMessages([$attribute => collect($exception->errors())->flatten()->all()]);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $template
+     * @param  array<string, mixed>  $value
+     * @return array<string, mixed>
+     */
+    private static function adopt(array $template, array $value, bool $saving): array
+    {
+        $type = $template['type'] ?? '';
+        if ($type !== ($value['type'] ?? '')) {
+            return $value;
+        }
+        if ($type === ResponseKind::NODE) {
+            return [...$value, 'attrs' => ResponseKind::ownOptions($template['attrs'] ?? [], $value['attrs'] ?? [], $saving)];
+        }
+        if (in_array($type, ['tableHeader', 'documentBlock'], true) || self::blank($template)) {
+            return $value;
+        }
+        $expected = $template['content'] ?? [];
+        $actual = $value['content'] ?? [];
+        if ($type === 'table' && self::listTable($template)) {
+            $row = end($expected);
+            while (count($expected) < count($actual)) {
+                $expected[] = $row;
+            }
+        }
+        if ($expected === [] || count($expected) !== count($actual)) {
+            return $value;
+        }
+
+        return [...$value, 'content' => array_map(fn (array $child, array $current): array => self::adopt($child, $current, $saving), array_values($expected), array_values($actual))];
     }
 
     /**

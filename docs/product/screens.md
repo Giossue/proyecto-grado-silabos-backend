@@ -230,6 +230,12 @@ y el botón «Documentos» (DOC-10).
 - Una respuesta que puso Administración sin opciones sale como «{tipo} (lo definió
   Administración)» y pide escribir las opciones; el campo y su sección muestran «Faltan
   opciones» hasta escribirlas. Es lo único que deja la materia «Incompleta».
+- Una respuesta de elegir que puso Administración con opciones lleva la marca «De la plantilla»
+  y el botón «Opciones de la respuesta»: abre el mismo cuadro, con el tipo y «Más opciones» sin
+  poder cambiarse («El tipo y Más opciones los fija Administración: aquí solo cambia las
+  opciones»). Si la materia tiene opciones propias se ve «Opciones propias» y el cuadro ofrece
+  «Restablecer opciones de la plantilla». Quitar una opción suelta lo elegido con ella
+  (2026-11-16).
 - La pestaña «Respuestas del docente» y el menú por espacio ya no existen.
 - El ojo alterna con la edición y muestra el sílabo de la materia como lo
   recibirán sus docentes antes de llenarlo: los datos de la malla (carrera, facultad, materia, código,
