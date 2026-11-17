@@ -623,6 +623,15 @@ cinta; para una respuesta, en «Más opciones» de su cuadro. El asistente usa `
 - **Word, PDF, revisiones y vista previa**: la fotografía deja fuera los campos ocultos (y una
   sección cuyos campos quedaron todos ocultos) y lleva las respuestas ocultas sin contestar, así
   que no se imprimen; lo guardado del docente no cambia.
+- **Línea de una respuesta oculta** (2026-11-17): si un párrafo, título o elemento de lista tiene
+  al menos una respuesta oculta y ninguna respuesta que se vea, se oculta entero, con su texto
+  (así no queda suelto «Cuál:»). Dentro de una tabla se usa la celda: la celda se queda, para que
+  la tabla no cambie de forma, pero su contenido se vacía; una fila de tabla repetible no se
+  quita. Si la línea también tiene una respuesta visible, solo se oculta la respuesta. Vale igual
+  en el formulario del docente, la vista previa, la fotografía, el Word y el PDF
+  (`ResponseCondition::withoutHiddenLines` en el servidor, `withoutHiddenLines` y
+  `onlyHiddenResponses` en `src/lib/responseConditions.ts`). No borra nada de lo guardado, y un
+  documento sin respuestas ocultas sale idéntico.
   Coordinación sigue viendo todo en el proyecto de carrera para ajustar opciones.
 - El motor de condiciones de los bloques (`keep_if`, `Blocks\Condition`) evalúa datos dentro de
   un bloque con una sola clave y un solo valor; estas condiciones cruzan campos y comparan con

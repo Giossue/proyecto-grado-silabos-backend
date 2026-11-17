@@ -70,7 +70,7 @@ final class SyllabusConditions
                     continue;
                 }
                 if (isset($field['document'])) {
-                    $field['document'] = ResponseCondition::clear($field['document'], $result['answers']);
+                    $field['document'] = ResponseCondition::withoutHiddenLines(ResponseCondition::clear($field['document'], $result['answers']), $result['answers']);
                 }
                 $kept[] = $field;
             }

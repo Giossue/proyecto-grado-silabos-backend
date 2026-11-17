@@ -98,6 +98,7 @@ cambia la respuesta. Si la respuesta que decide no aparece en el sílabo, la par
   las opciones (por su texto, como «Sí», o su clave, como `o1`). Con `respuesta` vacía se quita.
 - Una sola respuesta: ponga `"showIf":{"response":"usa_laboratorio","options":["o1"]}` en su
   `data-response`, con las claves de las opciones.
+- Si una respuesta queda oculta se oculta toda su línea (su párrafo, o su celda si está en una tabla), salvo que la línea tenga otra respuesta visible: escriba la etiqueta y la respuesta condicionada en el mismo párrafo (`<p>¿Cuál? <span data-response='…'></span></p>`) y el texto que depende de ella en su propio párrafo.
 - La respuesta que decide debe estar antes (en un campo anterior o antes en el mismo campo) y
   no puede ser la misma parte. Una sola condición por parte, sin combinar con «y» u «o».
 - Si después se quita esa respuesta o la opción usada, la condición queda inválida y no se

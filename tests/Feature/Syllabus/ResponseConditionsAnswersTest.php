@@ -213,7 +213,23 @@ class ResponseConditionsAnswersTest extends TestCase
         $xml = $this->wordXml();
         $this->assertStringContainsString('Métodos de enseñanza', $xml);
         $this->assertStringNotContainsString('Técnicas de enseñanza', $xml);
-        $this->assertStringNotContainsString('Laboratorio usado: Química', $xml);
+        $this->assertStringNotContainsString('Laboratorio usado', $xml);
+        $this->assertStringNotContainsString('Laboratorio usado', (string) json_encode($snapshot['sections'], JSON_UNESCAPED_UNICODE));
+        $this->assertStringContainsString('Laboratorio usado', (string) json_encode($this->stored($this->responseField), JSON_UNESCAPED_UNICODE));
+    }
+
+    public function test_a_shown_response_keeps_its_line_in_the_document(): void
+    {
+        $this->draft();
+        $this->save($this->responseField, $this->methods('o1', 'Química'))->assertOk();
+        $this->save($this->techniques, $this->answeredValue($this->techniques, 'Prácticas guiadas'))->assertOk();
+        $this->submit()->assertSuccessful();
+
+        $snapshot = SyllabusRevision::query()->firstOrFail()->fotografia;
+        $this->assertStringContainsString('Laboratorio usado', (string) json_encode($snapshot['sections'], JSON_UNESCAPED_UNICODE));
+        $xml = $this->wordXml();
+        $this->assertStringContainsString('Laboratorio usado', $xml);
+        $this->assertStringContainsString('Química', $xml);
     }
 
     public function test_coordination_cannot_remove_an_option_that_a_condition_uses(): void

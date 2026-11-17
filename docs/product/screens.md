@@ -116,14 +116,16 @@ y el botón «Documentos» (DOC-10).
     («Tipo de respuesta: no va en campos Institucionales»). Responde quien llena el campo: lo
     puede contestar Coordinación en cada materia o dejarlo para el docente. Dentro de «Más
     opciones», «Mostrar solo si» (2026-11-16) elige «Siempre» o una respuesta anterior de elegir una
-    o varias y, con casillas, «si eligió alguna de:» sus opciones;
+    o varias y, con casillas, «si eligió alguna de:» sus opciones; debajo dice «Si queda oculta, se
+    oculta toda su línea» (2026-11-17);
   - ícono «Mostrar solo si…» (2026-11-16): con un campo elegido abre el mismo selector («Siempre» o
     una respuesta de elegir de un campo anterior y sus opciones), con «Aplicar» y «Quitar
     condición»; sin respuestas anteriores dice «Ponga antes una respuesta de elegir una o varias
     para usarla aquí». Debajo del campo condicionado se lee «Se muestra solo si «…» es …», y una
     condición que quedó sin su respuesta u opción sale en los problemas en vivo del campo. El
     docente no ve lo oculto (se vuelve a evaluar mientras responde), no se le exige y no se
-    imprime;
+    imprime; una respuesta oculta se lleva toda su línea, o vacía su celda en una tabla, salvo que
+    la línea tenga otra respuesta visible (2026-11-17);
   - ícono «Tabla repetible» (2026-11-16): en un campo «Editable» abre un menú con «Nueva tabla
     repetible» y, por cada tabla del campo, «Editar «…»» o «Ver «…»». El diálogo pide «Título de la
     tabla», «Cada fila se llama» (para «Agregar …»), «Mínimo de filas», «Máximo de filas» y «Filas al

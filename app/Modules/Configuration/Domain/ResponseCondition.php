@@ -14,6 +14,12 @@ final class ResponseCondition
 
     private const KEY = '/^[a-z][a-z0-9_]{0,40}$/';
 
+    private const LINES = ['paragraph', 'heading', 'listItem'];
+
+    private const CELLS = ['tableCell', 'tableHeader'];
+
+    private const LISTS = ['bulletList', 'orderedList'];
+
     /**
      * @return array{response: string, options: list<string>}
      */
@@ -109,6 +115,51 @@ final class ResponseCondition
         }
 
         return $document;
+    }
+
+    /**
+     * @param  array<string, mixed>  $answers
+     */
+    public static function withoutHiddenLines(mixed $node, array $answers): mixed
+    {
+        if (! is_array($node) || ! is_array($node['content'] ?? null)) {
+            return $node;
+        }
+        $content = [];
+        foreach ($node['content'] as $child) {
+            if (! is_array($child)) {
+                $content[] = $child;
+
+                continue;
+            }
+            $type = $child['type'] ?? null;
+            if (in_array($type, self::CELLS, true) && self::onlyHidden($child, $answers)) {
+                $content[] = [...$child, 'content' => [['type' => 'paragraph']]];
+
+                continue;
+            }
+            if (in_array($type, self::LINES, true) && self::onlyHidden($child, $answers)) {
+                continue;
+            }
+            $kept = self::withoutHiddenLines($child, $answers);
+            if (in_array($type, self::LISTS, true) && ($child['content'] ?? []) !== [] && is_array($kept) && ($kept['content'] ?? []) === []) {
+                continue;
+            }
+            $content[] = $kept;
+        }
+        $node['content'] = $content;
+
+        return $node;
+    }
+
+    /**
+     * @param  array<string, mixed>  $answers
+     */
+    private static function onlyHidden(mixed $node, array $answers): bool
+    {
+        $responses = self::responses($node);
+
+        return $responses !== [] && array_filter($responses, fn (array $attrs): bool => ! is_array($attrs[self::ATTR] ?? null) || self::shows(self::shape($attrs[self::ATTR]), $answers)) === [];
     }
 
     /**
