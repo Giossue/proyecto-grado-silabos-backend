@@ -37,13 +37,16 @@ final class FieldResponse
         if (! self::enabled()) {
             return $document;
         }
-        $template = self::template(FieldDocument::normalize($template));
+        /** @var array<string, mixed> $template */
+        $template = ResponseKind::withoutOwnOptions(self::template(FieldDocument::normalize($template)));
         if (self::blank($document)) {
             return $template;
         }
         if (! self::matches($template, $document)) {
             throw ValidationException::withMessages([$attribute => 'Complete solo los espacios de respuesta. El texto, los encabezados y la estructura los define Administración.']);
         }
+        /** @var array<string, mixed> $document */
+        $document = ResponseKind::withoutOwnOptions($document);
 
         return $document;
     }
@@ -91,6 +94,21 @@ final class FieldResponse
         } catch (ValidationException) {
             return $definition;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $definition
+     * @param  array<string, mixed>  $document
+     * @return array<string, mixed>
+     */
+    public static function keepOwnOptions(array $definition, array $document, mixed $stored, string $attribute = 'value'): array
+    {
+        if (! self::enabled() || ! FreeText::isDocument($stored)) {
+            return $document;
+        }
+        $template = self::template(FieldDocument::normalize($definition));
+
+        return self::within($attribute, fn (): array => self::ownFrom($template, $document, self::templateFor($definition, $stored)));
     }
 
     /**
@@ -318,6 +336,51 @@ final class FieldResponse
         }
 
         return [...$value, 'content' => array_map(fn (array $child, array $current): array => self::adopt($child, $current, $saving), array_values($expected), array_values($actual))];
+    }
+
+    /**
+     * @param  array<string, mixed>  $template
+     * @param  array<string, mixed>  $value
+     * @param  array<string, mixed>  $own
+     * @return array<string, mixed>
+     */
+    private static function ownFrom(array $template, array $value, array $own): array
+    {
+        $type = $template['type'] ?? '';
+        if ($type !== ($value['type'] ?? '') || $type !== ($own['type'] ?? '')) {
+            return $value;
+        }
+        if ($type === ResponseKind::NODE) {
+            $attrs = $value['attrs'] ?? [];
+            $options = $own['attrs']['options'] ?? [];
+            if (($own['attrs'][ResponseKind::OWN_OPTIONS] ?? null) !== true || ($attrs['options'] ?? []) !== ($template['attrs']['options'] ?? [])) {
+                return $value;
+            }
+
+            return [...$value, 'attrs' => ResponseKind::attrs([...$attrs, 'options' => $options, ResponseKind::OWN_OPTIONS => true])];
+        }
+        if (in_array($type, ['tableHeader', 'documentBlock'], true) || self::blank($template)) {
+            return $value;
+        }
+        $expected = $template['content'] ?? [];
+        $actual = $value['content'] ?? [];
+        $mine = $own['content'] ?? [];
+        if ($type === 'table' && self::listTable($template) && $mine !== []) {
+            $row = end($expected);
+            $last = end($mine);
+            while (count($expected) < count($actual)) {
+                $expected[] = $row;
+            }
+            while (count($mine) < count($actual)) {
+                $mine[] = $last;
+            }
+            $mine = array_slice($mine, 0, count($actual));
+        }
+        if ($expected === [] || count($expected) !== count($actual) || count($mine) !== count($actual)) {
+            return $value;
+        }
+
+        return [...$value, 'content' => array_map(fn (array $child, array $current, array $ownChild): array => self::ownFrom($child, $current, $ownChild), array_values($expected), array_values($actual), array_values($mine))];
     }
 
     /**

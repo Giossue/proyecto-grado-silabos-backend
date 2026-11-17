@@ -73,7 +73,8 @@ final class ApplyFichaImport
                     if (FieldResponse::isEmpty($field->contenido, FieldResponse::normalize($field->contenido, $document))) {
                         continue;
                     }
-                    $document = FieldResponse::career($field->contenido, $document);
+                    $stored = FieldValue::query()->where('asignatura_id', $entry['subject_id'])->where('definicion_campo_id', $field->id)->first()?->valor;
+                    $document = FieldResponse::career($field->contenido, FieldResponse::keepOwnOptions($field->contenido, $document, $stored, 'file'));
                     FieldValue::query()->updateOrCreate(
                         ['asignatura_id' => $entry['subject_id'], 'definicion_campo_id' => $field->id],
                         ['valor' => FreeText::normalize($document)],

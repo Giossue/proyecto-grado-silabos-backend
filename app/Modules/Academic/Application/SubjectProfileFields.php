@@ -48,7 +48,13 @@ class SubjectProfileFields
     {
         $template = FieldResponse::templateFor($field->contenido, $stored);
 
-        return $template == $field->contenido || $template == FieldResponse::template(FieldDocument::normalize($field->contenido)) ? null : $template;
+        if ($template == $field->contenido || $template == FieldResponse::template(FieldDocument::normalize($field->contenido))) {
+            return null;
+        }
+        /** @var array<string, mixed> $template */
+        $template = ResponseKind::withoutOwnOptions($template);
+
+        return $template;
     }
 
     /**

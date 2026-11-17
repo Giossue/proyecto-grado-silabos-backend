@@ -155,6 +155,14 @@ final class ResponseKind
         return self::hasOptions(is_string($attrs['kind'] ?? null) ? $attrs['kind'] : '') && ($attrs['options'] ?? []) === [];
     }
 
+    /**
+     * @return list<mixed>
+     */
+    public static function optionsOf(mixed $document): array
+    {
+        return array_map(fn (array $attrs): mixed => $attrs['options'] ?? [], self::found($document));
+    }
+
     public static function within(mixed $document): bool
     {
         return self::found($document) !== [];

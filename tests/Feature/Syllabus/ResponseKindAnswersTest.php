@@ -4,10 +4,12 @@ namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
+use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -263,5 +265,87 @@ class ResponseKindAnswersTest extends TestCase
         $this->answer($changed)->assertUnprocessable()->assertJsonValidationErrors(['value' => self::FIXED]);
         $forged = $this->withResponses($this->response('texto', [], '3'));
         $this->answer($forged)->assertUnprocessable()->assertJsonValidationErrors(['value' => self::FIXED]);
+    }
+
+    public function test_the_own_options_of_the_subject_reach_the_teacher_without_the_customization_marker(): void
+    {
+        $own = fn (mixed $value = null): array => $this->withResponses($this->response('una', ['Aula', 'Laboratorio', 'Campo'], $value));
+        $this->draft(fn (): array => $own(), $this->response('una', ['Aula', 'Laboratorio']));
+
+        $attrs = $this->stored()['content'][1]['content'][0]['attrs'];
+        $this->assertSame(['Aula', 'Laboratorio', 'Campo'], array_column($attrs['options'], 'title'));
+        $this->assertArrayNotHasKey('customOptions', $attrs);
+        $payload = $this->asUser('docente@silabos.test')->getJson(route('api.v1.teacher.syllabi.show', $this->syllabus))->assertOk();
+        $field = collect($payload->json('syllabus.sections'))->flatMap(fn (array $section): array => $section['fields'])->firstWhere('key', 'metodologia');
+        $this->assertArrayNotHasKey('customOptions', $field['template']['content'][1]['content'][0]['attrs']);
+
+        $markedDocument = $own('o3');
+        $markedDocument['content'][1]['content'][0]['attrs']['customOptions'] = true;
+        $this->answer($markedDocument)->assertOk();
+        $attrs = $this->stored()['content'][1]['content'][0]['attrs'];
+        $this->assertSame('o3', $attrs['value']);
+        $this->assertArrayNotHasKey('customOptions', $attrs);
+
+        $row = FieldValue::query()->where('silabo_id', $this->syllabus->id)->where('definicion_campo_id', $this->responseField->id)->firstOrFail();
+        $row->forceFill(['valor' => $markedDocument])->save();
+        $this->assertSame([], $this->issues());
+        $this->submit()->assertSuccessful();
+        $snapshot = SyllabusRevision::query()->firstOrFail()->fotografia;
+        $sent = collect($snapshot['sections'])->flatMap(fn (array $section): array => $section['fields'])->firstWhere('key', 'metodologia');
+        $this->assertSame('o3', $sent['document']['content'][1]['content'][0]['attrs']['value']);
+        $this->assertArrayNotHasKey('customOptions', $sent['document']['content'][1]['content'][0]['attrs']);
+    }
+
+    /**
+     * @param  list<string>  $options
+     * @return array<string, mixed>
+     */
+    private function closedSetup(array $options): array
+    {
+        return $this->withResponses($this->response('una', $options, 'o2'), ['type' => 'text', 'text' => 'Exposición'], ['type' => 'text', 'text' => '4']);
+    }
+
+    private function approvedClosedField(): void
+    {
+        $this->draft(fn (): array => $this->closedSetup(['Aula', 'Laboratorio', 'Campo']), $this->response('una', ['Aula', 'Laboratorio']));
+        $attrs = $this->stored()['content'][1]['content'][0]['attrs'];
+        $this->assertSame(['Aula', 'Laboratorio', 'Campo'], array_column($attrs['options'], 'title'));
+        $this->assertArrayNotHasKey('customOptions', $attrs);
+        $this->syllabus->forceFill(['estado' => 'aprobado'])->save();
+    }
+
+    private function catchUp(): void
+    {
+        app(InProgressWork::class)->catchUp([(string) $this->syllabus->convocation->carrera_id]);
+    }
+
+    public function test_restoring_the_template_options_of_a_closed_field_sends_the_approved_syllabus_back_on_catch_up(): void
+    {
+        $this->approvedClosedField();
+        FieldValue::query()->whereNotNull('asignatura_id')->where('definicion_campo_id', $this->responseField->id)
+            ->firstOrFail()->forceFill(['valor' => FieldResponse::career($this->responseField->contenido, $this->closedSetup(['Aula', 'Laboratorio']))])->save();
+
+        $this->assertSame([(string) $this->syllabus->id], app(InProgressWork::class)->returningToDraft([$this->syllabus->fresh()]));
+        $this->catchUp();
+
+        $this->assertSame('borrador', $this->syllabus->fresh()->estado);
+        $attrs = $this->stored()['content'][1]['content'][0]['attrs'];
+        $this->assertSame(['Aula', 'Laboratorio'], array_column($attrs['options'], 'title'));
+        $this->assertSame('o2', $attrs['value']);
+    }
+
+    public function test_a_closed_field_with_own_options_and_nothing_changed_keeps_the_approved_syllabus_on_catch_up(): void
+    {
+        $this->approvedClosedField();
+        $this->assertSame([], app(InProgressWork::class)->returningToDraft([$this->syllabus->fresh()]));
+
+        $row = FieldValue::query()->where('silabo_id', $this->syllabus->id)->where('definicion_campo_id', $this->responseField->id)->firstOrFail();
+        $legacy = $row->valor;
+        $legacy['content'][1]['content'][0]['attrs']['customOptions'] = true;
+        $row->forceFill(['valor' => $legacy])->save();
+        $this->assertSame([], app(InProgressWork::class)->returningToDraft([$this->syllabus->fresh()]));
+
+        $this->catchUp();
+        $this->assertSame('aprobado', $this->syllabus->fresh()->estado);
     }
 }

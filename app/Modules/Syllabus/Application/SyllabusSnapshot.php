@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Application;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
@@ -43,7 +44,8 @@ class SyllabusSnapshot
                 'fields' => $section->blocks->flatMap(fn ($block) => $block->fields->map(function (FieldDefinition $field) use ($values, $variables): array {
                     $document = $field->quien_llena === FieldDefinition::INSTITUTIONAL
                         ? $field->contenido : (($values->get($field->id) instanceof FieldValue ? $values->get($field->id)->valor : $field->contenido));
-                    $document = FieldDocument::normalize($document);
+                    /** @var array<string, mixed> $document */
+                    $document = ResponseKind::withoutOwnOptions(FieldDocument::normalize($document));
 
                     return [
                         'definition_id' => $field->id,

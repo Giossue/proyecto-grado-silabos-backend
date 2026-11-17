@@ -643,7 +643,8 @@ final class InProgressWork
                 }
                 $template = $built[$field->id] ?? $field->contenido;
                 if (! SubjectProfileFields::teacherEditable($field, $built)) {
-                    if (FieldResponse::templateFor($field->contenido, $value->valor) != $template) {
+                    if (ResponseKind::withoutOwnOptions($value->valor) != $template
+                        && (ResponseKind::withoutOwnOptions(FieldResponse::templateFor($field->contenido, $value->valor)) != $template || ResponseKind::optionsOf($value->valor) != ResponseKind::optionsOf($template))) {
                         $documents[(string) $field->id] = $template;
                     }
 

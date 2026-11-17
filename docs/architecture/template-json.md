@@ -492,7 +492,12 @@ Reglas:
   sigue las opciones actuales de la plantilla (lo elegido que ya no existe se suelta). Si
   Administración cambia el tipo o los ajustes, la fila deja de encajar y se usa la plantilla,
   como antes. El docente de esa materia responde con sus opciones; las demás materias siguen con
-  las de la plantilla. Lo escrito se guarda como fila de
+  las de la plantilla. La marca vive solo en la fila de la materia: no pasa al sílabo del docente
+  ni a su fotografía (las opciones sí), y si un borrador antiguo la trae, el servidor la quita al
+  guardar sin rechazarlo. Importar el proyecto de carrera desde Excel conserva las opciones
+  propias y la marca de cada respuesta cuyas opciones el Excel no cambia; si lo importado elige
+  una opción que la materia no tiene, se rechaza con «Elija solo entre las opciones de la
+  respuesta.». Lo escrito se guarda como fila de
   `valores_campo` de la asignatura y sigue el bloqueo de la convocatoria abierta. Reemplazar la
   plantilla lo conserva por clave de campo mientras siga encajando.
 - **El sílabo** del docente parte de esa fila; esa es la `template` que recibe y contra la que el
