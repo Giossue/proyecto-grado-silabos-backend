@@ -123,6 +123,16 @@ ni opciones (`normalize`), Coordinación solo arma en los espacios de respuesta 
 cambio de lo armado conserva lo contestado donde encaja (`carried`). Detalle en
 `docs/architecture/template-json.md`, «Tipos de respuesta».
 
+## Actualización 2026-11-16: ajustes, opciones por materia y condiciones
+
+Administración vuelve a poner respuestas en la plantilla. Cada nodo `response` puede llevar en
+`attrs` sus ajustes (`required`, `help`, `maxLength`, `minChoices`, `maxChoices`, `display`),
+guardados solo si difieren del valor por defecto, y una condición (`id`, `showIf`). Coordinación
+ajusta las opciones de las respuestas de elegir de la plantilla en su materia (marca
+`customOptions`, que pone solo el servidor), pero no el tipo ni los ajustes; `FieldResponse` sigue
+protegiendo lo demás. Lo oculto por una condición no se borra. Detalle en
+`docs/architecture/template-json.md`, «Ajustes de cada respuesta» y «Mostrar solo si».
+
 ## Actualización 2026-11-10: campo Carrera
 
 `docente` y `coordinacion` se unen en `carrera` (en pantalla «Carrera»; `institucional` se

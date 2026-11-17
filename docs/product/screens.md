@@ -104,6 +104,15 @@ y el botón «Documentos» (DOC-10).
   - formato de texto (negrita, cursiva, subrayado, color del texto, alineación, listas). El
     color del texto solo ofrece negro, azul (`#365F91`, el de los rótulos de las unidades) y
     blanco;
+  - «Deshacer» y «Rehacer» (2026-11-16): dentro de un texto deshacen lo escrito; fuera de él, o cuando el
+    texto ya no tiene qué deshacer, deshacen los cambios de estructura (agregar, borrar, mover, arrastrar o
+    duplicar secciones y campos, títulos, nombres y contenido de campos), hasta 50 pasos. Fuera de un texto y
+    de los diálogos también responden Ctrl+Z, Ctrl+Y y Ctrl+Mayús+Z;
+  - ícono «Insertar dato del sistema» (llaves, 2026-11-16): menú «Datos del sistema» con el catálogo de datos
+    (nombre de la facultad, carrera, docente, período, etc.) que se insertan en el texto del campo elegido;
+    escribir «/» en el texto abre la misma lista. En el editor cada dato se ve con su nombre real («Nombre de
+    la facultad»), también dentro de las celdas de la tabla de identificación; en el modo lectura y en la
+    vista previa quedan vacíos, como en el sílabo;
   - ícono «Tabla» con su menú (insertar, filas, columnas, combinar, separar, encabezado, fondo de
     celda, quitar). El fondo de celda solo ofrece los colores de la tabla de
     identificación: «Celeste» (en negrita) y «Azul institucional» (texto blanco y negrita),
@@ -137,8 +146,14 @@ y el botón «Documentos» (DOC-10).
   - con un campo elegido: «¿Se puede editar?» («No editable» es Institucional y «Editable» es
     Carrera) (2026-11-11), «Plantilla» (inserta
     Identificación institucional, Distribución y planificación, Bibliografía básica o
-    complementaria, Bibliografía verificada por, o Firmas), nombre, subir, bajar y eliminar;
-  - con una sección elegida: vertical u horizontal, subir, bajar y eliminar;
+    complementaria, Bibliografía verificada por, o Firmas), nombre, subir, bajar, «Duplicar el campo …»
+    (la copia queda debajo con «(copia)» en el nombre), «Mover a…» (menú con las demás secciones; el campo
+    va al final de la elegida) y eliminar;
+  - con una sección elegida: vertical u horizontal, subir, bajar, «Duplicar la sección …» (con sus campos,
+    debajo y con «(copia)» en el título) y eliminar;
+  - al pasar el cursor, a la izquierda de cada campo y de cada título de sección aparece un asa («Arrastrar el
+    campo …», «Arrastrar la sección …»): se arrastra para cambiar el orden; un campo también se suelta en otra
+    sección. Con la plantilla bloqueada el asa queda apagada;
   - un ícono con ayuda al pasar el cursor, junto a las demás herramientas: «Opciones
     avanzadas», cuyo menú tiene «Diseño» y «Editar JSON»;
   - «Diseño» (diálogo): márgenes y tamaños de letra;
@@ -163,7 +178,8 @@ y el botón «Documentos» (DOC-10).
   títulos en línea y se cambia el logo de la universidad.
 - «Opciones avanzadas → Editar JSON» abre «Plantilla como JSON»: «Descargar», «Cargar archivo»
   y «Aplicar y reemplazar». Si hay errores, no cambia nada y muestra la ruta de cada uno. Los bloques
-  solo se agregan por JSON.
+  que «Tabla repetible» no puede representar (identificación, unidades, evaluación) solo se agregan o
+  cambian por JSON.
 - Con la convocatoria abierta, todo queda bloqueado y aparece el aviso de edición
   bloqueada. Si la plantilla cambió durante una pausa, se avisa que al reanudar los
   sílabos se adaptan: se conserva lo escrito y los enviados o aprobados vuelven a borrador.
@@ -270,7 +286,12 @@ y el botón «Documentos» (DOC-10).
   poder cambiarse («El tipo y Más opciones los fija Administración: aquí solo cambia las
   opciones»). Si la materia tiene opciones propias se ve «Opciones propias» y el cuadro ofrece
   «Restablecer opciones de la plantilla». Quitar una opción suelta lo elegido con ella
-  (2026-11-16).
+  (2026-11-16). Las opciones propias se conservan aunque Administración cambie después las de la
+  plantilla, y también al importar desde Excel si el archivo no las cambió.
+- Una opción que la plantilla usa en un «Mostrar solo si» no se puede quitar: al guardar sale «No puede
+  quitar una opción que la plantilla usa para mostrar u ocultar otra parte del sílabo. Déjela o pida a
+  Administración que cambie esa condición.». Coordinación ve todos los campos y respuestas, aunque estén
+  condicionados, para poder ajustarlos (2026-11-16).
 - La pestaña «Respuestas del docente» y el menú por espacio ya no existen.
 - El ojo alterna con la edición y muestra el sílabo de la materia como lo
   recibirán sus docentes antes de llenarlo: los datos de la malla (carrera, facultad, materia, código,

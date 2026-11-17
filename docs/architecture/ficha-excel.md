@@ -74,7 +74,10 @@ pertenezcan a la carga y tengan contenido.
 `ApplyFichaImport` bloquea la carrera, comprueba editabilidad y estructura otra vez y
 escribe únicamente lo seleccionado en `valores_campo`, dentro de una transacción.
 Conserva encabezados, textos fijos, estilos de celdas y permisos de edición docente;
-`FieldResponse` valida la estructura nuevamente antes de persistir. La auditoría
+`FieldResponse` valida la estructura nuevamente antes de persistir. Antes de guardar,
+`FieldResponse::keepOwnOptions` conserva las opciones propias de la materia (respuestas con
+`customOptions`, ver `template-json.md`) cuando el Excel no las cambió; sin opciones propias, lo
+importado sigue las de la plantilla (2026-11-16). La auditoría
 registra quién aplicó y cuántas materias; no conserva el Excel ni su contenido.
 `InProgressWork` exige confirmación para rehacer sílabos en curso y no toca procesos
 cerrados. Si falla la aplicación, el diálogo conserva la vista previa para corregir

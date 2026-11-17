@@ -299,8 +299,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   su papel y orientación, limitada al ancho disponible de pantalla.
 - La letra, los colores, los márgenes y la alineación los fija la plantilla. El Word
   numera las páginas.
-- Todo campo del docente es obligatorio. No hay límites de caracteres ni opción
-  «Obligatorio» por campo.
+- Todo campo del docente es obligatorio. Desde el 2026-11-16 cada respuesta que pone
+  Administración puede ser opcional y llevar ayuda y límites (caracteres máximos en texto libre,
+  cuántas elegir en «Elegir varias») y mostrarse como lista o desplegable en «Elegir una»; un
+  campo cuyo único espacio es una respuesta opcional no se exige. Se validan al guardar y al
+  enviar (`odd/tasks/plantilla-madura.md`, S3c y S3e).
 - Cada revisión enviada congela la definición de la plantilla que usó.
 - Para cambiar la plantilla con sílabos existentes, Administración pausa la convocatoria
   institucional. Al reanudar confirma, y los sílabos afectados se adaptan a la plantilla:
@@ -308,6 +311,28 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   deben cumplir la plantilla vigente. Las convocatorias cerradas no se adaptan a la plantilla
   hasta reabrirlas (I-118); lo mismo vale para la malla, el proyecto de carrera, los paralelos y
   los docentes (2026-11-04).
+- Editor maduro de la plantilla (2026-11-16, `odd/tasks/plantilla-madura.md`):
+  - Administración vuelve a poner respuestas en la plantilla (dónde, de qué tipo y con opciones
+    base) para todas las carreras, y Coordinación trabaja sobre ellas; revierte la decisión del
+    2026-11-11 que dejaba el botón solo a Coordinación (S3a).
+  - Los tipos de respuesta son tres: texto libre, elegir una y elegir varias. Sin número, fecha
+    ni texto corto (S3b; Número se quitó el 2026-11-11).
+  - Cada guardado del editor queda como versión en `versiones_plantilla` (solo se agrega), con
+    quién y cuándo; se ve, se compara con la actual y se restaura al borrador del editor, sin
+    guardar. Restaurar trae secciones, campos, título, márgenes y condiciones, no los bloques,
+    variables ni plantillas listas de la definición (S4a).
+  - Antes de guardar se cuentan los sílabos de la convocatoria en pausa que cambiarían,
+    ensayando el guardado real en una transacción que se deshace; si no se puede contar a
+    tiempo, se guarda igual tras confirmar (S4b). Los problemas se marcan en vivo con las mismas
+    reglas que al guardar (S4c).
+  - Las tablas repetibles simples se crean y editan desde el editor; las que el diseñador no
+    representa (identificación, unidades, evaluación) siguen solo por JSON (S5).
+  - «Mostrar solo si» (S6): un campo o una respuesta se muestran solo si una respuesta anterior
+    de elegir tiene alguna de ciertas opciones. Lo escrito en una parte oculta no se borra: solo
+    no se exige, no se valida ni se imprime, y vuelve a verse al cambiar la respuesta. Una
+    condición cuya respuesta de origen no está en el sílabo deja ver la parte (falla abierta).
+  - Una sección retirada de la plantilla recibe su sufijo de clave una sola vez; antes cada
+    guardado volvía a agregarlo hasta romper el guardado.
 
 ## Proyecto de carrera
 
@@ -327,7 +352,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - El servidor valida el alcance, la estructura y su vigencia al cargar y al aplicar.
   Si cambian los campos o las materias, exige descargar una plantilla nueva. Rechaza
   fórmulas y modificaciones de identificación; la protección del Excel no sustituye
-  la autorización. No hay versiones de plantilla: se compara una huella de estructura.
+  la autorización. El Excel no usa el historial de versiones de la plantilla: se compara una
+  huella de estructura.
 - Se reutilizan la comparación con valores actuales, los permisos, la transacción y
   la confirmación para regenerar sílabos en curso. Se eliminaron la carga antigua de
   documentos, los lectores OCR, los gateways de extracción de proyectos de carrera y sus trabajos
@@ -335,12 +361,18 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   una nueva migración y respaldo previo. La aplicación relee el mismo Excel al
   confirmar, compara sus huellas y guarda únicamente la selección en `valores_campo`.
 - Un campo Carrera lo escribe Coordinación por materia en la página del proyecto de carrera,
-  con el editor de texto y el botón «Espacio para el docente» (texto libre, número, elegir
+  con el editor de texto y el botón «Espacio para el docente» (texto libre, elegir
   una o varias). Lo que escribe le llega fijo al docente, que solo llena los espacios; sin
   espacios, el campo es de solo lectura; si lo deja vacío, el docente lo escribe entero. El
   proyecto de carrera solo queda incompleto con un espacio de elegir sin opciones
   (2026-11-10; reemplaza la regla de PV-21 del 2026-10-30 de que todos los campos tengan
   texto).
+- Coordinación ajusta por materia las opciones de las respuestas de elegir que puso
+  Administración (agregar, quitar, cambiar), pero no su tipo ni sus ajustes, ni las borra
+  (2026-11-16, `odd/tasks/plantilla-madura.md`, S3d). Las opciones propias se guardan en la
+  fila de la materia con la marca `customOptions` y se conservan aunque Administración cambie
+  las de la plantilla; la importación desde Excel también las conserva si no las cambia. La
+  marca no llega al sílabo del docente. No puede quitar una opción que usa un «Mostrar solo si».
 - El docente declara de 1 a 8 unidades (empieza con 4) y escribe el nombre y el
   resultado de aprendizaje de cada una dentro de su tabla del formato oficial, y
   completa la planificación semanal. Para enviar, cada unidad debe tener nombre y
@@ -548,8 +580,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   el campo se marca en rojo y el mensaje sale debajo (`lib/nativeValidation.ts`).
 - Los archivos son privados y registran quién los subió (I-180).
 - Un push a `main` despliega en Dokploy y ejecuta las migraciones.
-- Tipos de respuesta (2026-11-10): un campo o una celda puede pedir Número, Elegir una o
-  Elegir varias, además del texto libre. Los arma Administración en la plantilla (toda la
+- Tipos de respuesta (2026-11-10; Número se quitó el 2026-11-11): un campo o una celda puede
+  pedir Elegir una o Elegir varias, además del texto libre. Los arma Administración en la plantilla (toda la
   universidad) o Coordinación por materia en el proyecto de carrera, también en campos del
   docente; quien llena el campo solo responde. Todo va en el JSON del campo, sin tablas
   nuevas, y se bloquea con la convocatoria abierta igual que el proyecto de carrera.

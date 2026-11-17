@@ -67,7 +67,15 @@ de la plantilla, para toda la universidad, en campos Carrera. Coordinación los 
 materia, en la página del proyecto de carrera, con «Espacio para el docente», junto al texto que
 escribe, sin cambiar el formato fijo de la plantilla. El docente solo responde:
 marca opciones (lo elegido queda fijo y solo se quita) o escribe la respuesta. Para enviar, cada
-respuesta debe estar contestada. El documento imprime lo elegido como texto.
+respuesta obligatoria debe estar contestada. El documento imprime lo elegido como texto.
+
+Desde el 2026-11-16, Administración fija en cada respuesta que pone si es obligatoria u opcional,
+una ayuda, los límites (caracteres máximos en texto libre; cuántas elegir como mínimo y como máximo
+en «Elegir varias») y si «Elegir una» se muestra como lista o como desplegable; se validan al
+guardar y al enviar. Coordinación ve esas respuestas ya puestas en cada materia y puede ajustar sus
+opciones, pero no cambiar su tipo ni sus ajustes, ni borrarlas. Un campo o una respuesta también
+pueden mostrarse solo si una respuesta anterior de elegir tiene ciertas opciones («Mostrar solo
+si»): lo oculto no se exige ni se imprime, y lo que el docente escribió ahí se conserva.
 
 El docente solo llena los datos del bloque; no cambia su tipo. El detalle técnico está en
 `docs/architecture/template-json.md`.

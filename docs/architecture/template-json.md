@@ -33,6 +33,11 @@ leen la misma definición.
     cambió desde esa versión hasta la plantilla actual (`TemplateVersionDiff`).
   - Restaurar no escribe nada: el editor carga el borrador y Administración lo guarda con «Guardar», con los mismos
     bloqueos y validaciones de siempre.
+  - El borrador trae secciones, campos (con su `show_if`), título y diseño. Los bloques, las variables y las
+    plantillas listas de la definición no se restauran: «Guardar» del editor conserva los actuales.
+  - La versión de «Sistema» no la crea la migración: se crea la primera vez que se lista el historial o justo
+    antes del primer guardado, con la plantilla de ese momento. Los endpoints sueltos de
+    `structure/sections` y `structure/fields` (el editor no los usa) no guardan versión.
 - **Borrador sin guardar** (solo Administración, 2026-11-16): tres llamadas reciben el mismo cuerpo que guarda el
   editor (`version: 1`, `title`, `layout`, `sections`) y no escriben nada.
   - `POST /api/v1/admin/template/{id}/draft/preview` arma la plantilla del borrador como si se guardara

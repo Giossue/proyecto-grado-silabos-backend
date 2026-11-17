@@ -87,6 +87,16 @@ base; este documento explica las reglas que hay detrás.
   `institucional` (por defecto `carrera`; la migración `2026_11_10_000268` pasó `docente` y
   `coordinacion` a `carrera` sin tocar valores ni revisiones). El contenido es un documento Tiptap
   (`{"type":"doc","content":[…]}`), comprobado por `CHECK`.
+- Lo nuevo del editor del 2026-11-16 vive en JSON, sin columnas ni tablas nuevas salvo
+  `versiones_plantilla`: los ajustes de cada respuesta y su condición van en los `attrs` del nodo
+  `response` del contenido; las condiciones de campos enteros, en
+  `definicion_plantilla.field_conditions` (la clave no existe si no hay ninguna); las opciones
+  propias de una materia, en su fila de `valores_campo` con `customOptions`. Ver
+  [template-json.md](template-json.md).
+- Al guardar, cada sección que ya no está vigente (`vigente_en_plantilla` falso) lleva en su clave
+  el sufijo `-` más los 8 primeros caracteres de su identificador, puesto una sola vez; las que ya lo
+  tienen no se vuelven a renombrar (antes, cada guardado lo agregaba hasta pasar los 120 caracteres
+  de la clave y el guardado fallaba). Los campos retirados no se renombran.
 
 ### Valores de campo: un solo dueño
 

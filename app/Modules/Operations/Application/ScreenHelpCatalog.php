@@ -76,7 +76,9 @@ Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo d
             'title' => 'Plantilla del sílabo',
             'content' => 'Es el formato del sílabo, el mismo para todas las carreras.
 
-«Editar» abre el editor y pide escribir «editar plantilla». Ahí escribe directo en la hoja, elige quién llena cada campo (Institucional o Carrera) y pulsa «Guardar». El logo de la universidad y «Editar JSON» se guardan al instante, sin pasar por «Guardar».
+«Editar» abre el editor y pide escribir «editar plantilla». Ahí escribe directo en la hoja, marca si cada campo «Se puede editar» y pulsa «Guardar». El logo de la universidad y «Editar JSON» se guardan al instante, sin pasar por «Guardar».
+
+En el editor puede insertar datos del sistema (con el botón o escribiendo «/»), duplicar, mover y arrastrar campos y secciones, y deshacer cualquier cambio. Con «Tipo de respuesta» pone respuestas para todas las carreras: obligatoria o no, ayuda, límites, lista o desplegable, y «Mostrar solo si». Con «Tabla repetible» crea tablas sin JSON. El ojo muestra el borrador sin guardar y los problemas se marcan en rojo mientras edita. Antes de guardar se le avisa qué sílabos cambian. «Historial» guarda cada versión: puede ver qué cambió y restaurarla al editor.
 
 Con una convocatoria abierta la plantilla está bloqueada. Para cambiarla, pause la convocatoria. Al reanudar se le pedirá confirmación: los sílabos de este período se adaptan a la plantilla nueva, porque el formato es único para toda la universidad. Se conserva lo escrito en los campos que siguen encajando; los enviados o aprobados vuelven a borrador para enviarse y firmarse de nuevo.
 
@@ -194,7 +196,9 @@ Si hay una convocatoria abierta, no se puede cambiar; primero páusela.',
             'title' => 'Proyecto de carrera de una materia',
             'content' => 'Elija una sección a la izquierda y escriba sus campos a la derecha. Lo que escriba le llega fijo al docente.
 
-Con «Espacio para el docente» deja un espacio para que él responda: texto libre o elegir de una lista que usted escribe ahí mismo. Un campo que deje vacío lo escribe el docente completo.
+Con «Espacio para el docente» deja un espacio para que él responda: texto libre, elegir una o elegir varias de una lista que usted escribe ahí mismo. Un campo que deje vacío lo escribe el docente completo.
+
+Las respuestas que puso Administración llegan ya puestas. Con «Opciones de la respuesta» cambia sus opciones para esta materia, no el tipo, y puede volver a las de la plantilla. No puede quitar una opción que la plantilla usa para mostrar u ocultar otra parte.
 
 El ojo muestra cómo recibirá el sílabo el docente. Pulse «Guardar proyecto de carrera» antes de salir.
 
