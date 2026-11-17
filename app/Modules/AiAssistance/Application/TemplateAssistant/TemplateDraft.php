@@ -9,6 +9,7 @@ use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\ResponseCondition;
+use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -369,6 +370,7 @@ final class TemplateDraft
             'quien_llena' => $this->responsible($responsible),
             'content' => $this->content($html),
         ];
+        $this->allowResponses($field['quien_llena'], $field['content']);
         $fields = $this->sections[$index]['fields'];
         array_splice($fields, $this->insertionIndex($position, count($fields)), 0, [$field]);
         $this->setFields($index, $fields);
@@ -389,6 +391,7 @@ final class TemplateDraft
     {
         [$sectionIndex, $fieldIndex] = $this->locateField($key);
         $responsible = $this->responsible($responsible);
+        $this->allowResponses($responsible, $this->sections[$sectionIndex]['fields'][$fieldIndex]['content']);
         $this->changeField($sectionIndex, $fieldIndex, fn (array $field): array => array_replace($field, ['quien_llena' => $responsible]));
 
         return $key;
@@ -398,6 +401,7 @@ final class TemplateDraft
     {
         [$sectionIndex, $fieldIndex] = $this->locateField($key);
         $content = $this->content($html);
+        $this->allowResponses($this->sections[$sectionIndex]['fields'][$fieldIndex]['quien_llena'], $content);
         $this->changeField($sectionIndex, $fieldIndex, fn (array $field): array => array_replace($field, ['content' => $content]));
 
         return $key;
@@ -419,6 +423,44 @@ final class TemplateDraft
         $this->setFields($target, $fields);
 
         return $key;
+    }
+
+    public function duplicateField(string $key): string
+    {
+        [$sectionIndex, $fieldIndex] = $this->locateField($key);
+        if (count($this->sections[$sectionIndex]['fields']) >= self::MAX_FIELDS) {
+            throw new TemplateDraftError('La sección ya tiene el máximo de '.self::MAX_FIELDS.' campos.');
+        }
+        $keys = $this->fieldKeys();
+        $ids = $this->responseIds();
+        $field = $this->sections[$sectionIndex]['fields'][$fieldIndex];
+        $label = $field['label'] === '' ? '' : $this->text("{$field['label']} (copia)", 'El nombre del campo', true);
+        $copy = $this->copyField($field, $label, $keys, $ids);
+        $fields = $this->sections[$sectionIndex]['fields'];
+        array_splice($fields, $fieldIndex + 1, 0, [$copy]);
+        $this->setFields($sectionIndex, $fields);
+
+        return $copy['key'];
+    }
+
+    public function duplicateSection(string $key): string
+    {
+        $index = $this->locateSection($key);
+        if (count($this->sections) >= self::MAX_SECTIONS) {
+            throw new TemplateDraftError('La plantilla ya tiene el máximo de '.self::MAX_SECTIONS.' secciones.');
+        }
+        $section = $this->sections[$index];
+        $title = $this->text("{$section['title']} (copia)", 'El título de la sección', false);
+        $keys = $this->fieldKeys();
+        $ids = $this->responseIds();
+        $fields = [];
+        foreach ($section['fields'] as $field) {
+            $fields[] = $this->copyField($field, $field['label'], $keys, $ids);
+        }
+        $copy = ['key' => $this->uniqueKey($section['key'], 'seccion', $this->sectionKeys()), 'title' => $title, 'orientation' => $section['orientation'], 'fields' => $fields];
+        array_splice($this->sections, $index + 1, 0, [$copy]);
+
+        return $copy['key'];
     }
 
     public function removeField(string $key): string
@@ -658,6 +700,18 @@ final class TemplateDraft
     }
 
     /**
+     * @param  array<string, mixed>  $content
+     */
+    private function allowResponses(string $responsible, array $content): void
+    {
+        try {
+            ResponseKind::forField($responsible, $content);
+        } catch (ValidationException) {
+            throw new TemplateDraftError('Un campo No editable (institucional) no lleva respuestas. Hágalo Editable (carrera) o quite las respuestas.');
+        }
+    }
+
+    /**
      * @param  array<string, mixed>  $node
      * @return list<string>
      */
@@ -786,6 +840,67 @@ final class TemplateDraft
     private function fieldKeys(): array
     {
         return array_keys([...$this->fieldsByKey($this->base), ...$this->fieldsByKey($this->sections)]);
+    }
+
+    /**
+     * @param  DraftField  $field
+     * @param  list<string>  $keys
+     * @param  list<string>  $ids
+     * @return DraftField
+     */
+    private function copyField(array $field, string $label, array &$keys, array &$ids): array
+    {
+        $key = $this->uniqueKey($field['key'], 'campo', $keys);
+        $keys[] = $key;
+
+        return [...$field, 'key' => $key, 'label' => $label, 'content' => $this->withNewResponseIds($field['content'], $ids)];
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @param  list<string>  $ids
+     * @return array<string, mixed>
+     */
+    private function withNewResponseIds(array $node, array &$ids): array
+    {
+        $id = data_get($node, 'attrs.'.ResponseCondition::ID);
+        if (($node['type'] ?? null) === ResponseKind::NODE && is_string($id) && is_array($node['attrs'])) {
+            $base = rtrim(substr($id, 0, 37), '_');
+            $copy = "{$base}_2";
+            for ($n = 3; in_array($copy, $ids, true); $n++) {
+                $copy = "{$base}_{$n}";
+            }
+            $ids[] = $copy;
+            $node['attrs'][ResponseCondition::ID] = $copy;
+        }
+        if (is_array($node['content'] ?? null)) {
+            $children = [];
+            foreach ($node['content'] as $child) {
+                $children[] = is_array($child) ? $this->withNewResponseIds($child, $ids) : $child;
+            }
+            $node['content'] = $children;
+        }
+
+        return $node;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function responseIds(): array
+    {
+        $ids = [];
+        foreach ($this->sections as $section) {
+            foreach ($section['fields'] as $field) {
+                foreach (ResponseCondition::responses($field['content']) as $attrs) {
+                    if (is_string($attrs[ResponseCondition::ID] ?? null)) {
+                        $ids[] = $attrs[ResponseCondition::ID];
+                    }
+                }
+            }
+        }
+
+        return $ids;
     }
 
     /**

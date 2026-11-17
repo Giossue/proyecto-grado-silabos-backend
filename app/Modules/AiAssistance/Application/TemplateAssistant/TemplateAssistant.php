@@ -12,6 +12,7 @@ use App\Modules\AiAssistance\Domain\Exceptions\AiProviderError;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 final class TemplateAssistant
 {
@@ -24,6 +25,8 @@ final class TemplateAssistant
     private const UNAVAILABLE = 'El asistente no está disponible por ahora. Puede seguir editando la plantilla.';
 
     private const RETRY = 'No pude completar el pedido. Intente explicarlo de otra forma.';
+
+    public const PROCESS_STATES = ['abierta', 'pausada', 'ninguna'];
 
     public const SAME_AS_PENDING = 'Esa propuesta ya está lista en el mensaje anterior: pulse «Aplicar» en ella para pasar los cambios al editor.';
 
@@ -49,11 +52,24 @@ final class TemplateAssistant
     /** @var list<string> */
     private array $preexisting = [];
 
+    private ?string $assumedProcess = null;
+
     public function __construct(
         private readonly AiAgentGateway $gateway,
         private readonly TemplateAssistantKnowledge $knowledge,
         private readonly TemplateDraftValidator $validator,
     ) {}
+
+    public function assumingProcess(string $state): self
+    {
+        if (! in_array($state, self::PROCESS_STATES, true)) {
+            throw new InvalidArgumentException("Estado de convocatoria desconocido: {$state}.");
+        }
+        $assistant = clone $this;
+        $assistant->assumedProcess = $state;
+
+        return $assistant;
+    }
 
     public static function userTag(string $userId): string
     {
@@ -63,7 +79,7 @@ final class TemplateAssistant
     /**
      * @param  list<array{role: 'user'|'assistant', content: string}>  $history
      * @param  list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>|null  $editorDraft
-     * @param  array{estado: string, cambios: list<string>, secciones?: list<array<string, mixed>>}|null  $lastProposal
+     * @param  array{estado: string, cambios: list<string>, secciones?: list<array<string, mixed>>, bloques?: array<string, array<string, mixed>>}|null  $lastProposal
      */
     public function run(SyllabusTemplate $template, string $request, array $history = [], string $userTag = 'consola', ?array $editorDraft = null, ?array $lastProposal = null): TemplateAssistantOutcome
     {
@@ -72,7 +88,7 @@ final class TemplateAssistant
         $this->gatewayVersion = '';
         $draft = $editorDraft === null ? TemplateDraft::fromTemplate($template) : TemplateDraft::fromDraft($template, $editorDraft);
         $this->preexisting = $this->validator->errors($draft);
-        $tools = new TemplateTools($draft, $this->validator, $this->processState(), $this->preexisting);
+        $tools = new TemplateTools($draft, $this->validator, $this->processState(), $this->preexisting, $template);
         $system = $this->knowledge->system();
         $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $request, $editorDraft !== null, $history !== [], $lastProposal)]];
         $deadline = now()->addSeconds((int) config('ai.template.max_seconds'));
@@ -136,7 +152,7 @@ final class TemplateAssistant
     }
 
     /**
-     * @param  array{estado: string, cambios: list<string>, secciones?: list<array<string, mixed>>}|null  $lastProposal
+     * @param  array{estado: string, cambios: list<string>, secciones?: list<array<string, mixed>>, bloques?: array<string, array<string, mixed>>}|null  $lastProposal
      */
     private function finished(TemplateToolResult $finish, TemplateDraft $draft, int $steps, ?array $lastProposal): TemplateAssistantOutcome
     {
@@ -147,7 +163,10 @@ final class TemplateAssistant
         if (! $draft->changed()) {
             return $this->outcome(TemplateAssistantOutcome::ANSWER, $message, null, null, $steps);
         }
-        if (($lastProposal['estado'] ?? null) === 'pendiente' && $this->canonical($lastProposal['secciones'] ?? null) === $this->canonical($draft->payload()['sections'])) {
+        $payload = $draft->payload();
+        if (($lastProposal['estado'] ?? null) === 'pendiente'
+            && $this->canonical($lastProposal['secciones'] ?? null) === $this->canonical($payload['sections'])
+            && $this->canonical($lastProposal['bloques'] ?? []) === $this->canonical($payload['block_changes'] ?? [])) {
             return $this->outcome(TemplateAssistantOutcome::ANSWER, self::SAME_AS_PENDING, null, null, $steps);
         }
 
@@ -178,7 +197,7 @@ final class TemplateAssistant
     }
 
     /**
-     * @param  array{payload: array{version: int, sections: list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>}, changes: list<string>, changed: array{secciones: list<string>, campos: list<string>}, fingerprint: string}|null  $proposal
+     * @param  array{payload: array{version: int, sections: list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>, block_changes?: array<string, array<string, mixed>>}, changes: list<string>, changed: array{secciones: list<string>, campos: list<string>}, fingerprint: string}|null  $proposal
      */
     private function outcome(string $status, string $message, ?array $proposal, ?string $code, int $steps): TemplateAssistantOutcome
     {
@@ -262,12 +281,16 @@ final class TemplateAssistant
      */
     private function processState(): array
     {
-        $state = collect([SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED])
-            ->first(fn (string $state): bool => SyllabusProcess::query()->where('estado', $state)->exists());
+        $state = $this->assumedProcess ?? match (collect([SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED])
+            ->first(fn (string $state): bool => SyllabusProcess::query()->where('estado', $state)->exists())) {
+            SyllabusProcess::STATE_OPEN => 'abierta',
+            SyllabusProcess::STATE_PAUSED => 'pausada',
+            default => 'ninguna',
+        };
 
         return match ($state) {
-            SyllabusProcess::STATE_OPEN => ['estado' => 'abierta', 'aviso' => 'Hay una convocatoria abierta: la plantilla no se puede cambiar hasta pausarla.'],
-            SyllabusProcess::STATE_PAUSED => ['estado' => 'pausada', 'aviso' => 'La convocatoria está en pausa: si se aplican cambios, al reanudarla los sílabos en curso vuelven a borrador y conservan lo escrito en los campos que siguen encajando; los campos que cambien su estructura quedan vacíos.'],
+            'abierta' => ['estado' => 'abierta', 'aviso' => 'Hay una convocatoria abierta: la plantilla no se puede cambiar hasta pausarla.'],
+            'pausada' => ['estado' => 'pausada', 'aviso' => 'La convocatoria está en pausa: si se aplican cambios, al reanudarla los sílabos en curso vuelven a borrador y conservan lo escrito en los campos que siguen encajando; los campos que cambien su estructura quedan vacíos.'],
             default => ['estado' => 'ninguna', 'aviso' => 'No hay convocatoria abierta ni en pausa: los cambios se aplican a los próximos sílabos.'],
         };
     }

@@ -126,7 +126,7 @@ class AnswerTemplateAssistantJob implements ShouldBeUnique, ShouldQueue
     }
 
     /**
-     * @return array{estado: string, cambios: list<string>, secciones: list<array<string, mixed>>}|null
+     * @return array{estado: string, cambios: list<string>, secciones: list<array<string, mixed>>, bloques: array<string, array<string, mixed>>}|null
      */
     private function lastProposal(TemplateAssistantMessage $message): ?array
     {
@@ -146,7 +146,7 @@ class AnswerTemplateAssistantJob implements ShouldBeUnique, ShouldQueue
             default => 'cambiada',
         };
 
-        return ['estado' => $state, 'cambios' => $proposal->cambios['lista'], 'secciones' => $proposal->estructura['sections']];
+        return ['estado' => $state, 'cambios' => $proposal->cambios['lista'], 'secciones' => $proposal->estructura['sections'], 'bloques' => $proposal->estructura['block_changes'] ?? []];
     }
 
     /**

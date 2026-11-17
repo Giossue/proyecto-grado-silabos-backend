@@ -5,7 +5,10 @@ namespace App\Modules\AiAssistance\Application\TemplateAssistant;
 use App\Modules\AiAssistance\Domain\Data\AiToolCall;
 use App\Modules\AiAssistance\Domain\Data\AiToolSpec;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Application\TemplateVersions;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateVersion;
 use stdClass;
 
 final class TemplateTools
@@ -14,7 +17,11 @@ final class TemplateTools
 
     private const CELL_TYPES = ['texto' => 'text', 'opcion' => 'choice', 'numero' => 'number'];
 
-    private const READ_ONLY = ['ver_plantilla', 'ver_campo', 'listar_presets', 'listar_variables', 'ver_estado', 'responder', 'preguntar'];
+    private const READ_ONLY = ['ver_plantilla', 'ver_campo', 'listar_presets', 'listar_variables', 'ver_estado', 'ver_historial', 'comparar_version', 'responder', 'preguntar'];
+
+    private const HISTORY_LIMIT = 30;
+
+    private const CHANGES_LIMIT = 60;
 
     /**
      * @param  array{estado: string, aviso: string}  $process
@@ -25,6 +32,7 @@ final class TemplateTools
         private readonly TemplateDraftValidator $validator,
         private readonly array $process,
         private readonly array $preexisting = [],
+        private readonly ?SyllabusTemplate $template = null,
     ) {}
 
     public function locked(): bool
@@ -47,6 +55,8 @@ final class TemplateTools
             $this->spec('ver_campo', 'Muestra el contenido completo de un campo como HTML.', ['clave' => $key]),
             $this->spec('listar_presets', 'Lista los contenidos listos (tablas y bloques oficiales) que se ponen en un campo con usar_preset.', []),
             $this->spec('listar_variables', 'Lista los datos del sistema que se insertan con <span data-variable="clave"></span>.', []),
+            $this->spec('ver_historial', 'Lista las versiones guardadas de la plantilla (cada guardado es una versión), de la más nueva a la más vieja, con su número, fecha y tamaño. Solo lectura.', []),
+            $this->spec('comparar_version', 'Lista qué cambió desde una versión guardada hasta la plantilla guardada ahora. Solo lectura: restaurar se hace en el editor.', ['numero' => ['type' => 'integer', 'description' => 'Número de la versión según ver_historial.']]),
             $this->spec('ver_estado', 'Indica si la convocatoria está abierta, en pausa o no hay, y qué implica cambiar la plantilla.', []),
             $this->spec('agregar_seccion', 'Agrega una sección vacía después de otra sección y devuelve su clave. Después agréguele al menos un campo.', ['titulo' => ['type' => 'string'], 'orientacion' => $orientation, 'despues_de' => $after]),
             $this->spec('renombrar_seccion', 'Cambia el título de una sección.', ['clave' => $key, 'titulo' => ['type' => 'string']]),
@@ -60,6 +70,8 @@ final class TemplateTools
             $this->spec('cambiar_contenido_campo', 'Reemplaza todo el contenido de un campo. Lea antes el contenido con ver_campo.', ['clave' => $key, 'contenido_html' => $html]),
             $this->spec('mover_campo', 'Mueve un campo para que quede después de otro campo, en la misma sección o en otra.', ['clave' => $key, 'seccion' => $key, 'despues_de' => $after]),
             $this->spec('quitar_campo', 'Quita un campo.', ['clave' => $key]),
+            $this->spec('duplicar_campo', 'Copia un campo justo debajo de él, con clave nueva, el nombre seguido de «(copia)» y el mismo contenido y responsable; las respuestas copiadas reciben identificadores nuevos. Devuelve la clave de la copia.', ['clave' => $key]),
+            $this->spec('duplicar_seccion', 'Copia una sección con todos sus campos justo debajo de ella, con claves nuevas y el título seguido de «(copia)». Devuelve la clave de la copia.', ['clave' => $key]),
             $this->spec('usar_preset', 'Reemplaza el contenido de un campo por un contenido listo y fija quién lo llena.', ['clave' => $key, 'preset' => ['type' => 'string', 'description' => 'Clave del contenido listo según listar_presets.']]),
             $this->spec('crear_tabla_repetible', 'Crea una tabla repetible nueva (el docente agrega filas) y devuelve su clave. Después póngala en un campo Carrera con <div data-block="CLAVE"></div> (agregar_campo o cambiar_contenido_campo).', [
                 'titulo' => ['type' => 'string', 'description' => 'Título de la tabla, por ejemplo «Prácticas de laboratorio».'],
@@ -114,6 +126,8 @@ final class TemplateTools
                     'clave' => $variable['key'], 'nombre' => $variable['label'],
                 ], TemplateVariables::catalog())]),
                 'ver_estado' => TemplateToolResult::ok($this->process),
+                'ver_historial' => TemplateToolResult::ok($this->versions()),
+                'comparar_version' => TemplateToolResult::ok($this->compare($args['numero'] ?? null)),
                 'agregar_seccion' => $this->apply('Sección agregada.', fn (): string => $this->draft->addSectionAfter($this->string($args, 'titulo'), $this->string($args, 'orientacion'), $this->string($args, 'despues_de'))),
                 'renombrar_seccion' => $this->apply('Sección renombrada.', fn (): string => $this->draft->renameSection($this->string($args, 'clave'), $this->string($args, 'titulo'))),
                 'cambiar_orientacion_seccion' => $this->apply('Orientación cambiada.', fn (): string => $this->draft->orientSection($this->string($args, 'clave'), $this->string($args, 'orientacion'))),
@@ -126,6 +140,8 @@ final class TemplateTools
                 'cambiar_contenido_campo' => $this->apply('Contenido reemplazado.', fn (): string => $this->draft->rewriteField($this->string($args, 'clave'), $this->string($args, 'contenido_html'))),
                 'mover_campo' => $this->apply('Campo movido.', fn (): string => $this->draft->moveFieldAfter($this->string($args, 'clave'), $this->string($args, 'seccion'), $this->string($args, 'despues_de'))),
                 'quitar_campo' => $this->apply('Campo quitado.', fn (): string => $this->draft->removeField($this->string($args, 'clave'))),
+                'duplicar_campo' => $this->apply('Campo duplicado.', fn (): string => $this->draft->duplicateField($this->string($args, 'clave'))),
+                'duplicar_seccion' => $this->apply('Sección duplicada.', fn (): string => $this->draft->duplicateSection($this->string($args, 'clave'))),
                 'usar_preset' => $this->apply('Contenido listo aplicado.', fn (): string => $this->draft->applyPreset($this->string($args, 'clave'), $this->string($args, 'preset'))),
                 'crear_tabla_repetible' => $this->apply('Tabla repetible creada. Póngala en un campo con <div data-block="CLAVE"></div>.', fn (): string => $this->draft->createTable($this->tableDesign($args))),
                 'mostrar_solo_si' => $this->apply('Condición actualizada.', fn (): string => $this->draft->showFieldIf($this->string($args, 'clave'), $this->string($args, 'respuesta'), $this->strings($args, 'opciones'))),
@@ -147,6 +163,63 @@ final class TemplateTools
         $errors = $this->draft->changed() ? array_values(array_diff($this->validator->errors($this->draft), $this->preexisting)) : [];
 
         return ['valido' => $errors === [], 'errores' => $errors, 'cambios' => $this->draft->changes()];
+    }
+
+    /**
+     * @return array{versiones: list<array{numero: int, guardada_en: string, secciones: int, campos: int}>, nota: string}
+     */
+    private function versions(): array
+    {
+        $versions = array_values(TemplateVersion::query()
+            ->where('plantilla_id', $this->history()->id)
+            ->orderByDesc('numero_version_plantilla')
+            ->limit(self::HISTORY_LIMIT)
+            ->get()
+            ->map(function (TemplateVersion $version): array {
+                $sections = is_array($version->contenido['sections'] ?? null) ? $version->contenido['sections'] : [];
+
+                return [
+                    'numero' => $version->numero,
+                    'guardada_en' => $version->guardada_en->toIso8601String(),
+                    'secciones' => count($sections),
+                    'campos' => array_sum(array_map(fn (mixed $section): int => is_array($section) && is_array($section['fields'] ?? null) ? count($section['fields']) : 0, $sections)),
+                ];
+            })
+            ->all());
+
+        return [
+            'versiones' => $versions,
+            'nota' => $versions === []
+                ? 'Todavía no hay versiones guardadas: la primera aparece al abrir «Historial» o al guardar.'
+                : 'Quién guardó cada versión se ve en «Historial» del editor.',
+        ];
+    }
+
+    /**
+     * @return array{version: int, cambios_hasta_la_guardada: list<string>, omitidos: int}
+     */
+    private function compare(mixed $number): array
+    {
+        if (! is_int($number)) {
+            throw new TemplateDraftError('Falta el parámetro «numero» como número entero.');
+        }
+        $template = $this->history();
+        $version = TemplateVersion::query()->where('plantilla_id', $template->id)->where('numero_version_plantilla', $number)->first();
+        if ($version === null) {
+            throw new TemplateDraftError("No existe la versión {$number}. Use ver_historial para ver los números.");
+        }
+        $changes = app(TemplateVersions::class)->compare($template, $version);
+
+        return [
+            'version' => $number,
+            'cambios_hasta_la_guardada' => array_slice($changes, 0, self::CHANGES_LIMIT),
+            'omitidos' => max(0, count($changes) - self::CHANGES_LIMIT),
+        ];
+    }
+
+    private function history(): SyllabusTemplate
+    {
+        return $this->template ?? throw new TemplateDraftError('El historial no está disponible.');
     }
 
     /**

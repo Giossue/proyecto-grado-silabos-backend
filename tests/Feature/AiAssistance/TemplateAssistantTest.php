@@ -15,6 +15,7 @@ use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
 use App\Modules\AiAssistance\Domain\Exceptions\AiProviderError;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateVersion;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\CreatesSyllabusProcess;
@@ -164,6 +165,78 @@ class TemplateAssistantTest extends TestCase
         $this->assertSame(['objetivo_general' => ['response' => 'usa_laboratorio', 'options' => ['o1']]], $this->template->fresh()->definition()->fieldConditions());
         $content = FieldDefinition::query()->where('clave', 'laboratorio')->firstOrFail()->contenido;
         $this->assertEquals(['response' => 'usa_laboratorio', 'options' => ['o1']], $content['content'][1]['content'][1]['attrs']['showIf']);
+    }
+
+    public function test_the_assistant_duplicates_a_field_and_a_section_with_new_keys_and_response_ids(): void
+    {
+        $question = '<p>¿Usa laboratorio? <span data-response=\'{"kind":"una","options":[{"const":"o1","title":"Sí"},{"const":"o2","title":"No"}],"id":"usa_laboratorio"}\'></span></p>'
+            .'<p>¿Cuál? <span data-response=\'{"kind":"texto","showIf":{"response":"usa_laboratorio","options":["o1"]}}\'></span></p>';
+        $gateway = $this->script([
+            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Laboratorio', 'quien_llena' => 'carrera', 'contenido_html' => $question, 'despues_de' => '(final)']),
+            ScriptedAiAgentGateway::calls(
+                ['duplicar_campo', ['clave' => 'laboratorio']],
+                ['duplicar_seccion', ['clave' => 'objetivos']],
+                ['duplicar_campo', ['clave' => 'no_existe']],
+            ),
+            ScriptedAiAgentGateway::call('validar_borrador'),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
+        ]);
+
+        $outcome = $this->run_('Duplica el campo de laboratorio y la sección de objetivos');
+
+        [$field, $section, $missing] = array_slice($gateway->toolResults(2), 1);
+        $this->assertStringContainsString('"clave":"laboratorio_2"', $field);
+        $this->assertStringContainsString('"clave":"objetivos_2"', $section);
+        $this->assertStringContainsString('No existe el campo «no_existe»', $missing);
+        $this->assertStringContainsString('"valido":true', $gateway->toolResults(3)[4]);
+        $this->assertSame([
+            'Nueva sección «3. Objetivo(s) de la asignatura (copia)».',
+            'Nuevo campo «Laboratorio» en «2. Descripción de la asignatura».',
+            'Nuevo campo «Laboratorio (copia)» en «2. Descripción de la asignatura».',
+            'Nuevo campo «Objetivo general» en «3. Objetivo(s) de la asignatura (copia)».',
+            'Nuevo campo «Objetivos específicos» en «3. Objetivo(s) de la asignatura (copia)».',
+        ], $outcome->proposal['changes'] ?? null);
+        $sections = $outcome->proposal['payload']['sections'] ?? [];
+        $this->assertSame(['descripcion', 'laboratorio', 'laboratorio_2'], array_column($sections[1]['fields'], 'key'));
+        $this->assertSame(['objetivos', 'objetivos_2'], [$sections[2]['key'], $sections[3]['key']]);
+        $this->assertSame(['objetivo_general_2', 'objetivos_especificos_2'], array_column($sections[3]['fields'], 'key'));
+        $this->assertSame(['Objetivo general', 'Objetivos específicos'], array_column($sections[3]['fields'], 'label'));
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $outcome->proposal['payload'] ?? [])->assertOk();
+        $copy = FieldDefinition::query()->where('clave', 'laboratorio_2')->firstOrFail()->contenido;
+        $this->assertSame('usa_laboratorio_2', $copy['content'][0]['content'][1]['attrs']['id']);
+        $this->assertEquals(['response' => 'usa_laboratorio', 'options' => ['o1']], $copy['content'][1]['content'][1]['attrs']['showIf']);
+    }
+
+    public function test_the_assistant_reads_the_version_history_without_writing_or_sharing_who_saved(): void
+    {
+        $empty = $this->script([
+            ScriptedAiAgentGateway::call('ver_historial'),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Aún no hay versiones.']),
+        ]);
+        $this->run_('¿Qué versiones hay?');
+        $this->assertStringContainsString('"versiones":[]', $empty->toolResults(1)[0]);
+        $this->assertSame(0, TemplateVersion::query()->count());
+
+        $payload = TemplateDraft::fromTemplate($this->template)->payload();
+        $payload['sections'][1]['title'] = '2. Descripción';
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $payload)->assertOk();
+        $versions = TemplateVersion::query()->count();
+        $this->openSyllabusProcess($this->template->id);
+        $gateway = $this->script([
+            ScriptedAiAgentGateway::calls(['ver_historial'], ['comparar_version', ['numero' => 1]], ['comparar_version', ['numero' => 99]]),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
+        ]);
+
+        $outcome = $this->run_('¿Qué cambió desde la primera versión?');
+
+        [$history, $compared, $missing] = $gateway->toolResults(1);
+        $this->assertStringContainsString('"numero":2', $history);
+        $this->assertStringContainsString('"numero":1', $history);
+        $this->assertStringNotContainsString((string) User::query()->where('correo_electronico', 'admin@silabos.test')->value('nombre'), $history);
+        $this->assertStringContainsString('2. Descripción', $compared);
+        $this->assertStringContainsString('No existe la versión 99', $missing);
+        $this->assertSame(TemplateAssistantOutcome::ANSWER, $outcome->status);
+        $this->assertSame($versions, TemplateVersion::query()->count());
     }
 
     public function test_the_assistant_creates_a_simple_repeatable_table_and_places_it_in_a_field(): void

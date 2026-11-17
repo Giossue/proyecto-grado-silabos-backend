@@ -4,16 +4,17 @@ namespace App\Console\Commands;
 
 use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateAssistant;
 use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateAssistantOutcome;
-use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateDraft;
+use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateAssistantScenarios;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Illuminate\Console\Command;
+use RuntimeException;
 
 class TemplateAssistantTrial extends Command
 {
     protected $signature = 'template:assistant-trial
         {--pedido=* : Pedido a probar; si no se indica, se leen los del archivo}
         {--archivo=resources/ai/plantilla/pruebas.txt : Archivo con un pedido por línea}
-        {--escenarios= : Archivo JSON con conversaciones de varios mensajes}
+        {--escenarios= : Archivo JSON con conversaciones de varios mensajes y lo que se espera de cada turno}
         {--solo=* : Números de escenario a correr}';
 
     protected $description = 'Prueba el asistente de IA de la plantilla con pedidos reales sin guardar nada';
@@ -28,7 +29,7 @@ class TemplateAssistantTrial extends Command
         }
         $scenarios = $this->option('escenarios');
         if (is_string($scenarios) && $scenarios !== '') {
-            return $this->scenarios($assistant, $template, base_path($scenarios));
+            return $this->scenarios($assistant, $template, $scenarios);
         }
         $requests = $this->requests();
         if ($requests === []) {
@@ -52,46 +53,46 @@ class TemplateAssistantTrial extends Command
 
     private function scenarios(TemplateAssistant $assistant, SyllabusTemplate $template, string $file): int
     {
-        $raw = is_file($file) ? file_get_contents($file) : false;
-        $scenarios = $raw === false ? null : json_decode($raw, true);
-        if (! is_array($scenarios) || ! array_is_list($scenarios)) {
-            $this->error("No se pudo leer {$file}.");
+        $harness = new TemplateAssistantScenarios;
+        try {
+            $scenarios = $harness->load($file);
+        } catch (RuntimeException $exception) {
+            $this->error($exception->getMessage());
 
             return self::FAILURE;
         }
         $only = array_map('intval', (array) $this->option('solo'));
         $summary = [];
+        $all = [];
         foreach ($scenarios as $index => $scenario) {
             $number = $index + 1;
             if ($only !== [] && ! in_array($number, $only, true)) {
                 continue;
             }
             $this->newLine();
-            $this->line("<options=bold;fg=cyan>Escenario {$number}: ".($scenario['nombre'] ?? '').'</>');
-            $draft = TemplateDraft::fromTemplate($template->fresh())->payload()['sections'];
-            $history = [];
-            $last = null;
-            foreach ((array) ($scenario['turnos'] ?? []) as $turnIndex => $turn) {
-                $message = (string) ($turn['mensaje'] ?? '');
-                $started = microtime(true);
-                $outcome = $assistant->run($template->fresh(), $message, $history, 'consola', $draft, $last);
+            $this->line("<options=bold;fg=cyan>Escenario {$number}: {$scenario['nombre']}</>");
+            $started = microtime(true);
+            $results = $harness->run($assistant, $template->fresh(), $scenario, false, function (array $result) use (&$started, &$summary, $number): void {
                 $seconds = round(microtime(true) - $started, 1);
-                $this->report($turnIndex + 1, $message, $outcome, $seconds);
-                $applied = $outcome->proposal !== null && ($turn['aplicar'] ?? false) === true;
-                if ($outcome->proposal !== null) {
-                    $last = ['estado' => $applied ? 'aplicada' : 'pendiente', 'cambios' => $outcome->proposal['changes'], 'secciones' => $outcome->proposal['payload']['sections']];
-                }
-                if ($applied) {
-                    $draft = $outcome->proposal['payload']['sections'];
+                $outcome = $result['outcome'];
+                $this->report($result['turno'], $result['mensaje'], $outcome, $seconds);
+                if ($result['aplicada']) {
                     $this->line('   <comment>→ Aplicada en el editor</comment>');
                 }
-                $history[] = ['role' => 'user', 'content' => $message];
-                $history[] = ['role' => 'assistant', 'content' => $outcome->message];
-                $summary[] = [$number, $turnIndex + 1, $outcome->status, $outcome->errorCode ?? '', $outcome->steps, $seconds, $applied ? 'sí' : ''];
-            }
+                foreach ($result['fallas'] as $failure) {
+                    $this->line("   <error>✗ {$failure}</error>");
+                }
+                $verdict = ! $result['evaluado'] ? '' : ($result['fallas'] === [] ? 'cumple' : 'no cumple');
+                $summary[] = [$number, $result['turno'], $outcome->status, $outcome->errorCode ?? '', $outcome->steps, $seconds, $result['aplicada'] ? 'sí' : '', $verdict];
+                $started = microtime(true);
+            });
+            array_push($all, ...$results);
         }
         $this->newLine();
-        $this->table(['Escenario', 'Turno', 'Resultado', 'Error', 'Pasos', 'Segundos', 'Aplicada'], $summary);
+        $this->table(['Escenario', 'Turno', 'Resultado', 'Error', 'Pasos', 'Segundos', 'Aplicada', 'Esperado'], $summary);
+        $evaluated = array_filter($all, fn (array $result): bool => $result['evaluado']);
+        $passed = array_filter($evaluated, fn (array $result): bool => $result['fallas'] === []);
+        $this->line('Turnos que cumplen lo esperado: '.count($passed).' de '.count($evaluated).' ('.TemplateAssistantScenarios::passRate($all).' %)');
 
         return self::SUCCESS;
     }

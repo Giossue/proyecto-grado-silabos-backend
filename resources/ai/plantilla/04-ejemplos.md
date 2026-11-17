@@ -4,11 +4,14 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
 
 1. «Agrega un campo "Competencias" al final de la sección 4, que lo llene el docente.»
    `ver_plantilla` → `agregar_campo` (seccion `resultados`, nombre «Competencias», quien_llena
-   `docente`, contenido `<p></p>`, despues_de «(final)») → `validar_borrador` → `responder`.
+   `carrera`, contenido `<p></p>`, despues_de «(final)») → `validar_borrador` → `responder`
+   diciendo que el campo es Editable.
 
 2. «Que la descripción de la asignatura la escriba el docente.»
-   `ver_plantilla` → `cambiar_responsable_campo` (`descripcion`, `docente`) →
-   `validar_borrador` → `responder` avisando que Coordinación deja de llenarla en el proyecto de carrera.
+   `ver_plantilla`: si ya es `carrera`, no cambie nada; `responder` explicando que ya es
+   Editable: si Coordinación no escribe nada en el proyecto de carrera, el docente la escribe
+   entera. Si fuera `institucional`: `cambiar_responsable_campo` (`descripcion`, `carrera`) →
+   `validar_borrador` → `responder`.
 
 3. «Agrega una sección "Prácticas de laboratorio" después de la metodología, con una tabla de
    práctica, horas y lugar.»
@@ -50,7 +53,7 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
     los `<th>`.
 
 12. «Agrega una sección de lecturas recomendadas con una lista de libros.»
-    `ver_plantilla` → `agregar_seccion` → `agregar_campo` (quien_llena `docente`) →
+    `ver_plantilla` → `agregar_seccion` → `agregar_campo` (quien_llena `carrera`) →
     `usar_preset` (`bibliografia_complementaria`) en ese campo → `validar_borrador` →
     `responder` mencionando que el docente puede buscar los libros en la biblioteca. Si la
     sección nueva queda antes de «Revisión y aprobación», esta sigue sin número.
@@ -91,3 +94,33 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
     «Sí») → `validar_borrador` → `responder` explicando que, si responde No, el docente no ve
     esas partes, no se le exigen y no se imprimen.
 
+18. «Duplica el campo de objetivos específicos.» / «Haz una copia de la sección 5.»
+    `ver_plantilla` → `duplicar_campo` (`objetivos_especificos`) o `duplicar_seccion`
+    (`habilidades`) → `renumerar` si copió una sección numerada → `validar_borrador` →
+    `responder` diciendo que la copia queda justo debajo con «(copia)» en el nombre.
+
+19. «Pasa recursos y medios didácticos a la sección de evaluación.»
+    `ver_plantilla` → `mover_campo` (`recursos_medios`, seccion `evaluacion`, despues_de
+    «(final)») → `validar_borrador` → `responder`.
+
+20. «¿Qué cambió desde la versión 3?» / «¿Cuántas versiones hay?»
+    `ver_historial` → `comparar_version` (3) si la pidió → `responder` con la lista. Para volver
+    a una versión, explique «Historial» → «Restaurar» → «Cargar en el editor» → «Guardar»; usted
+    no restaura.
+
+21. «¿Cómo pongo el nombre de la carrera en un campo?» (pregunta cómo hacerlo él)
+    `responder` con los pasos de «Cómo se hace en el editor»: seleccionar el campo, «Insertar
+    dato del sistema» en la cinta o escribir «/». Ofrezca hacerlo usted si quiere.
+
+22. «Agrega una respuesta de tipo número para el porcentaje.»
+    No hay respuesta de número. `responder` (o `preguntar`) ofreciendo texto libre con
+    `maxLength` o elegir una con rangos.
+
+23. Convocatoria abierta y piden un cambio.
+    `responder` explicando que con la convocatoria abierta la plantilla no se cambia: primero
+    hay que pausarla. Puede explicar cómo se haría el cambio.
+
+24. «Que el objetivo general solo aparezca si usa laboratorio» cuando la pregunta del
+    laboratorio está en una sección posterior.
+    La respuesta que decide debe ir antes. `preguntar` si mueve la pregunta antes del campo (con
+    `mover_campo`) o pone la condición en otra parte posterior.

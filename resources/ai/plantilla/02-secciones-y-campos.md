@@ -21,32 +21,48 @@
 ## Campos
 
 Cada campo tiene un nombre (subtítulo; puede ir vacío si no lleva subtítulo), un responsable
-(`quien_llena`) y un contenido.
+(`quien_llena`) y un contenido. En el editor, el responsable se elige en «¿Se puede editar?».
 
 | quien_llena | En el editor se ve como | Qué significa |
 |---|---|---|
-| `docente` | Docente | Lo escribe el docente en su sílabo. Empieza con el contenido de la plantilla. |
-| `coordinacion` | Carrera | Lo llena Coordinación una vez por asignatura (proyecto de carrera de la asignatura) y se copia a cada sílabo. El docente no lo edita. |
-| `institucional` | Fijo | Texto fijo de la plantilla, igual para todos. Nadie lo llena. |
+| `carrera` | Editable (Carrera) | Se arma en capas: el texto de la plantilla queda fijo; Coordinación escribe lo suyo en el proyecto de carrera de cada asignatura y puede dejar espacios; el docente llena los espacios que quedan y contesta las respuestas. Si Coordinación no escribió nada, el docente lo escribe entero. |
+| `institucional` | No editable (Institucional) | Texto de la plantilla, igual para todos. Nadie lo llena y no lleva respuestas. |
 
-- Todo campo que no sea `institucional` es obligatorio: el docente no puede enviar su sílabo
-  si está vacío. Tenga esto en cuenta al agregar campos.
+No existen los responsables «docente», «coordinación» ni «fijo». Si el administrador los
+nombra: «que lo llene el docente» o «que lo llene Coordinación» es `carrera` (Editable);
+«fijo» o «que nadie lo cambie» es `institucional` (No editable). En sus mensajes diga
+«Editable» o «No editable».
+
+- Al enviar, cada campo Editable con espacios debe tener algo escrito o respondido. No cuentan
+  las respuestas opcionales (`"required":false`) ni las partes ocultas por «Mostrar solo si».
 - Las claves de los campos y secciones existentes no cambian nunca. Los campos nuevos reciben
   su clave sola, a partir del nombre.
-- Quitar un campo `coordinacion` hace que se pierda lo que Coordinación escribió en el proyecto de carrera.
-  Avíselo en el resumen.
-- Cambiar quién llena un campo cambia quién lo escribe en adelante. Avíselo en el resumen.
+- Quitar un campo Editable hace que se pierda lo que Coordinación escribió en el proyecto de
+  carrera. Avíselo en el resumen.
+- Cambiar si un campo se puede editar cambia quién lo escribe en adelante. Avíselo en el
+  resumen. Un campo con respuestas no puede pasar a No editable: quite antes las respuestas.
+
+## Duplicar y mover
+
+- `duplicar_campo` copia un campo justo debajo, con clave nueva y el nombre seguido de
+  «(copia)»; `duplicar_seccion` copia una sección con todos sus campos debajo de ella. Las
+  respuestas copiadas reciben identificadores nuevos; las condiciones se copian tal cual.
+  Después de duplicar una sección numerada, llame a `renumerar`.
+- `mover_campo` lleva un campo a otra sección o a otro lugar de la misma.
 
 ## Partes fijas y espacios para responder
 
-En los campos `docente` y `coordinacion`, el texto que ya trae la plantilla queda **fijo**: el
-docente o Coordinación solo escriben en los espacios vacíos.
+En los campos Editables, el texto que ya trae la plantilla queda **fijo**: Coordinación y el
+docente solo escriben en los espacios vacíos.
 
 - Un párrafo vacío (`<p></p>`) es un espacio para escribir texto.
 - En una tabla, las celdas vacías son espacios para responder y los encabezados quedan fijos.
 - Una tabla con encabezados y **una sola fila vacía** funciona como lista: quien responde puede
   agregar filas.
 - Un campo que solo tiene `<p></p>` es un espacio libre para responder.
+- Una respuesta (`data-response`) pide contestar de una forma fija: texto libre, elegir una o
+  elegir varias. No hay respuesta de número, fecha ni texto corto; si las piden, dígalo y ofrezca
+  texto libre con límite de caracteres o elegir una.
 
 Por eso, para pedir información al docente, ponga el texto guía fijo y deje los espacios
 vacíos. No escriba texto de ejemplo dentro de los espacios: quedaría fijo.
@@ -73,7 +89,8 @@ editor: el administrador la abre en «Tabla repetible» de la cinta.
 Una parte puede mostrarse solo si una respuesta anterior de elegir una o elegir varias tiene
 alguna de ciertas opciones (por ejemplo «mostrar esto solo si respondió Sí»). Si no se cumple,
 el docente no la ve, no se le exige, no se valida al enviar y no se imprime en el Word ni en el
-PDF; lo que había escrito se conserva y vuelve a verse si cambia la respuesta.
+PDF. Lo oculto no se borra: lo que el docente había escrito se conserva y vuelve a verse si
+cambia la respuesta. Si la respuesta que decide no aparece en el sílabo, la parte se muestra.
 
 - La respuesta que decide lleva un identificador: `"id"` en su `data-response` (minúsculas,
   números y guion bajo, por ejemplo `"id":"usa_laboratorio"`). `ver_campo` lo muestra.

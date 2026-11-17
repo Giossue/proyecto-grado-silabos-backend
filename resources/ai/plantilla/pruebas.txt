@@ -16,3 +16,7 @@ Agrega al final de evaluación un espacio opcional de observaciones de máximo 3
 En la tabla de recursos que en una celda se puedan elegir entre una y dos opciones: aula, laboratorio o campo.
 En metodología agrega una tabla de prácticas de laboratorio con tema obligatorio, modalidad presencial o virtual y horas, de una a diez prácticas.
 En metodología pregunta si usa laboratorio (Sí o No), que escriba cuál solo si responde Sí, y que técnicas de enseñanza solo aparezca si usa laboratorio.
+Duplica el campo de objetivos específicos.
+Pasa el campo de recursos y medios didácticos a la sección de evaluación.
+¿Qué cambió desde la primera versión guardada?
+¿Cómo inserto el nombre de la facultad desde el editor?
