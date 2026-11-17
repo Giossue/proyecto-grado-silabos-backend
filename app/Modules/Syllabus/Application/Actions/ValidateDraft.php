@@ -44,8 +44,10 @@ class ValidateDraft
                     continue;
                 }
                 $template = $templates[$field->id] ?? $field->contenido;
-                $empty = FieldResponse::isEmpty($template, $values->get($field->id)?->valor);
-                $pending = ResponseKind::pending(FreeText::isDocument($values->get($field->id)?->valor) ? $values->get($field->id)?->valor : $template);
+                $empty = FieldResponse::isEmpty($template, $values->get($field->id)?->valor)
+                    && (! FieldResponse::enabled() || FieldResponse::asksForAnswer(FieldResponse::template($template)));
+                $answers = FreeText::isDocument($values->get($field->id)?->valor) ? $values->get($field->id)?->valor : $template;
+                $pending = ResponseKind::pending($answers);
                 if ($empty) {
                     $issues[] = [
                         'field_id' => $field->id,
@@ -59,6 +61,9 @@ class ValidateDraft
                 }
                 if (! $empty && $pending['unanswered'] > 0) {
                     $issues[] = ['field_id' => $field->id, 'code' => 'respuesta_faltante', 'severity' => 'error', 'message' => "«{$field->displayName()}» tiene una respuesta sin contestar. Elija una opción o escriba la respuesta antes de enviar."];
+                }
+                foreach (ResponseKind::violations($answers) as $violation) {
+                    $issues[] = ['field_id' => $field->id, 'code' => 'respuesta_fuera_de_limite', 'severity' => 'error', 'message' => "«{$field->displayName()}»: {$violation}"];
                 }
                 $stored = $values->get($field->id)?->valor;
                 if (FieldResponse::enabled() && is_array($stored)) {

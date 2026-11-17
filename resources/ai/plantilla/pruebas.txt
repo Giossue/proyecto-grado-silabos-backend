@@ -11,3 +11,6 @@ Cambia el nombre del campo "Métodos de enseñanza – aprendizaje" por "Método
 Pon el encabezado de la tabla de firmas en verde.
 Agrega una sección de lecturas recomendadas con una lista de libros que llene el docente, al final antes de revisión y aprobación.
 Agrega en la sección de perfil de egreso una tabla de competencias con encabezado azul institucional y una fila para responder.
+En metodología agrega un campo Modalidad para elegir presencial, en línea o híbrida, que se muestre como desplegable.
+Agrega al final de evaluación un espacio opcional de observaciones de máximo 300 caracteres con la ayuda "Solo si hay algo que aclarar".
+En la tabla de recursos que en una celda se puedan elegir entre una y dos opciones: aula, laboratorio o campo.

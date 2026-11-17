@@ -54,3 +54,23 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
     `usar_preset` (`bibliografia_complementaria`) en ese campo → `validar_borrador` →
     `responder` mencionando que el docente puede buscar los libros en la biblioteca. Si la
     sección nueva queda antes de «Revisión y aprobación», esta sigue sin número.
+
+13. «En metodología agrega un campo "Modalidad" donde se elija presencial, en línea o híbrida,
+    como desplegable.»
+    `ver_plantilla` → `agregar_campo` (seccion `metodologia`, nombre «Modalidad», quien_llena
+    `carrera`, contenido `<p>Modalidad: <span data-response='{"kind":"una","options":[{"const":"o1","title":"Presencial"},{"const":"o2","title":"En línea"},{"const":"o3","title":"Híbrida"}],"display":"desplegable"}'></span></p>`,
+    despues_de «(final)») → `validar_borrador` → `responder`.
+
+14. «Agrega al final de evaluación un espacio opcional de observaciones, de máximo 300
+    caracteres, con la ayuda "Solo si hay algo que aclarar".»
+    `ver_plantilla` → `agregar_campo` (quien_llena `carrera`, contenido
+    `<p>Observaciones: <span data-response='{"kind":"texto","required":false,"maxLength":300,"help":"Solo si hay algo que aclarar"}'></span></p>`)
+    → `validar_borrador` → `responder` aclarando que, si queda vacío, no impide enviar.
+
+15. «En recursos que se puedan elegir entre una y tres herramientas, y que Coordinación ponga
+    cuáles.»
+    `ver_plantilla` → `ver_campo` → `cambiar_contenido_campo` con el mismo HTML más
+    `<span data-response='{"kind":"varias","options":[]}'></span>`. Sin opciones escritas no se
+    puede fijar cuántas elegir: `responder` explicando que el límite se pone cuando haya opciones,
+    o `preguntar` qué herramientas ofrecer para escribirlas y fijar `minChoices` 1 y `maxChoices` 3.
+

@@ -151,6 +151,23 @@ final class FieldResponse
         return ! self::answered(self::template($template), $value);
     }
 
+    /** @param array<string, mixed> $template */
+    public static function asksForAnswer(array $template): bool
+    {
+        $type = $template['type'] ?? '';
+        if ($type === 'tableHeader') {
+            return false;
+        }
+        if ($type === ResponseKind::NODE) {
+            $attrs = $template['attrs'] ?? [];
+
+            return ResponseKind::required($attrs) && ! ResponseKind::answered($attrs);
+        }
+
+        return self::blank($template) || $type === 'documentBlock'
+            || array_any($template['content'] ?? [], fn (array $child): bool => self::asksForAnswer($child));
+    }
+
     /** @param array<string, mixed> $node */
     public static function blank(array $node): bool
     {

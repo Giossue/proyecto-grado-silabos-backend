@@ -16,26 +16,44 @@ final class ResponseKind
 
     public const TEXT_LENGTH = 3000;
 
+    public const HELP_LENGTH = 200;
+
+    public const DISPLAYS = ['lista', 'desplegable'];
+
     public const KINDS = [
         'texto' => [
             'label' => 'Texto libre',
             'schema' => ['type' => 'string', 'maxLength' => self::TEXT_LENGTH, 'multiline' => true, 'errorMessage' => 'Escriba una respuesta de hasta 3000 caracteres.'],
+            'settings' => ['maxLength'],
         ],
         'una' => [
             'label' => 'Elegir una',
             'schema' => ['type' => 'string', 'oneOf' => [], 'errorMessage' => 'Elija solo entre las opciones de la respuesta.'],
+            'settings' => ['display'],
         ],
         'varias' => [
             'label' => 'Elegir varias',
             'schema' => ['type' => 'array', 'errorMessage' => 'Elija solo entre las opciones de la respuesta.', 'items' => ['type' => 'string', 'oneOf' => [], 'errorMessage' => 'Elija solo entre las opciones de la respuesta.']],
+            'settings' => ['minChoices', 'maxChoices'],
         ],
     ];
+
+    public const SETTINGS = [
+        'required' => true,
+        'help' => '',
+        'maxLength' => self::TEXT_LENGTH,
+        'minChoices' => null,
+        'maxChoices' => null,
+        'display' => 'lista',
+    ];
+
+    public const COMMON_SETTINGS = ['required', 'help'];
 
     private const OPTION_KEY = '/^[a-z][a-z0-9_]{0,40}$/';
 
     /**
      * @param  array<string, mixed>  $attrs
-     * @return array{kind: string, options: list<array{const: string, title: string}>, value: mixed}
+     * @return array<string, mixed>
      */
     public static function attrs(array $attrs): array
     {
@@ -44,6 +62,7 @@ final class ResponseKind
             TemplateDocument::fail('Elija un tipo de respuesta: '.self::labels().'.');
         }
         $options = self::options($kind, $attrs['options'] ?? []);
+        $settings = self::settings($kind, $options, $attrs);
         $raw = $attrs['value'] ?? null;
         $schema = self::schema($kind, $options);
         if ($schema === null) {
@@ -51,7 +70,12 @@ final class ResponseKind
                 TemplateDocument::fail('Esta respuesta todavía no tiene opciones para elegir.');
             }
 
-            return ['kind' => $kind, 'options' => $options, 'value' => self::emptyValue($kind)];
+            return ['kind' => $kind, 'options' => $options, 'value' => self::emptyValue($kind), ...$settings];
+        }
+        $limit = $settings['maxLength'] ?? null;
+        if (is_int($limit)) {
+            $schema['maxLength'] = $limit;
+            $schema['errorMessage'] = "Escriba una respuesta de hasta {$limit} caracteres.";
         }
         if ($schema['type'] === 'array' && $raw !== null && (! is_array($raw) || ! array_is_list($raw))) {
             TemplateDocument::fail($schema['errorMessage']);
@@ -63,8 +87,46 @@ final class ResponseKind
         if ($schema['type'] === 'string' && ! self::hasOptions($kind) && is_string($value)) {
             $value = trim($value);
         }
+        if (is_array($value) && $value !== []) {
+            self::assertChoices(count($value), self::setting($settings, 'minChoices'), self::setting($settings, 'maxChoices'));
+        }
 
-        return ['kind' => $kind, 'options' => $options, 'value' => $value];
+        return ['kind' => $kind, 'options' => $options, 'value' => $value, ...$settings];
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $attrs
+     */
+    public static function setting(array $attrs, string $name): mixed
+    {
+        $value = $attrs[$name] ?? null;
+
+        return $value ?? self::SETTINGS[$name] ?? null;
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $attrs
+     */
+    public static function required(array $attrs): bool
+    {
+        return self::setting($attrs, 'required') !== false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function violations(mixed $document): array
+    {
+        $messages = [];
+        foreach (self::found($document) as $attrs) {
+            try {
+                self::attrs($attrs);
+            } catch (ValidationException $exception) {
+                $messages[] = (string) collect($exception->errors())->flatten()->first();
+            }
+        }
+
+        return array_values(array_unique($messages));
     }
 
     public static function label(string $kind): string
@@ -128,6 +190,10 @@ final class ResponseKind
             return false;
         }
 
+        if (self::chosenSettings($template) !== self::chosenSettings($value)) {
+            return false;
+        }
+
         return ($template['options'] ?? []) === ($value['options'] ?? []) || ($optionsPending && self::needsOptions($template));
     }
 
@@ -138,6 +204,7 @@ final class ResponseKind
     public static function sameAnswer(array $template, array $value): bool
     {
         return ($template['kind'] ?? null) === ($value['kind'] ?? null)
+            && self::chosenSettings($template) === self::chosenSettings($value)
             && ($template['options'] ?? []) == ($value['options'] ?? [])
             && ($template['value'] ?? null) == ($value['value'] ?? null);
     }
@@ -204,7 +271,7 @@ final class ResponseKind
         foreach (self::found($document) as $attrs) {
             if (self::needsOptions($attrs)) {
                 $pending['without_options']++;
-            } elseif (! self::answered($attrs)) {
+            } elseif (! self::answered($attrs) && self::required($attrs)) {
                 $pending['unanswered']++;
             }
         }
@@ -226,6 +293,95 @@ final class ResponseKind
         }
 
         return $found;
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $attrs
+     * @return array<string, mixed>
+     */
+    private static function chosenSettings(array $attrs): array
+    {
+        $chosen = [];
+        foreach (array_keys(self::SETTINGS) as $name) {
+            $value = $attrs[$name] ?? null;
+            if ($value !== null && $value !== self::SETTINGS[$name]) {
+                $chosen[$name] = $value;
+            }
+        }
+
+        return $chosen;
+    }
+
+    /**
+     * @param  list<array{const: string, title: string}>  $options
+     * @param  array<string, mixed>  $attrs
+     * @return array<string, mixed>
+     */
+    private static function settings(string $kind, array $options, array $attrs): array
+    {
+        $allowed = [...self::COMMON_SETTINGS, ...self::KINDS[$kind]['settings']];
+        $settings = [];
+        foreach (array_keys(self::SETTINGS) as $name) {
+            $raw = $attrs[$name] ?? null;
+            if ($raw === null) {
+                continue;
+            }
+            if (! in_array($name, $allowed, true)) {
+                TemplateDocument::fail('Una respuesta de '.mb_strtolower(self::label($kind)).' no lleva esa opción.');
+            }
+            $value = match ($name) {
+                'required' => is_bool($raw) ? $raw : TemplateDocument::fail('Indique si la respuesta es obligatoria.'),
+                'help' => self::help($raw),
+                'maxLength' => is_int($raw) && $raw >= 1 && $raw <= self::TEXT_LENGTH ? $raw : TemplateDocument::fail('El límite de caracteres va de 1 a '.self::TEXT_LENGTH.'.'),
+                'minChoices', 'maxChoices' => self::choiceLimit($raw, $options),
+                'display' => is_string($raw) && in_array($raw, self::DISPLAYS, true) ? $raw : TemplateDocument::fail('Elija cómo se muestra: '.implode(' o ', self::DISPLAYS).'.'),
+            };
+            if ($value !== self::SETTINGS[$name]) {
+                $settings[$name] = $value;
+            }
+        }
+        if (isset($settings['minChoices'], $settings['maxChoices']) && $settings['minChoices'] > $settings['maxChoices']) {
+            TemplateDocument::fail('El mínimo para elegir no puede superar el máximo.');
+        }
+
+        return $settings;
+    }
+
+    private static function help(mixed $raw): string
+    {
+        $help = is_string($raw) ? trim((string) preg_replace('/\s+/u', ' ', $raw)) : null;
+        if ($help === null || mb_strlen($help) > self::HELP_LENGTH) {
+            TemplateDocument::fail('Escriba una ayuda de hasta '.self::HELP_LENGTH.' caracteres.');
+        }
+
+        return $help;
+    }
+
+    /**
+     * @param  list<array{const: string, title: string}>  $options
+     */
+    private static function choiceLimit(mixed $raw, array $options): int
+    {
+        if ($options === []) {
+            TemplateDocument::fail('Escriba las opciones antes de fijar cuántas elegir.');
+        }
+        $count = count($options);
+        if (! is_int($raw) || $raw < 1 || $raw > $count) {
+            TemplateDocument::fail("Cuántas elegir va de 1 a {$count}, el número de opciones.");
+        }
+
+        return $raw;
+    }
+
+    private static function assertChoices(int $count, mixed $min, mixed $max): void
+    {
+        $plural = fn (int $limit): string => $limit === 1 ? '1 opción' : "{$limit} opciones";
+        if (is_int($min) && $count < $min) {
+            TemplateDocument::fail('Elija al menos '.$plural($min).'.');
+        }
+        if (is_int($max) && $count > $max) {
+            TemplateDocument::fail('Elija como máximo '.$plural($max).'.');
+        }
     }
 
     private static function hasOptions(string $kind): bool

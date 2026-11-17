@@ -13,6 +13,7 @@ use App\Modules\AiAssistance\Domain\Data\AiAgentRequest;
 use App\Modules\AiAssistance\Domain\Data\AiAgentStep;
 use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
 use App\Modules\AiAssistance\Domain\Exceptions\AiProviderError;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -93,6 +94,29 @@ class TemplateAssistantTest extends TestCase
         $this->assertStringContainsString('El contenido no es válido', $variable);
         $this->assertStringContainsString('quien_llena debe ser', $responsible);
         $this->assertStringContainsString('No existe el campo «no_existe»', $missing);
+    }
+
+    public function test_the_assistant_places_responses_with_their_settings(): void
+    {
+        $response = '<p>Modalidad: <span data-response=\'{"kind":"una","options":[{"const":"o1","title":"Presencial"},{"const":"o2","title":"En línea"}],"display":"desplegable","help":"Elija la modalidad principal."}\'></span></p>'
+            .'<p>Observaciones: <span data-response=\'{"kind":"texto","required":false,"maxLength":300}\'></span></p>';
+        $gateway = $this->script([
+            ScriptedAiAgentGateway::calls(
+                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Mal', 'quien_llena' => 'carrera', 'contenido_html' => '<p><span data-response=\'{"kind":"texto","maxLength":5000}\'></span></p>', 'despues_de' => '(final)']],
+                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Modalidad', 'quien_llena' => 'carrera', 'contenido_html' => $response, 'despues_de' => '(final)']],
+            ),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
+        ]);
+
+        $outcome = $this->run_('Pedido');
+
+        [$invalid, $valid] = $gateway->toolResults(1);
+        $this->assertStringContainsString('El límite de caracteres va de 1 a 3000.', $invalid);
+        $this->assertStringContainsString('"ok":true', $valid);
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $outcome->proposal['payload'] ?? [])->assertOk();
+        $content = FieldDefinition::query()->where('clave', 'modalidad')->firstOrFail()->contenido;
+        $this->assertEquals(['kind' => 'una', 'options' => [['const' => 'o1', 'title' => 'Presencial'], ['const' => 'o2', 'title' => 'En línea']], 'value' => null, 'help' => 'Elija la modalidad principal.', 'display' => 'desplegable'], $content['content'][0]['content'][1]['attrs']);
+        $this->assertEquals(['kind' => 'texto', 'options' => [], 'value' => '', 'required' => false, 'maxLength' => 300], $content['content'][1]['content'][1]['attrs']);
     }
 
     public function test_only_the_palette_colors_are_accepted(): void

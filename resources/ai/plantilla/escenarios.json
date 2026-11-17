@@ -75,5 +75,13 @@
       { "mensaje": "el de horas mejor que diga Según el reglamento de prácticas de la UEB" },
       { "mensaje": "perfecto, ¿la numeración de las demás secciones quedó bien?" }
     ]
+  },
+  {
+    "nombre": "Respuestas con ajustes",
+    "turnos": [
+      { "mensaje": "En metodología agrega un campo Modalidad para elegir presencial, en línea o híbrida", "aplicar": true },
+      { "mensaje": "que se muestre como desplegable y que no sea obligatoria", "aplicar": true },
+      { "mensaje": "y ponle una ayuda que diga: elija la modalidad principal" }
+    ]
   }
 ]

@@ -439,6 +439,30 @@ El tipo, las opciones y lo respondido viajan dentro del documento del campo, en 
 
 En HTML: `<span data-response='{"kind":"una","options":[…],"value":null}'></span>`.
 
+#### Ajustes de cada respuesta
+
+Quien arma la respuesta (Administración desde la cinta de la plantilla, Coordinación con
+«Espacio para el docente») puede abrir «Más opciones» y fijar estos ajustes. Todos son
+opcionales; se guardan en `attrs` solo cuando cambian el valor por defecto, así que un documento
+guardado antes conserva su forma y su comportamiento (todo obligatorio, lista y 3000 caracteres).
+
+| Ajuste | Tipos | Valores | Por defecto | Mensaje si no vale |
+|---|---|---|---|---|
+| `required` | todos | `true` o `false` | `true` | «Indique si la respuesta es obligatoria.» |
+| `help` | todos | texto de hasta 200 caracteres, se muestra debajo de la respuesta | `""` | «Escriba una ayuda de hasta 200 caracteres.» |
+| `maxLength` | `texto` | 1 a 3000 | 3000 | «El límite de caracteres va de 1 a 3000.» |
+| `minChoices`, `maxChoices` | `varias` | 1 al número de opciones; el mínimo no supera el máximo | sin límite | «Cuántas elegir va de 1 a {n}, el número de opciones.» · «El mínimo para elegir no puede superar el máximo.» · sin opciones: «Escriba las opciones antes de fijar cuántas elegir.» |
+| `display` | `una` | `lista` o `desplegable` | `lista` | «Elija cómo se muestra: lista o desplegable.» |
+
+Un ajuste que no corresponde al tipo se rechaza («Una respuesta de {tipo} no lleva esa opción.»).
+Quien responde no puede cambiarlos: el servidor los compara con los de la plantilla como el tipo
+y las opciones. Al guardar y al enviar se revisan los límites de lo respondido: «Escriba una
+respuesta de hasta {n} caracteres.», «Elija al menos {n} opciones.», «Elija como máximo {n}
+opciones.» (con «1 opción» en singular); una lista vacía se puede guardar como borrador. Al
+enviar, un límite no cumplido sale como `respuesta_fuera_de_limite` («{campo}»: {mensaje}).
+`display: desplegable` solo cambia cómo responde el docente (una lista desplegable); Word y PDF
+imprimen el texto de la opción igual que siempre.
+
 Reglas:
 
 - Hasta 50 opciones por respuesta, cada una con texto de hasta 120 caracteres y sin repetir.
@@ -460,9 +484,11 @@ Reglas:
   servidor protege el guardado. El docente solo contesta: no cambia el tipo ni las opciones, no
   escribe junto a la respuesta y no la quita. En una tabla que crece, cada fila nueva repite las
   respuestas de la fila modelo, sin contestar.
-- **Al enviar**, cada respuesta debe estar contestada (`respuesta_faltante`: ««{campo}» tiene una
+- **Al enviar**, cada respuesta obligatoria debe estar contestada (`respuesta_faltante`: ««{campo}» tiene una
   respuesta sin contestar. Elija una opción o escriba la respuesta antes de enviar.») y una de elegir sin
-  opciones escritas avisa `respuesta_sin_opciones` («…pídalas al coordinador.»).
+  opciones escritas avisa `respuesta_sin_opciones` («…pídalas al coordinador.»). Una respuesta
+  opcional (`required: false`) sin contestar no impide enviar y no se imprime; un campo cuyo único
+  espacio es una respuesta opcional puede enviarse vacío.
 - **Cambiar lo armado con sílabos en curso** (en pausa, o al reabrir una convocatoria
   finalizada) lleva el campo de cada sílabo a la estructura nueva y conserva lo ya contestado
   donde todavía encaja; los enviados o aprobados vuelven a Borrador tras confirmar, como con

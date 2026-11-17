@@ -107,9 +107,14 @@ y el botón «Documentos» (DOC-10).
     celda, quitar). El fondo de celda solo ofrece los colores de la tabla de
     identificación: «Celeste» (en negrita) y «Azul institucional» (texto blanco y negrita),
     o «Sin fondo»;
+  - ícono «Tipo de respuesta» (2026-11-16, vuelve a la cinta): en un campo «Editable» abre el
+    mismo cuadro que usa Coordinación («Texto libre», «Elegir una», «Elegir varias», opciones y
+    «Más opciones»: «Obligatoria», «Ayuda», «Caracteres máximos», «Cómo se muestra» lista o
+    desplegable, «Elegir al menos» y «Como máximo»); en un campo «No editable» queda apagado
+    («Tipo de respuesta: no va en campos Institucionales»). Responde quien llena el campo: lo
+    puede contestar Coordinación en cada materia o dejarlo para el docente;
   - con un campo elegido: «¿Se puede editar?» («No editable» es Institucional y «Editable» es
-    Carrera; los espacios para el docente los pone Coordinación en cada materia, no la
-    plantilla) (2026-11-11), «Plantilla» (inserta
+    Carrera) (2026-11-11), «Plantilla» (inserta
     Identificación institucional, Distribución y planificación, Bibliografía básica o
     complementaria, Bibliografía verificada por, o Firmas), nombre, subir, bajar y eliminar;
   - con una sección elegida: vertical u horizontal, subir, bajar y eliminar;
@@ -217,7 +222,8 @@ y el botón «Documentos» (DOC-10).
   carrera». Si sale con cambios sin guardar, pregunta «Hay cambios sin guardar» (2026-11-10).
 - En la cinta del editor, «Espacio para el docente» abre un cuadro con «Texto libre»,
   «Elegir una» y «Elegir varias»; si es de elegir, las opciones se escriben ahí mismo y no se
-  puede insertar sin ninguna. Lo que escribe Coordinación le llega fijo al docente; un campo que
+  puede insertar sin ninguna. «Más opciones» fija si es obligatoria, la ayuda y los límites
+  (2026-11-16), igual que en la plantilla. Lo que escribe Coordinación le llega fijo al docente; un campo que
   deja vacío lo escribe el docente entero. En campos con formato de la plantilla (texto fijo o
   tablas), cada espacio vacío trae un cuadro de texto y el mismo botón; un espacio armado se ve
   como «Espacio para el docente: {tipo}», con sus opciones y el botón «Quitar el espacio».
@@ -263,6 +269,11 @@ y el botón «Documentos» (DOC-10).
   una respuesta sin contestar avisa ««{campo}» tiene una respuesta sin contestar. Elija una
   opción o escriba la respuesta antes de enviar.» y una sin opciones, ««{campo}» tiene una respuesta
   sin opciones para elegir: pídalas al coordinador.» (2026-11-10).
+- Ajustes de la respuesta (2026-11-16): la ayuda que dejó quien armó la respuesta sale debajo,
+  junto con «Elija de {n} a {m} opciones», «Elija al menos…» o «Elija como máximo…» y «Opcional»
+  cuando no es obligatoria; no deja marcar más opciones que el máximo. Una «Elegir una» marcada
+  como desplegable se responde con una lista desplegable y se quita con «Quitar la respuesta». El
+  texto libre no pasa de su límite de caracteres. Una respuesta opcional vacía no impide enviar.
 - Campos del docente: editables. Campos del proyecto de carrera: solo lectura, salvo los marcados
   como editables («Viene del proyecto de carrera; puede ajustarlo.»). Lo institucional se ve en
   «Vista previa».
