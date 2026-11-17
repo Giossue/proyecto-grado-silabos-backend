@@ -33,6 +33,31 @@ leen la misma definición.
     cambió desde esa versión hasta la plantilla actual (`TemplateVersionDiff`).
   - Restaurar no escribe nada: el editor carga el borrador y Administración lo guarda con «Guardar», con los mismos
     bloqueos y validaciones de siempre.
+- **Borrador sin guardar** (solo Administración, 2026-11-16): tres llamadas reciben el mismo cuerpo que guarda el
+  editor (`version: 1`, `title`, `layout`, `sections`) y no escriben nada.
+  - `POST /api/v1/admin/template/{id}/draft/preview` arma la plantilla del borrador como si se guardara
+    (`SyllabusTemplateProvisioner::replaceStructure` dentro de una transacción que se deshace siempre,
+    `TemplateDraftRehearsal`) y devuelve `sheets` (las hojas en el formato del editor) y `sections` (el formulario
+    del docente, igual que `GET .../teacher-preview` con la plantilla guardada). Un borrador inválido da el `422`
+    de guardar.
+  - `POST /api/v1/admin/template/{id}/draft/impact` dice qué pasaría con los sílabos al reanudar la convocatoria en
+    pausa si se guarda el borrador: en la misma transacción que se deshace aplica el borrador y adapta cada sílabo
+    iniciado con `InProgressWork::adaptToTemplate`, lo mismo que hace reanudar. Devuelve `affected`,
+    `in_progress` (sílabos iniciados), `keep` (conservan todo lo escrito), `lose` (algún campo escrito vuelve a
+    quedar como la plantilla o desaparece), `back_to_draft` (enviados o aprobados que vuelven a borrador) y
+    `careers` con los mismos conteos por carrera. Sin convocatoria en pausa o sin sílabos iniciados, `affected` es
+    `false` y el editor guarda directo. Cada respuesta trae `counted`. El ensayo corre con `lock_timeout` de 2 s y
+    `statement_timeout` de 20 s (`SET LOCAL`, configurables en `templates.rehearsal.*`); si se agotan, responde
+    `200` con `counted: false` y `message` «No se pudo calcular qué sílabos cambian ahora.», y el editor pide
+    confirmar sin conteos. La vista previa, en ese caso, da `422` en `errors.draft`. Cuesta unos 23 ms por sílabo
+    iniciado: no se recorta para que los conteos sigan siendo exactos.
+  - `POST /api/v1/admin/template/{id}/draft/check` responde siempre `200` con `problems`: cada uno con `path`
+    (`sections.N`, `sections.N.fields.M...`, `title`...), `message` y `blocking`. Los que bloquean son exactamente
+    los errores que daría guardar (`ImportTemplateStructureRequest::errorsFor`); los que no bloquean son las reglas
+    de estructura del borrador (`TemplateStructureValidator::draftProblems`: faltan secciones obligatorias o de
+    biblioteca, sección sin campos), que impiden abrir una convocatoria pero no guardar. El editor la llama
+    800 ms después del último cambio. La herramienta `validar_borrador` del asistente usa el mismo
+    `TemplateDraftProblems`, así que dice lo mismo.
 
 El archivo exportado empieza con `"$schema"`, que apunta al esquema publicado del formato
 (`resources/templates/plantilla.schema.json`, servido en `/plantilla.schema.json`). Con él, un editor como VS Code

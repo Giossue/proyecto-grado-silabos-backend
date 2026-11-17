@@ -10,6 +10,7 @@ use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Closure;
+use Illuminate\Support\Facades\Validator as ValidatorFactory;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
@@ -22,6 +23,26 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
 
     /** @var list<string>|null */
     private ?array $definitionErrors = null;
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, list<string>>
+     */
+    public static function errorsFor(array $payload): array
+    {
+        $request = static::create('/', 'PUT', $payload);
+        $request->setContainer(app());
+        $request->prepareForValidation();
+        $validator = ValidatorFactory::make($request->all(), $request->rules(), $request->messages(), $request->attributes());
+        foreach ($request->after() as $callback) {
+            $validator->after($callback);
+        }
+
+        /** @var array<string, list<string>> $errors */
+        $errors = $validator->errors()->messages();
+
+        return $errors;
+    }
 
     protected function prepareForValidation(): void
     {

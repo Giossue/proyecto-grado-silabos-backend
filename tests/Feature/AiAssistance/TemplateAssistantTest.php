@@ -38,6 +38,24 @@ class TemplateAssistantTest extends TestCase
         $this->template = SyllabusTemplate::query()->firstOrFail();
     }
 
+    public function test_the_assistant_check_says_the_same_as_the_live_check_of_the_editor(): void
+    {
+        $sections = TemplateDraft::fromTemplate($this->template)->payload()['sections'];
+        $sections[1]['fields'][0]['key'] = $sections[0]['fields'][0]['key'];
+        $sections[2]['title'] = '';
+        $sections[] = ['key' => 'vacia', 'title' => 'Vacía', 'orientation' => 'portrait', 'fields' => []];
+        $draft = TemplateDraft::fromDraft($this->template, $sections);
+
+        $live = $this->postJson(route('api.v1.admin.template.draft.check', $this->template), $draft->payload())->assertOk()->json('problems');
+        $assistant = app(TemplateDraftValidator::class)->errors($draft);
+
+        $this->assertNotEmpty($live);
+        $this->assertCount(count(array_unique(array_column($live, 'message'))), $assistant);
+        foreach ($live as $problem) {
+            $this->assertNotEmpty(array_filter($assistant, fn (string $error): bool => str_ends_with($error, $problem['message'])), $problem['message']);
+        }
+    }
+
     public function test_proposes_a_teacher_field_that_the_import_accepts_without_touching_the_template(): void
     {
         $gateway = $this->script([

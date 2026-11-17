@@ -16,7 +16,6 @@ use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Configuration\Presentation\Http\Requests\CreateTemplateRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ImportTemplateStructureRequest;
@@ -155,19 +154,7 @@ class TemplateController extends Controller
                 'layout' => TemplateStyle::layout($definition->document()),
                 'layoutOptions' => TemplatePresentation::layoutOptions($definition->document()),
                 'titleBlock' => ['text' => $definition->document()['title']['text']],
-                'sections' => $template->sections->map(fn (TemplateSection $section) => [
-                    'id' => $section->id,
-                    'key' => $section->clave,
-                    'title' => $section->titulo,
-                    'orientation' => $section->orientacion,
-                    'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(fn (FieldDefinition $field): array => [
-                        'id' => $field->id,
-                        'key' => $field->clave,
-                        'label' => $field->etiqueta,
-                        'quien_llena' => $field->quien_llena,
-                        'content' => $field->contenido,
-                    ])->all())->values()->all(),
-                ])->values()->all(),
+                'sections' => TemplatePresentation::sections($template),
             ],
         ];
     }

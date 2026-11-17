@@ -98,7 +98,8 @@ y el botón «Documentos» (DOC-10).
 - En las plantillas protegidas, los párrafos y celdas vacíos son espacios de respuesta.
   El editor no muestra un aviso sobre esto. No hay controles por celda.
 - «Editar» pasa a pantalla completa, sin menú lateral: arriba, «Volver a la vista», el
-  título y el cambio de tema. «Volver a la vista» pide confirmar si hay cambios sin
+  título, «Ver como docente» (el formulario del docente con el borrador sin guardar, con el aviso «Vista de
+  prueba del borrador sin guardar: …») y el cambio de tema. «Volver a la vista» pide confirmar si hay cambios sin
   guardar. Activa la cinta de edición sobre las mismas hojas:
   - formato de texto (negrita, cursiva, subrayado, color del texto, alineación, listas). El
     color del texto solo ofrece negro, azul (`#365F91`, el de los rótulos de las unidades) y
@@ -123,7 +124,20 @@ y el botón «Documentos» (DOC-10).
   - «Diseño» (diálogo): márgenes y tamaños de letra;
   - los límites de las listas (unidades, semanas por unidad) no se cambian desde la pantalla
     (2026-11-02): quedan en la definición de la plantilla y solo se tocan por JSON;
-  - «Guardar» (también Ctrl+S). Nada se guarda hasta «Guardar».
+  - ícono «Vista previa» (ojo, 2026-11-16): muestra las hojas del borrador sin guardar en modo lectura, tal
+    como quedarán al guardar; las herramientas se apagan y el mismo botón («Volver a editar») regresa;
+  - mientras se edita, cada problema se marca en vivo, poco después de dejar de escribir, en el campo o la
+    sección que lo tiene (borde rojo y el mensaje debajo); los que no son de un campo o sección salen bajo el
+    título. En la cinta, junto a «Guardar», un botón rojo «N problemas» lleva al primero y lo elige. «Guardar» se
+    permite igual que antes: si el problema impide guardar, el servidor lo rechaza con el mismo mensaje;
+  - «Guardar» (también Ctrl+S). Nada se guarda hasta «Guardar». Antes de guardar se revisa qué sílabos cambian:
+    si hay una convocatoria en pausa con sílabos iniciados, sale «Sílabos afectados» («Al reanudar la
+    convocatoria en pausa:» y cuántos sílabos conservan lo escrito, cuántos pierden lo escrito en algún campo que
+    cambió y cuántos enviados o aprobados vuelven a borrador; con más de una carrera, los sílabos de cada una),
+    con «Cancelar» y «Guardar». Si ninguno cambia, guarda directo. Si no se pudo contar (la revisión falló o
+    tardó demasiado), el mismo diálogo dice «No se pudieron contar los sílabos afectados. Al reanudar una
+    convocatoria en pausa, sus sílabos conservan lo escrito en los campos que siguen igual y los enviados o
+    aprobados vuelven a borrador» con «Guardar de todos modos»: la revisión nunca impide guardar.
 - En la hoja se agregan secciones y campos («Nueva sección», «Agregar campo»), se editan
   títulos en línea y se cambia el logo de la universidad.
 - «Opciones avanzadas → Editar JSON» abre «Plantilla como JSON»: «Descargar», «Cargar archivo»

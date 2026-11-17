@@ -453,28 +453,6 @@ final class TemplateDraft
     }
 
     /**
-     * @return list<string>
-     */
-    public function structuralErrors(): array
-    {
-        $errors = [];
-        $keys = array_column($this->sections, 'key');
-        foreach (['obligatorias' => $this->definition->requiredSections(), 'de biblioteca' => $this->definition->librarySections()] as $name => $required) {
-            $missing = array_diff($required, $keys);
-            if ($missing !== []) {
-                $errors[] = "Faltan secciones {$name}: ".implode(', ', $missing).'.';
-            }
-        }
-        foreach ($this->sections as $section) {
-            if ($section['fields'] === []) {
-                $errors[] = "La sección «{$section['title']}» no tiene campos; agregue al menos uno o quítela.";
-            }
-        }
-
-        return $errors;
-    }
-
-    /**
      * @return list<DraftSection>
      */
     private static function sectionsOf(SyllabusTemplate $template): array

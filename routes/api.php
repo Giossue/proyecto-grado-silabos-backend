@@ -11,6 +11,7 @@ use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
 use App\Modules\Academic\Presentation\Http\Controllers\SupportDocumentController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\TemplateAssistantController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
+use App\Modules\Configuration\Presentation\Http\Controllers\TemplateDraftController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateStructureController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateVersionController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
@@ -190,6 +191,12 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.assistant.proposals.discard');
             Route::get('admin/template/{template}/teacher-preview', [TemplateController::class, 'teacherPreview'])
                 ->middleware('active-role')->name('api.v1.admin.template.teacher-preview');
+            Route::post('admin/template/{template}/draft/preview', [TemplateDraftController::class, 'preview'])
+                ->middleware('active-role')->name('api.v1.admin.template.draft.preview');
+            Route::post('admin/template/{template}/draft/impact', [TemplateDraftController::class, 'impact'])
+                ->middleware('active-role')->name('api.v1.admin.template.draft.impact');
+            Route::post('admin/template/{template}/draft/check', [TemplateDraftController::class, 'check'])
+                ->middleware(['active-role', 'throttle:120,1'])->name('api.v1.admin.template.draft.check');
             Route::get('admin/template/{template}/versions', [TemplateVersionController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.admin.template.versions.index');
             Route::get('admin/template/{template}/versions/{version}', [TemplateVersionController::class, 'show'])

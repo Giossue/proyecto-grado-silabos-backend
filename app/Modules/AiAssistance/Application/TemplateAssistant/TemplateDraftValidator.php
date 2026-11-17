@@ -2,31 +2,23 @@
 
 namespace App\Modules\AiAssistance\Application\TemplateAssistant;
 
-use App\Modules\Configuration\Presentation\Http\Requests\ImportTemplateStructureRequest;
-use Illuminate\Support\Facades\Validator;
+use App\Modules\Configuration\Application\TemplateDraftProblems;
 
 final class TemplateDraftValidator
 {
+    public function __construct(private readonly TemplateDraftProblems $problems) {}
+
     /**
      * @return list<string>
      */
     public function errors(TemplateDraft $draft): array
     {
-        $payload = $draft->payload();
-        $request = ImportTemplateStructureRequest::create('/', 'PUT', $payload);
-        $request->setContainer(app());
-        $validator = Validator::make($payload, $request->rules(), [], $request->attributes());
-        foreach ($request->after() as $callback) {
-            $validator->after($callback);
-        }
         $errors = [];
-        foreach ($validator->errors()->messages() as $path => $messages) {
-            foreach ($messages as $message) {
-                $errors[] = "{$this->describe($path, $draft)}: {$message}";
-            }
+        foreach ($this->problems->of($draft->payload(), $draft->definition()) as $problem) {
+            $errors[] = $problem['blocking'] ? "{$this->describe($problem['path'], $draft)}: {$problem['message']}" : $problem['message'];
         }
 
-        return array_values(array_unique([...$draft->structuralErrors(), ...$errors]));
+        return array_values(array_unique($errors));
     }
 
     private function describe(string $path, TemplateDraft $draft): string
