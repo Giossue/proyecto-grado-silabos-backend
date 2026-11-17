@@ -119,6 +119,7 @@ final class SyllabusTemplateProvisioner
         DB::table('secciones_plantilla')
             ->where('plantilla_id', $template->id)
             ->where('vigente_en_plantilla', false)
+            ->whereRaw("right(clave_seccion_plantilla, 9) <> '-' || substr(seccion_plantilla_id::text, 1, 8)")
             ->update(['clave_seccion_plantilla' => DB::raw("clave_seccion_plantilla || '-' || substr(seccion_plantilla_id::text, 1, 8)")]);
 
         return $template->fresh();
