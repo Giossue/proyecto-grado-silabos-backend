@@ -167,6 +167,19 @@ class TemplateDraftRehearsalTest extends TestCase
         $this->putJson(route('api.v1.admin.template.json.import', $this->template), $onlyEmpty)->assertOk();
     }
 
+    public function test_the_live_check_marks_a_response_in_a_field_that_cannot_be_edited_like_saving_does(): void
+    {
+        $draft = $this->draft();
+        $draft['sections'][1]['fields'][0]['quien_llena'] = 'institucional';
+        $draft['sections'][1]['fields'][0]['content'] = ['<p>Modalidad: <span data-response=\'{"kind":"texto"}\'></span></p>'];
+
+        $saving = $this->putJson(route('api.v1.admin.template.json.import', $this->template), $draft)->assertStatus(422)->json('errors');
+        $problems = collect($this->postJson(route('api.v1.admin.template.draft.check', $this->template), $draft)->assertOk()->json('problems'))->where('blocking', true);
+
+        $this->assertSame(['sections.1.fields.0.content'], $problems->pluck('path')->unique()->values()->all());
+        $this->assertSame(array_values($saving)[0], $problems->pluck('message')->values()->all());
+    }
+
     public function test_the_template_saves_fifteen_times_in_a_row_while_syllabi_keep_retired_fields(): void
     {
         $this->pausedConvocationWithWork();
