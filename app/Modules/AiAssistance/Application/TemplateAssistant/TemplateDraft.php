@@ -7,6 +7,7 @@ use App\Modules\Configuration\Domain\Blocks\BlockDefinition;
 use App\Modules\Configuration\Domain\Blocks\RepeatableTable;
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldLimit;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\ResponseCondition;
 use App\Modules\Configuration\Domain\ResponseKind;
@@ -19,7 +20,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
- * @phpstan-type DraftField array{key: string, label: string, quien_llena: string, content: array<string, mixed>, show_if?: array{response: string, options: list<string>}}
+ * @phpstan-type DraftField array{key: string, label: string, quien_llena: string, content: array<string, mixed>, show_if?: array{response: string, options: list<string>}, max_length?: int}
  * @phpstan-type DraftSection array{key: string, title: string, orientation: string, fields: list<DraftField>}
  */
 final class TemplateDraft
@@ -157,6 +158,7 @@ final class TemplateDraft
                     'quien_llena' => $field['quien_llena'],
                     'resumen' => $this->summary($field['content']),
                     ...(isset($field['show_if']) ? ['mostrar_solo_si' => $field['show_if']] : []),
+                    ...(isset($field['max_length']) ? ['limite_caracteres' => $field['max_length']] : []),
                 ], $section['fields'], array_keys($section['fields'])),
             ];
         }
@@ -179,7 +181,31 @@ final class TemplateDraft
             'seccion' => $this->sections[$sectionIndex]['key'],
             'contenido_html' => implode("\n", DocumentHtml::toLines($field['content'])),
             ...(isset($field['show_if']) ? ['mostrar_solo_si' => $field['show_if']] : []),
+            ...(isset($field['max_length']) ? ['limite_caracteres' => $field['max_length']] : []),
         ];
+    }
+
+    public function limitField(string $key, int $limit): string
+    {
+        [$sectionIndex, $fieldIndex] = $this->locateField($key);
+        if ($limit === 0) {
+            $this->changeField($sectionIndex, $fieldIndex, function (array $field): array {
+                unset($field['max_length']);
+
+                return $field;
+            });
+
+            return $key;
+        }
+        if (! FieldLimit::allowed($this->sections[$sectionIndex]['fields'][$fieldIndex]['quien_llena'])) {
+            throw new TemplateDraftError(FieldLimit::ONLY_CAREER);
+        }
+        if ($limit < FieldLimit::MIN || $limit > FieldLimit::MAX) {
+            throw new TemplateDraftError(FieldLimit::INVALID);
+        }
+        $this->changeField($sectionIndex, $fieldIndex, fn (array $field): array => [...$field, 'max_length' => $limit]);
+
+        return $key;
     }
 
     /**
@@ -392,7 +418,7 @@ final class TemplateDraft
         [$sectionIndex, $fieldIndex] = $this->locateField($key);
         $responsible = $this->responsible($responsible);
         $this->allowResponses($responsible, $this->sections[$sectionIndex]['fields'][$fieldIndex]['content']);
-        $this->changeField($sectionIndex, $fieldIndex, fn (array $field): array => array_replace($field, ['quien_llena' => $responsible]));
+        $this->changeField($sectionIndex, $fieldIndex, fn (array $field): array => self::keepingLimit(array_replace($field, ['quien_llena' => $responsible])));
 
         return $key;
     }
@@ -480,7 +506,7 @@ final class TemplateDraft
         if (! is_array($preset)) {
             throw new TemplateDraftError("No existe el contenido listo «{$presetKey}». Use listar_presets para ver los disponibles.");
         }
-        $this->changeField($sectionIndex, $fieldIndex, fn (array $field): array => array_replace($field, ['quien_llena' => (string) $preset['quien_llena'], 'content' => $preset['content']]));
+        $this->changeField($sectionIndex, $fieldIndex, fn (array $field): array => self::keepingLimit(array_replace($field, ['quien_llena' => (string) $preset['quien_llena'], 'content' => $preset['content']])));
 
         return $key;
     }
@@ -541,6 +567,11 @@ final class TemplateDraft
                     ? "«{$name}» se mostrará solo si la respuesta «{$field['field']['show_if']['response']}» tiene: ".implode(', ', $field['field']['show_if']['options']).'.'
                     : "«{$name}» se mostrará siempre.";
             }
+            if (($before['field']['max_length'] ?? null) !== ($field['field']['max_length'] ?? null)) {
+                $changes[] = isset($field['field']['max_length'])
+                    ? "«{$name}» admitirá hasta ".FieldLimit::format($field['field']['max_length']).' caracteres del docente.'
+                    : "«{$name}» ya no tendrá límite de caracteres.";
+            }
             if ($before['section']['key'] !== $field['section']['key']) {
                 $changes[] = "«{$name}» pasa a la sección «{$field['section']['title']}».";
             }
@@ -597,6 +628,7 @@ final class TemplateDraft
     private static function sectionsOf(SyllabusTemplate $template): array
     {
         $conditions = $template->definition()->fieldConditions();
+        $limits = $template->definition()->fieldLimits();
 
         return array_values($template->sections->map(fn (TemplateSection $section): array => [
             'key' => $section->clave,
@@ -608,6 +640,7 @@ final class TemplateDraft
                 'quien_llena' => $field->quien_llena,
                 'content' => $field->contenido,
                 ...(isset($conditions[$field->clave]) ? ['show_if' => $conditions[$field->clave]] : []),
+                ...(isset($limits[$field->clave]) && FieldLimit::allowed($field->quien_llena) ? ['max_length' => $limits[$field->clave]] : []),
             ])->all())->all()),
         ])->all());
     }
@@ -750,6 +783,19 @@ final class TemplateDraft
             $this->sections,
             array_keys($this->sections),
         );
+    }
+
+    /**
+     * @param  DraftField  $field
+     * @return DraftField
+     */
+    private static function keepingLimit(array $field): array
+    {
+        if (! FieldLimit::allowed($field['quien_llena'])) {
+            unset($field['max_length']);
+        }
+
+        return $field;
     }
 
     /**

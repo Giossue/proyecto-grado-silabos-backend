@@ -644,6 +644,35 @@ del mismo motor de valores de los bloques (`ValueSchema`: número, elección `on
 modo que validar, mostrar el control e imprimir leen del catálogo. Agregar un tipo es agregar su
 entrada en cada catálogo (y su ícono en el menú de cada espacio, `ResponseSlotSetup.vue`).
 
+### Límite de caracteres de un campo (2026-11-17)
+
+Administración puede poner a un campo `carrera` un tope de caracteres para lo que escribe el
+docente. Va en el campo como `"max_length": 500` (entero de 1 a 50 000; `null` o sin la clave
+quita el límite) y el servidor lo guarda en `definicion_plantilla.field_limits`, por clave de
+campo, solo si hay alguno: una plantilla sin límites guarda y exporta exactamente lo mismo que
+antes. Vale igual para todas las carreras y materias, y no cambia el Word ni el PDF.
+
+- **Reglas al guardar** (también en los problemas en vivo, en `sections.{i}.fields.{j}.max_length`):
+  «El límite de caracteres debe ser un número entero entre 1 y 50 000.» y, en un campo
+  `institucional`, «Solo un campo editable (Carrera) puede tener límite de caracteres.».
+- **Qué cuenta**: los caracteres (puntos de código, como `mb_strlen`) del texto libre que escribe
+  el docente en los espacios vacíos del campo, o en el campo entero si es de texto libre, más las
+  respuestas «Texto libre» que contesta él. No cuentan las tablas repetibles (cada columna ya
+  tiene su límite), el texto fijo de la plantilla o de Coordinación, las respuestas que contestó
+  Coordinación, las respuestas de elegir, los saltos de línea del texto libre ni las partes
+  ocultas por «Mostrar solo si». Una sola función por capa: `FieldLimit::count` (backend) y
+  `fieldCharacters` en `src/lib/fieldLimits.ts` (frontend).
+- **Docente**: el campo lleva `max_length` en el sílabo y en la vista previa del borrador. Bajo el
+  campo ve «320 / 500», en rojo al llegar; el editor no acepta más texto al escribir ni al pegar
+  (el pegado se recorta a lo que queda). El servidor rechaza un guardado que pase el límite con
+  `422` en `value`: «Este campo admite hasta 500 caracteres.».
+- **Límite puesto después**: lo ya escrito por encima no se borra. Se puede guardar mientras no
+  aumente la cantidad (para recortar), el campo se marca («Supera el límite: recorte el texto para
+  enviar») y al enviar sale `campo_supera_limite`: ««{campo}» tiene 640 caracteres y admite hasta
+  500. Recorte el texto antes de enviar.».
+- **Asistente**: `limite_caracteres` (clave y límite; 0 lo quita) y `limite_caracteres` en
+  `ver_campo` y `ver_plantilla`.
+
 ### HTML permitido en el contenido
 
 | Qué | Cómo |

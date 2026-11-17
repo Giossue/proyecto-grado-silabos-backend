@@ -181,6 +181,36 @@ final class TemplateDefinition
     }
 
     /**
+     * @return array<string, int>
+     */
+    public function fieldLimits(): array
+    {
+        $limits = [];
+        foreach (is_array($this->definition['field_limits'] ?? null) ? $this->definition['field_limits'] : [] as $key => $limit) {
+            if (is_int($limit) && $limit >= FieldLimit::MIN && $limit <= FieldLimit::MAX) {
+                $limits[(string) $key] = $limit;
+            }
+        }
+
+        return $limits;
+    }
+
+    /**
+     * @param  array<string, int>  $limits
+     */
+    public function withFieldLimits(array $limits): self
+    {
+        $definition = $this->definition;
+        unset($definition['field_limits']);
+        if ($limits !== []) {
+            ksort($limits);
+            $definition['field_limits'] = $limits;
+        }
+
+        return new self($definition);
+    }
+
+    /**
      * @param  array<string, mixed>  $document
      */
     public function withDocument(array $document): self

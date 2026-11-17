@@ -19,3 +19,4 @@ En metodología pregunta si usa laboratorio (Sí o No), que escriba cuál solo s
 Duplica el campo de objetivos específicos.
 Pasa el campo de recursos y medios didácticos a la sección de evaluación.
 ¿Cómo inserto el nombre de la facultad desde el editor?
+Que en la descripción de la asignatura el docente pueda escribir como máximo 500 caracteres.

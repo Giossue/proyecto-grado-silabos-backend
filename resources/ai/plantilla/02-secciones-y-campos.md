@@ -105,6 +105,19 @@ cambia la respuesta. Si la respuesta que decide no aparece en el sílabo, la par
   puede guardar hasta corregirla. Coordinación no puede quitar en su materia una opción que use
   una condición.
 
+## Límite de caracteres
+
+Un campo Editable puede tener un límite de caracteres para lo que escribe el docente: suma su
+texto libre y sus respuestas de texto. No cuentan las tablas repetibles (cada columna ya tiene su
+límite), el texto fijo de la plantilla, lo que respondió Coordinación ni las partes ocultas por
+«Mostrar solo si». Vale igual para todas las carreras y materias, y no cambia el Word ni el PDF.
+
+- Use `limite_caracteres` con la clave del campo y el límite (de 1 a 50000); con 0 se quita.
+  Un campo No editable no admite límite.
+- El docente ve un contador («320 / 500») y el editor no le deja escribir ni pegar más; el
+  servidor rechaza lo que pase el límite. Si ya había escrito más antes de ponerlo, no se borra:
+  lo ve marcado y debe recortarlo para poder enviar.
+
 Bloques (su diseño interno no se cambia): identificación, unidades, evaluación y bibliografía.
 La tabla de firmas y las demás tablas no son bloques: su contenido se puede cambiar con
 `cambiar_contenido_campo`, respetando los colores permitidos.

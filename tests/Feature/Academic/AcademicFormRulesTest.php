@@ -22,15 +22,18 @@ class AcademicFormRulesTest extends TestCase
         $this->seed(DatabaseSeeder::class);
     }
 
-    public function test_a_faculty_is_created_and_edited_without_a_logo(): void
+    public function test_a_faculty_cannot_be_created_without_a_logo_but_an_existing_one_without_it_can_be_edited(): void
     {
         $this->actingAsRole('admin@silabos.test')
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
                 'nombre' => 'Facultad sin logo', 'campus' => CampusLocation::Matriz->value,
             ])
-            ->assertSuccessful();
+            ->assertJsonValidationErrors(['logo' => 'El campo logotipo es obligatorio.']);
+        $this->assertDatabaseMissing('facultades', ['nombre_facultad' => 'Facultad sin logo']);
 
-        $faculty = Faculty::query()->where('nombre_facultad', 'Facultad sin logo')->firstOrFail();
+        $faculty = Faculty::query()->create([
+            'nombre' => 'Facultad sin logo', 'campus' => CampusLocation::Matriz, 'activo' => true,
+        ]);
         $this->assertNull($faculty->logo_objeto_id);
 
         $this->actingAsRole('admin@silabos.test')

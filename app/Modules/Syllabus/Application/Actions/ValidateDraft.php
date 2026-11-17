@@ -4,8 +4,10 @@ namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Academic\Application\SubjectProfileFields;
+use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\DocumentBlock;
+use App\Modules\Configuration\Domain\FieldLimit;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\ResponseCondition;
@@ -24,7 +26,7 @@ use Illuminate\Validation\ValidationException;
 
 class ValidateDraft
 {
-    public const RULE_VERSION = 'field-document-v12';
+    public const RULE_VERSION = 'field-document-v13';
 
     public function __construct(
         private readonly ActiveRole $roles,
@@ -42,6 +44,7 @@ class ValidateDraft
             $variables = TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($locked)]);
             $templates = $this->profiles->templates((string) $locked->parallel()->value('asignatura_id'));
             $conditions = SyllabusConditions::evaluate($locked, $templates);
+            $limits = TemplateContext::active()->fieldLimits();
             foreach ($fields as $field) {
                 if (! SubjectProfileFields::teacherEditable($field, $templates) || isset($conditions['hidden'][$field->id])) {
                     continue;
@@ -78,6 +81,11 @@ class ValidateDraft
                     } catch (ValidationException) {
                         $issues[] = ['field_id' => $field->id, 'code' => 'estructura_respuesta_modificada', 'severity' => 'error', 'message' => 'El formato de este campo cambió. Complete las respuestas en la estructura vigente.'];
                     }
+                }
+                $limit = FieldLimit::allowed($field->quien_llena) ? ($limits[$field->clave] ?? null) : null;
+                $written = $limit === null ? 0 : FieldLimit::count($original, $stored, $conditions['answers']);
+                if ($limit !== null && $written > $limit) {
+                    $issues[] = ['field_id' => $field->id, 'code' => 'campo_supera_limite', 'severity' => 'error', 'message' => FieldLimit::exceeded($field->displayName(), $limit, $written)];
                 }
                 $issues = [...$issues, ...$this->blockIssues($field, $values->get($field->id)?->valor, $variables)];
             }

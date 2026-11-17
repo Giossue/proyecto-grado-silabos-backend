@@ -166,6 +166,30 @@ class TemplateAssistantTest extends TestCase
         $this->assertEquals(['response' => 'usa_laboratorio', 'options' => ['o1']], $content['content'][1]['content'][1]['attrs']['showIf']);
     }
 
+    public function test_the_assistant_sets_and_removes_a_character_limit_only_on_editable_fields(): void
+    {
+        $gateway = $this->script([
+            ScriptedAiAgentGateway::calls(
+                ['limite_caracteres', ['clave' => 'conducta_etica', 'limite' => 500]],
+                ['limite_caracteres', ['clave' => 'descripcion', 'limite' => 50001]],
+                ['limite_caracteres', ['clave' => 'descripcion', 'limite' => 500]],
+                ['limite_caracteres', ['clave' => 'objetivo_general', 'limite' => 800]],
+                ['limite_caracteres', ['clave' => 'objetivo_general', 'limite' => 0]],
+            ),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
+        ]);
+
+        $outcome = $this->run_('Que en la descripción el docente escriba hasta 500 caracteres');
+
+        [$institutional, $outOfRange, $valid] = $gateway->toolResults(1);
+        $this->assertStringContainsString('Solo un campo editable (Carrera) puede tener límite de caracteres.', $institutional);
+        $this->assertStringContainsString('El límite de caracteres debe ser un número entero entre 1 y 50 000.', $outOfRange);
+        $this->assertStringContainsString('"ok":true', $valid);
+        $this->assertContains('«Descripción» admitirá hasta 500 caracteres del docente.', $outcome->proposal['changes'] ?? []);
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $outcome->proposal['payload'] ?? [])->assertOk();
+        $this->assertSame(['descripcion' => 500], $this->template->fresh()->definition()->fieldLimits());
+    }
+
     public function test_the_assistant_duplicates_a_field_and_a_section_with_new_keys_and_response_ids(): void
     {
         $question = '<p>¿Usa laboratorio? <span data-response=\'{"kind":"una","options":[{"const":"o1","title":"Sí"},{"const":"o2","title":"No"}],"id":"usa_laboratorio"}\'></span></p>'

@@ -5,6 +5,7 @@ namespace App\Modules\Configuration\Presentation\Http\Requests;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldLimit;
 use App\Modules\Configuration\Domain\ResponseCondition;
 use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Domain\TemplateStyle;
@@ -94,6 +95,11 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'sections.*.fields.*.label' => ['nullable', 'string', 'max:180'],
             'sections.*.fields.*.quien_llena' => ['required', Rule::in(FieldDefinition::RESPONSIBLES)],
             'sections.*.fields.*.show_if' => ['sometimes', 'nullable', 'array'],
+            'sections.*.fields.*.max_length' => ['sometimes', 'nullable', function (string $attribute, mixed $value, Closure $fail): void {
+                if (! is_int($value) || $value < FieldLimit::MIN || $value > FieldLimit::MAX) {
+                    $fail(FieldLimit::INVALID);
+                }
+            }],
             'sections.*.fields.*.content' => ['required', function (string $attribute, mixed $value, Closure $fail): void {
                 if (is_string($value) || (is_array($value) && array_is_list($value) && $value !== [] && array_filter($value, 'is_string') === $value)) {
                     $value = DocumentHtml::fromHtml($value);
@@ -154,6 +160,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'sections.*.fields.*.quien_llena' => 'quién lo llena',
             'sections.*.fields.*.content' => 'contenido',
             'sections.*.fields.*.show_if' => 'mostrar solo si',
+            'sections.*.fields.*.max_length' => 'límite de caracteres',
         ];
     }
 
@@ -173,6 +180,13 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             }
             foreach (ResponseCondition::problems($this->conditionFields($definition)) as $problem) {
                 $validator->errors()->add($problem['path'], $problem['message']);
+            }
+            foreach (array_values((array) $this->input('sections', [])) as $sectionIndex => $section) {
+                foreach (array_values(is_array($section['fields'] ?? null) ? $section['fields'] : []) as $fieldIndex => $field) {
+                    if (is_array($field) && ($field['max_length'] ?? null) !== null && is_string($field['quien_llena'] ?? null) && ! FieldLimit::allowed($field['quien_llena'])) {
+                        $validator->errors()->add("sections.{$sectionIndex}.fields.{$fieldIndex}.max_length", FieldLimit::ONLY_CAREER);
+                    }
+                }
             }
         }];
     }
@@ -224,6 +238,26 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
         return $conditions;
     }
 
+    /**
+     * @return array<string, int>
+     */
+    private function fieldLimits(): array
+    {
+        $limits = [];
+        foreach ((array) $this->input('sections', []) as $section) {
+            foreach (is_array($section['fields'] ?? null) ? $section['fields'] : [] as $field) {
+                $limit = is_array($field) ? ($field['max_length'] ?? null) : null;
+                if (! is_string($field['key'] ?? null) || ! is_int($limit) || $limit < FieldLimit::MIN || $limit > FieldLimit::MAX
+                    || ! is_string($field['quien_llena'] ?? null) || ! FieldLimit::allowed($field['quien_llena'])) {
+                    continue;
+                }
+                $limits[$field['key']] = $limit;
+            }
+        }
+
+        return $limits;
+    }
+
     private function validDefinition(): ?TemplateDefinition
     {
         if ($this->definitionErrors !== null) {
@@ -245,7 +279,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
         }
         $current = SyllabusTemplate::query()->first()?->definition() ?? TemplateContext::active();
         if ((int) $this->input('version') !== self::FORMAT_VERSION) {
-            return $this->definition = $this->defining(fn (): TemplateDefinition => $this->withTitleAndLayout($current)->withFieldConditions($this->fieldConditions()));
+            return $this->definition = $this->defining(fn (): TemplateDefinition => $this->withTitleAndLayout($current)->withFieldConditions($this->fieldConditions())->withFieldLimits($this->fieldLimits()));
         }
         $sections = [];
         foreach ((array) $this->input('sections', []) as $section) {
@@ -269,7 +303,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             }
         }
 
-        return $this->definition = $this->defining(fn (): TemplateDefinition => $this->withTitleAndLayout($definition)->withFieldConditions($this->fieldConditions()));
+        return $this->definition = $this->defining(fn (): TemplateDefinition => $this->withTitleAndLayout($definition)->withFieldConditions($this->fieldConditions())->withFieldLimits($this->fieldLimits()));
     }
 
     private function withTitleAndLayout(TemplateDefinition $definition): TemplateDefinition

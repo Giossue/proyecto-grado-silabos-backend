@@ -56,8 +56,8 @@ class StoreAcademicRecordRequest extends FormRequest
                 'campus' => ['required', Rule::enum(CampusLocation::class)],
                 'catalog_libraries' => ['sometimes', 'array', 'max:20'],
                 'catalog_libraries.*' => ['string', 'distinct', 'regex:/^[A-Za-z0-9_-]{1,20}$/'],
-                // El logo puede cargarse después; la convocatoria no se abre sin él.
-                'logo' => ['nullable', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
+                // Administración debe cargar el logo al crear la facultad.
+                'logo' => ['required', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
             ],
             'carrera' => [
                 'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'facultad_id')->where('facultad_activa', true)],

@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application;
 
 use App\Modules\Configuration\Domain\Blocks\RepeatableTable;
+use App\Modules\Configuration\Domain\FieldLimit;
 use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -69,6 +70,7 @@ final class TemplatePresentation
     public static function sections(SyllabusTemplate $template): array
     {
         $conditions = $template->definition()->fieldConditions();
+        $limits = $template->definition()->fieldLimits();
 
         return array_values($template->sections->map(fn (TemplateSection $section): array => [
             'id' => (string) $section->id,
@@ -82,6 +84,7 @@ final class TemplatePresentation
                 'quien_llena' => (string) $field->quien_llena,
                 'content' => $field->contenido,
                 ...(isset($conditions[$field->clave]) ? ['show_if' => $conditions[$field->clave]] : []),
+                ...(isset($limits[$field->clave]) && FieldLimit::allowed($field->quien_llena) ? ['max_length' => $limits[$field->clave]] : []),
             ])->all())->values()->all()),
         ])->values()->all());
     }

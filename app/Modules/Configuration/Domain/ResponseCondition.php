@@ -68,6 +68,15 @@ final class ResponseCondition
     }
 
     /**
+     * @param  array<array-key, mixed>  $attrs
+     * @param  array<string, mixed>  $answers
+     */
+    public static function visible(array $attrs, array $answers): bool
+    {
+        return ! is_array($attrs[self::ATTR] ?? null) || self::shows(self::shape($attrs[self::ATTR]), $answers);
+    }
+
+    /**
      * @param  list<array{key: string, document: mixed}>  $fields
      * @param  array<string, array{response: string, options: list<string>}>  $fieldConditions
      * @return array{hidden: array<string, true>, answers: array<string, mixed>}

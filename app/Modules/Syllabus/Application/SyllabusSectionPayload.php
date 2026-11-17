@@ -6,6 +6,7 @@ use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldLimit;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
@@ -25,13 +26,14 @@ final class SyllabusSectionPayload
     {
         $variables = TemplateVariables::resolve($context);
         $conditions = TemplateContext::active()->fieldConditions();
+        $limits = TemplateContext::active()->fieldLimits();
 
         return [
             'id' => $section->id,
             'key' => $section->clave,
             'title' => $section->titulo,
             'orientation' => $section->orientacion,
-            'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($conditions, $stored, $templates, $variables): array {
+            'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($conditions, $limits, $stored, $templates, $variables): array {
                 $document = FieldDocument::normalize($field->quien_llena === FieldDefinition::INSTITUTIONAL ? $field->contenido : $stored($field));
                 $editable = SubjectProfileFields::teacherEditable($field, $templates);
                 $template = FieldDocument::normalize($templates[$field->id] ?? $field->contenido);
@@ -47,6 +49,7 @@ final class SyllabusSectionPayload
                     'value' => $document,
                     'document' => FieldDocument::resolve($document, $variables),
                     ...(isset($conditions[$field->clave]) ? ['show_if' => $conditions[$field->clave]] : []),
+                    ...(isset($limits[$field->clave]) && FieldLimit::allowed($field->quien_llena) ? ['max_length' => $limits[$field->clave]] : []),
                 ];
             })->all())->values()->all(),
         ];

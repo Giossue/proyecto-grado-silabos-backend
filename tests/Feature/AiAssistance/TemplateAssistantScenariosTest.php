@@ -19,7 +19,7 @@ class TemplateAssistantScenariosTest extends TestCase
 
     private const CAPABILITIES = [
         'listar_variables', 'duplicar_campo', 'duplicar_seccion', 'mover_campo',
-        'crear_tabla_repetible', 'mostrar_solo_si', 'cambiar_responsable_campo', 'usar_preset', 'renumerar', 'preguntar',
+        'crear_tabla_repetible', 'mostrar_solo_si', 'limite_caracteres', 'cambiar_responsable_campo', 'usar_preset', 'renumerar', 'preguntar',
     ];
 
     private SyllabusTemplate $template;

@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application;
 
 use App\Modules\Configuration\Domain\DocumentHtml;
+use App\Modules\Configuration\Domain\FieldLimit;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
@@ -16,6 +17,7 @@ final class TemplateJsonExport
     {
         $definition = $template->definition();
         $conditions = $definition->fieldConditions();
+        $limits = $definition->fieldLimits();
 
         return [
             '$schema' => route('template.schema'),
@@ -44,6 +46,7 @@ final class TemplateJsonExport
                     'quien_llena' => $field->quien_llena,
                     'content' => DocumentHtml::toLines($field->contenido),
                     ...(isset($conditions[$field->clave]) ? ['show_if' => $conditions[$field->clave]] : []),
+                    ...(isset($limits[$field->clave]) && FieldLimit::allowed($field->quien_llena) ? ['max_length' => $limits[$field->clave]] : []),
                 ])->all())->values()->all(),
             ])->values()->all(),
         ];

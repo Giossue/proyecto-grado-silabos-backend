@@ -86,6 +86,10 @@ final class TemplateTools
                 'respuesta' => ['type' => 'string', 'description' => 'Identificador ("id" en data-response) de la respuesta anterior, por ejemplo «usa_laboratorio». Vacío quita la condición.'],
                 'opciones' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Opciones de esa respuesta que muestran el campo, por su texto («Sí») o su clave («o1»). Vacío si quita la condición.'],
             ]),
+            $this->spec('limite_caracteres', 'Pone un límite de caracteres a lo que el docente escribe en un campo Carrera: suma su texto libre y sus respuestas de texto; no cuentan las tablas repetibles, el texto fijo ni lo que respondió Coordinación. Con «limite» 0 quita el límite.', [
+                'clave' => $key,
+                'limite' => ['type' => 'integer', 'description' => 'Caracteres permitidos, de 1 a 50000. 0 quita el límite.'],
+            ]),
             $this->spec('validar_borrador', 'Revisa el borrador con las mismas reglas de guardar y lista los cambios hechos.', []),
             $this->spec('responder', 'Termina el turno con un mensaje para el administrador: resume los cambios del borrador o responde su pregunta.', ['mensaje' => ['type' => 'string']]),
             $this->spec('preguntar', 'Termina el turno pidiendo una aclaración cuando el pedido es ambiguo.', ['pregunta' => ['type' => 'string']]),
@@ -133,6 +137,7 @@ final class TemplateTools
                 'usar_preset' => $this->apply('Contenido listo aplicado.', fn (): string => $this->draft->applyPreset($this->string($args, 'clave'), $this->string($args, 'preset'))),
                 'crear_tabla_repetible' => $this->apply('Tabla repetible creada. Póngala en un campo con <div data-block="CLAVE"></div>.', fn (): string => $this->draft->createTable($this->tableDesign($args))),
                 'mostrar_solo_si' => $this->apply('Condición actualizada.', fn (): string => $this->draft->showFieldIf($this->string($args, 'clave'), $this->string($args, 'respuesta'), $this->strings($args, 'opciones'))),
+                'limite_caracteres' => $this->apply('Límite actualizado.', fn (): string => $this->draft->limitField($this->string($args, 'clave'), $this->integer($args, 'limite'))),
                 'validar_borrador' => TemplateToolResult::ok($this->validation()),
                 'responder' => TemplateToolResult::finish(TemplateToolResult::ANSWER, $this->message($args, 'mensaje')),
                 'preguntar' => TemplateToolResult::finish(TemplateToolResult::QUESTION, $this->message($args, 'pregunta')),
@@ -229,6 +234,19 @@ final class TemplateTools
         $value = $args[$name] ?? null;
         if (! is_string($value)) {
             throw new TemplateDraftError("Falta el parámetro «{$name}» como texto.");
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  array<string, mixed>  $args
+     */
+    private function integer(array $args, string $name): int
+    {
+        $value = $args[$name] ?? null;
+        if (! is_int($value)) {
+            throw new TemplateDraftError("Falta el parámetro «{$name}» como número entero.");
         }
 
         return $value;

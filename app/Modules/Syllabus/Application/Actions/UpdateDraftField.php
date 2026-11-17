@@ -4,13 +4,16 @@ namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Academic\Application\SubjectProfileFields;
+use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldLimit;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\SyllabusConditions;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -54,10 +57,21 @@ class UpdateDraftField
                 throw ValidationException::withMessages(['value' => 'Los bloques de este campo los define la plantilla; el docente solo los responde.']);
             }
 
+            $limit = FieldLimit::allowed($field->quien_llena) ? (TemplateContext::active()->fieldLimits()[$field->clave] ?? null) : null;
+            $before = $limit === null ? 0 : FieldLimit::count($template, $current?->valor, SyllabusConditions::evaluate($locked, $templates)['answers']);
+
             FieldValue::query()->updateOrCreate([
                 'silabo_id' => $locked->id,
                 'definicion_campo_id' => $field->id,
             ], ['valor' => $document]);
+
+            if ($limit !== null) {
+                $conditions = SyllabusConditions::evaluate($locked, $templates);
+                $after = isset($conditions['hidden'][$field->id]) ? 0 : FieldLimit::count($template, $document, $conditions['answers']);
+                if ($after > $limit && $after > $before) {
+                    throw ValidationException::withMessages(['value' => FieldLimit::message($limit)]);
+                }
+            }
 
             $locked->update([
                 'version_bloqueo' => $locked->version_bloqueo + 1,

@@ -20,6 +20,7 @@ un clic: arriba aparece la cinta con las herramientas de lo seleccionado.
 | Tablas repetibles nuevas | Sí (`crear_tabla_repetible`) | «Tabla repetible» → «Nueva tabla repetible» |
 | Cambiar columnas de una tabla repetible ya creada | No | «Tabla repetible» → «En este campo» |
 | Mostrar solo si | Sí (`mostrar_solo_si`, `showIf`) | «Mostrar solo si…» o, en una respuesta, «Tipo de respuesta» |
+| Límite de caracteres del docente en un campo | Sí (`limite_caracteres`) | «Límite de caracteres» en la cinta |
 | Contenidos listos | Sí (`usar_preset`) | «¿Se puede editar?» → «Plantilla» |
 | Revisar errores | Sí (`validar_borrador`, mismas reglas) | Los problemas se marcan en vivo en el campo o la sección |
 | Deshacer y rehacer | No | «Deshacer» y «Rehacer» en la cinta, o Ctrl+Z y Ctrl+Y |
@@ -61,6 +62,10 @@ un clic: arriba aparece la cinta con las herramientas de lo seleccionado.
   sola respuesta, ábrala con «Tipo de respuesta» y use «Mostrar solo si» dentro de «Más
   opciones». Solo se
   pueden elegir respuestas de elegir una o varias que estén antes.
+- **Límite de caracteres**: seleccione un campo Editable y pulse «Límite de caracteres» en la
+  cinta; escriba cuántos caracteres puede escribir el docente y «Aplicar». Para quitarlo,
+  «Quitar límite». Debajo del campo se lee «Hasta N caracteres». En un campo No editable el botón
+  está desactivado.
 - **Errores en vivo**: el editor marca en el campo o la sección lo que impide guardar, mientras
   se edita. Es lo mismo que revisa `validar_borrador`.
 - **Vista previa**: «Vista previa» en la cinta muestra la hoja del borrador sin guardar;

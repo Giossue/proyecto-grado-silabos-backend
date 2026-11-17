@@ -327,6 +327,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
     de elegir tiene alguna de ciertas opciones. Lo escrito en una parte oculta no se borra: solo
     no se exige, no se valida ni se imprime, y vuelve a verse al cambiar la respuesta. Una
     condición cuya respuesta de origen no está en el sílabo deja ver la parte (falla abierta).
+  - Límite de caracteres por campo (2026-11-17, `odd/tasks/limite-caracteres-campo.md`): solo
+    Administración lo pone, en un campo Editable, igual para todas las carreras. Cuenta lo que
+    escribe el docente en el campo (texto libre y respuestas de texto), no las tablas repetibles,
+    el texto fijo, lo de Coordinación ni lo oculto. Al llegar no deja escribir más. Lo escrito
+    antes de un límite nuevo no se borra: se marca y debe recortarse para enviar (asunción para no
+    perder trabajo). No cambia el Word ni el PDF.
   - Una sección retirada de la plantilla recibe su sufijo de clave una sola vez; antes cada
     guardado volvía a agregarlo hasta romper el guardado.
 

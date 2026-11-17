@@ -2183,5 +2183,48 @@
         }
       }
     ]
+  },
+  {
+    "nombre": "Límite de caracteres",
+    "turnos": [
+      {
+        "mensaje": "Que en la descripción de la asignatura el docente pueda escribir como máximo 500 caracteres",
+        "espera": {
+          "resultado": "propuesta",
+          "funciones": [
+            "limite_caracteres"
+          ],
+          "cambios": [
+            "hasta 500 caracteres"
+          ]
+        },
+        "guion": {
+          "pasos": [
+            [
+              {
+                "funcion": "limite_caracteres",
+                "argumentos": {
+                  "clave": "descripcion",
+                  "limite": 500
+                }
+              }
+            ],
+            [
+              {
+                "funcion": "validar_borrador"
+              }
+            ],
+            [
+              {
+                "funcion": "responder",
+                "argumentos": {
+                  "mensaje": "La descripción admitirá hasta 500 caracteres del docente."
+                }
+              }
+            ]
+          ]
+        }
+      }
+    ]
   }
 ]

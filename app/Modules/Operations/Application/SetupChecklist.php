@@ -64,7 +64,7 @@ class SetupChecklist
             'Antes de empezar',
             'En este orden. Cada paso habilita el siguiente; las coordinaciones no pueden empezar hasta que termine.',
             [
-                $this->step('faculties', 'Registrar las facultades', 'Elija el campus de cada facultad. El logo puede cargarse ahora o después, pero Coordinación lo necesita para abrir su convocatoria.', Faculty::query()->where('activo', true)->exists()),
+                $this->step('faculties', 'Registrar las facultades', 'Elija el campus y cargue el logo de cada facultad; Coordinación lo necesita para abrir su convocatoria.', Faculty::query()->where('activo', true)->exists()),
                 $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada. Puede importarlas desde Excel.', $careerCount > 0),
                 $this->step('accounts', 'Crear las cuentas de coordinación y de biblioteca', 'Al menos una de cada una, también por importación desde Excel. Los docentes los crea cada Coordinación.', $accountsReady),
                 $this->step('coordinators', 'Asignar un coordinador a cada carrera', match (true) {
