@@ -258,7 +258,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## Plantilla
 
-- Hay una sola plantilla. Se edita en el sitio, sin versiones ni publicación (I-32).
+- Hay una sola plantilla. Se edita en el sitio, sin publicación (I-32). Desde el 2026-11-16
+  cada guardado queda en un historial de versiones que se puede ver, comparar y restaurar al
+  borrador del editor (`odd/tasks/plantilla-madura.md`, S4a).
 - La plantilla la define Administración, y el Word que genera es el formato oficial del
   sílabo. No hay otra autoridad que la apruebe (antes PV-01 y PV-07; confirmado por el
   responsable del producto el 2026-10-26).

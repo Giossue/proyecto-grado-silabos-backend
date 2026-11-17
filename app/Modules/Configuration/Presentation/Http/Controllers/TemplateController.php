@@ -10,9 +10,9 @@ use App\Modules\Configuration\Application\Actions\FormatSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\ReplaceTemplateStructure;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\OfficialTemplate;
+use App\Modules\Configuration\Application\TemplateJsonExport;
 use App\Modules\Configuration\Application\TemplatePresentation;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -94,36 +94,7 @@ class TemplateController extends Controller
 
     public function exportJson(SyllabusTemplate $template, ManageTemplatesRequest $request): JsonResponse
     {
-        $definition = $template->definition();
-
-        return response()->json([
-            '$schema' => route('template.schema'),
-            'version' => ImportTemplateStructureRequest::FORMAT_VERSION,
-            ...(($definition->toArray()['response_policy'] ?? null) === 'protected' ? ['response_policy' => 'protected'] : []),
-            'document' => $definition->document(),
-            'variables' => $definition->variables(),
-            'blocks' => array_map(fn (array $block): array => [
-                'label' => $block['label'],
-                ...($block['props'] !== [] ? ['props' => $block['props']] : []),
-                ...($block['value'] !== [] ? ['value' => $block['value']] : []),
-                ...($block['rules'] !== [] ? ['rules' => $block['rules']] : []),
-                'layout' => DocumentHtml::toLines(['type' => 'doc', 'content' => $block['layout']]),
-            ], $definition->blocks()),
-            'required_sections' => $definition->requiredSections(),
-            'library_sections' => $definition->librarySections(),
-            'presets' => array_map(fn (array $preset): array => ['key' => $preset['key'], 'label' => $preset['label'], 'field' => $preset['field']], $definition->presets()),
-            'sections' => $template->sections->map(fn (TemplateSection $section): array => [
-                'key' => $section->clave,
-                'title' => $section->titulo,
-                'orientation' => $section->orientacion,
-                'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(fn (FieldDefinition $field): array => [
-                    'key' => $field->clave,
-                    'label' => $field->etiqueta,
-                    'quien_llena' => $field->quien_llena,
-                    'content' => DocumentHtml::toLines($field->contenido),
-                ])->all())->values()->all(),
-            ])->values()->all(),
-        ]);
+        return response()->json(TemplateJsonExport::export($template));
     }
 
     public function importJson(SyllabusTemplate $template, ImportTemplateStructureRequest $request, ReplaceTemplateStructure $action): JsonResponse

@@ -138,7 +138,9 @@ pida.
   con los sellos de las tres firmas; se descarga apenas existe. No se ofrece Word.
 - Una revisión enviada o aprobada no se modifica; congela la definición de la
   plantilla.
-- La plantilla es una sola, se edita en el sitio y no tiene versiones. Es solo datos
+- La plantilla es una sola y se edita en el sitio, sin publicación. Cada guardado queda en
+  un historial de versiones (`versiones_plantilla`, solo se agrega) para ver, comparar y
+  restaurar al borrador; restaurar no guarda. Es solo datos
   (ADR-0011): `plantilla_silabo.definicion_plantilla` más secciones y campos. Cada campo
   es `institucional` («Institucional»: lo escribe Administración) o `carrera` («Carrera»).
 - El proyecto de carrera de cada asignatura guarda los campos Carrera en `valores_campo`.

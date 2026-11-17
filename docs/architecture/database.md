@@ -112,6 +112,9 @@ Reglas:
   plantilla congelada. El PDF se genera desde ahí.
 - `aprobaciones`, `revisiones_coordinacion`, `firmas_silabo`, `archivos` y
   `eventos_auditoria` no admiten `UPDATE` ni `DELETE` (`proteger_registro_append_only`).
+- `versiones_plantilla` guarda una fotografía del JSON de la plantilla en cada guardado,
+  con quién y cuándo; no admite `UPDATE` (`proteger_version_plantilla`), y sus filas solo se
+  borran en cascada con la plantilla.
 - `envios_biblioteca` solo admite registrar una vez la verificación de Biblioteca
   (`verificado_por` y `verificado_en`, juntos o ninguno); nada más cambia ni se borra
   (`proteger_envio_biblioteca`). `verificacion_heredada` marca la verificación copiada de una

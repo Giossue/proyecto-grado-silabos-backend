@@ -21,6 +21,18 @@ leen la misma definición.
 - **API** (solo Administración, bloqueada con un proceso abierto):
   - `GET /api/v1/admin/template/{id}/json` exporta.
   - `PUT /api/v1/admin/template/{id}/json` **reemplaza toda** la plantilla (auditado como `plantilla.importada`).
+- **Historial** (solo Administración): cada guardado de la plantilla (importar este JSON, «Guardar» del editor
+  visual, «Restablecer a plantilla oficial» y «Vaciar») guarda en `versiones_plantilla` el JSON exportado tal como
+  queda, con quién y cuándo. Si no hay ninguna versión, la primera es la plantilla en ese momento, guardada por
+  «Sistema». Las versiones no se modifican (trigger `proteger_version_plantilla`).
+  - `GET /api/v1/admin/template/{id}/versions` lista las versiones (número, fecha, quién, secciones, campos y si es
+    la actual).
+  - `GET /api/v1/admin/template/{id}/versions/{version}` devuelve el JSON de la versión y un borrador para el editor
+    (`draft`: título, diseño y secciones con su contenido como documento).
+  - `GET /api/v1/admin/template/{id}/versions/{version}/comparison` devuelve en `changes` frases cortas con lo que
+    cambió desde esa versión hasta la plantilla actual (`TemplateVersionDiff`).
+  - Restaurar no escribe nada: el editor carga el borrador y Administración lo guarda con «Guardar», con los mismos
+    bloqueos y validaciones de siempre.
 
 El archivo exportado empieza con `"$schema"`, que apunta al esquema publicado del formato
 (`resources/templates/plantilla.schema.json`, servido en `/plantilla.schema.json`). Con él, un editor como VS Code

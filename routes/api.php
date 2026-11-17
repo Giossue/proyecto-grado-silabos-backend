@@ -12,6 +12,7 @@ use App\Modules\Academic\Presentation\Http\Controllers\SupportDocumentController
 use App\Modules\AiAssistance\Presentation\Http\Controllers\TemplateAssistantController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateStructureController;
+use App\Modules\Configuration\Presentation\Http\Controllers\TemplateVersionController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\AccountActivationResendController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\ActivationController;
@@ -189,6 +190,12 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.assistant.proposals.discard');
             Route::get('admin/template/{template}/teacher-preview', [TemplateController::class, 'teacherPreview'])
                 ->middleware('active-role')->name('api.v1.admin.template.teacher-preview');
+            Route::get('admin/template/{template}/versions', [TemplateVersionController::class, 'index'])
+                ->middleware('active-role')->name('api.v1.admin.template.versions.index');
+            Route::get('admin/template/{template}/versions/{version}', [TemplateVersionController::class, 'show'])
+                ->middleware('active-role')->whereUuid('version')->name('api.v1.admin.template.versions.show');
+            Route::get('admin/template/{template}/versions/{version}/comparison', [TemplateVersionController::class, 'comparison'])
+                ->middleware('active-role')->whereUuid('version')->name('api.v1.admin.template.versions.comparison');
             Route::get('admin/template/{template}/json', [TemplateController::class, 'exportJson'])
                 ->middleware('active-role')->name('api.v1.admin.template.json.export');
             Route::put('admin/template/{template}/json', [TemplateController::class, 'importJson'])

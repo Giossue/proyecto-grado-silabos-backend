@@ -87,6 +87,14 @@ y el botón «Documentos» (DOC-10).
   obligatorios con «*» y los de Coordinación o Institucionales con su etiqueta. La identificación
   usa datos de muestra. Aviso «Vista de prueba: así verá el formulario el docente. Lo que escriba
   aquí no se guarda». Mientras está activo no aparece «Editar»; al pulsarlo otra vez vuelven las hojas.
+- Un botón de ícono «Historial» abre un panel lateral con las versiones de la plantilla, de la más
+  nueva a la más vieja: «Versión N», fecha, quién guardó («Sistema» en la primera) y cuántas secciones
+  y campos tenía; la que coincide con la plantilla guardada lleva «Actual». Cada versión tiene «Ver
+  cambios» (frases cortas de lo que cambió desde esa versión hasta la actual, o «Igual a la plantilla
+  actual») y «Restaurar». «Restaurar» pide confirmar («Se carga en el editor como un borrador. La
+  plantilla no cambia hasta que pulse «Guardar»») y abre el editor con las secciones y campos de esa
+  versión, su título y sus márgenes, tras el aviso de editar de siempre. No se puede restaurar la versión actual ni con la
+  plantilla bloqueada («No se puede restaurar ahora: …»).
 - En las plantillas protegidas, los párrafos y celdas vacíos son espacios de respuesta.
   El editor no muestra un aviso sobre esto. No hay controles por celda.
 - «Editar» pasa a pantalla completa, sin menú lateral: arriba, «Volver a la vista», el
@@ -364,7 +372,7 @@ envían. Cada persona firma una sola vez por sílabo.
 
 ## IDs retirados
 
-- ADM-05 (Plantillas) y ADM-07 (Publicar): hay una sola plantilla, sin publicación.
+- ADM-05 (Plantillas) y ADM-07 (Publicar): hay una sola plantilla, sin publicación; tiene historial de versiones.
 - ADM-09 (Trabajos fallidos): sin pantalla.
 - ADM-11 (Configuración): es UI-04.
 - COR-02 y COR-03 (Convocatorias de carrera): están en COR-01 y COR-05.
