@@ -13,6 +13,7 @@ return [
     'template' => [
         'model' => env('AI_TEMPLATE_MODEL'),
         'strict_tools' => (bool) env('AI_TOOLS_STRICT', true),
+        'temperature' => env('AI_TEMPERATURE', 0.0),
         'max_output_tokens' => 8192,
         'max_steps' => 8,
         'max_seconds' => 120,

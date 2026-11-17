@@ -162,9 +162,18 @@ class HostedAiAgentGateway implements AiAgentGateway
             ], $request->tools),
             'tool_choice' => 'required',
             'thinking' => ['type' => 'disabled'],
+            ...$this->temperature(),
             'max_tokens' => (int) config('ai.template.max_output_tokens'),
             'user_id' => $request->userTag,
         ];
+    }
+
+    /** @return array{temperature?: float} */
+    private function temperature(): array
+    {
+        $temperature = config('ai.template.temperature');
+
+        return is_numeric($temperature) ? ['temperature' => (float) $temperature] : [];
     }
 
     /**

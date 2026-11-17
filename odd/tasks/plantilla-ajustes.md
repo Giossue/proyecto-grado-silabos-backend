@@ -16,7 +16,7 @@ Entrega: commits por unidad en backend y frontend. Pruebas: Pest (`php -d memory
 - [~] T1 (S1) Restaurar completo — CANCELADO: el usuario pidió quitar el historial (L5); el trabajo sin commit se descartó.
 - [x] T4 (S4) Quitar el historial de versiones de la plantilla en ambos repos — delegado; backend 897, frontend 918 pasan
 - [ ] T2 (S2) Ocultar la línea de una respuesta oculta — después de T1 (comparten pruebas Pest)
-- [ ] T3 (S3) Configuración de DeepSeek medida con escenarios — delegado (paralelo con T1)
+- [x] T3 (S3) Configuración de DeepSeek medida con escenarios — `temperature` configurable (`AI_TEMPERATURE`, por defecto 0); 93 % → 100 % en 38 escenarios; con razonamiento DeepSeek rechaza `tool_choice: required` (400). El escritor se detuvo antes de su informe; el padre revisó el diff y corrió `HostedAiAgentGatewayTest` 15/15, PHPStan y Pint.
 
 ## Log
 

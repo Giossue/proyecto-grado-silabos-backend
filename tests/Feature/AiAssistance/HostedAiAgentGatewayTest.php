@@ -60,6 +60,37 @@ class HostedAiAgentGatewayTest extends TestCase
         });
     }
 
+    public function test_sends_the_configured_temperature_without_reasoning(): void
+    {
+        config(['ai.template.temperature' => '0.3']);
+        Http::fake([self::BETA => Http::response($this->toolAnswer('ver_plantilla', '{}'))]);
+
+        app(AiAgentGateway::class)->step($this->request());
+
+        Http::assertSent(fn (Request $request): bool => $request->data()['temperature'] === 0.3
+            && $request->data()['thinking'] === ['type' => 'disabled']);
+    }
+
+    public function test_the_default_temperature_is_deterministic(): void
+    {
+        $this->assertSame(0.0, $this->app['config']->get('ai.template.temperature'));
+        Http::fake([self::BETA => Http::response($this->toolAnswer('ver_plantilla', '{}'))]);
+
+        app(AiAgentGateway::class)->step($this->request());
+
+        Http::assertSent(fn (Request $request): bool => $request->data()['temperature'] === 0.0);
+    }
+
+    public function test_a_blank_temperature_leaves_the_provider_default(): void
+    {
+        config(['ai.template.temperature' => '']);
+        Http::fake([self::BETA => Http::response($this->toolAnswer('ver_plantilla', '{}'))]);
+
+        app(AiAgentGateway::class)->step($this->request());
+
+        Http::assertSent(fn (Request $request): bool => ! array_key_exists('temperature', $request->data()));
+    }
+
     public function test_the_template_model_overrides_the_chat_model(): void
     {
         config(['ai.template.model' => 'deepseek-v4-pro']);

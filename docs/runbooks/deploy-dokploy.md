@@ -130,7 +130,8 @@ Modelos vigentes de DeepSeek (2026-10-31): `deepseek-flash` y `deepseek-v4-pro`;
 `deepseek-chat` y `deepseek-reasoner` se retiraron. El asistente de la plantilla (en prueba)
 usa `AI_TEMPLATE_MODEL` si está definida y, si no, `AI_MODEL`; solo funciona con
 `AI_DRIVER=deepseek`. `AI_TOOLS_STRICT` (por defecto `true`) activa el modo estricto de las
-funciones en la API beta de DeepSeek.
+funciones en la API beta de DeepSeek. `AI_TEMPERATURE` (por defecto `0`) mantiene al asistente
+dentro de lo pedido y estable entre corridas; vacía, DeepSeek usa su valor por defecto (`1`).
 
 Activar un proveedor envía datos a un tercero: el pedido de Administración con el borrador de la plantilla.
 Antes de usarlo con

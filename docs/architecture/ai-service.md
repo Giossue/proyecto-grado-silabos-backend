@@ -42,6 +42,12 @@ o la descarta; solo «Guardar» cambia la plantilla.
   `HostedAiAgentGateway` solo admite DeepSeek (`chat/completions`, `tool_choice: required`,
   razonamiento apagado, `user_id` anónimo). Con `AI_TOOLS_STRICT=true` (por defecto) usa
   `https://api.deepseek.com/beta/chat/completions` y marca cada función como `strict`.
+  Envía `temperature` desde `AI_TEMPERATURE` (por defecto `0`; vacía, no la envía y DeepSeek
+  usa `1`). Con 0 el asistente responde igual entre corridas: medido el 2026-11-17 con 38 escenarios
+  (59 turnos, antes de quitar los 3 del historial) contra `deepseek-flash`, pasó del 93 % sin
+  `temperature` al 100 %. El razonamiento sigue apagado:
+  con él DeepSeek ignora `temperature` y rechaza `tool_choice: required` con un 400
+  ([API](https://api-docs.deepseek.com/api/create-chat-completion)).
   `baseline` es un simulador sin red; `disabled` falla con «no disponible».
 - `AI_TEMPLATE_MODEL` elige el modelo del asistente; vacía, usa `AI_MODEL`. Los dos modelos
   vigentes (`deepseek-flash` y `deepseek-v4-pro`) usan la misma API.
