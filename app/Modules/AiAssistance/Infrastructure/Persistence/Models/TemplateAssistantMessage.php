@@ -85,7 +85,7 @@ class TemplateAssistantMessage extends Model
     }
 
     /**
-     * @return list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>|null
+     * @return list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>, show_if?: array<mixed>, max_length?: int}>}>|null
      */
     public function draft(): ?array
     {
@@ -106,6 +106,8 @@ class TemplateAssistantMessage extends Model
                         'label' => (string) ($field['label'] ?? ''),
                         'quien_llena' => (string) FieldDefinition::responsible($field['quien_llena'] ?? ''),
                         'content' => array_filter($field['content'], is_string(...), ARRAY_FILTER_USE_KEY),
+                        ...(is_array($field['show_if'] ?? null) ? ['show_if' => $field['show_if']] : []),
+                        ...(is_int($field['max_length'] ?? null) ? ['max_length' => $field['max_length']] : []),
                     ];
                 }
             }

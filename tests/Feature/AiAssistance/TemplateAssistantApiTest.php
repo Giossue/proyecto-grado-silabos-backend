@@ -42,7 +42,7 @@ class TemplateAssistantApiTest extends TestCase
     {
         $this->script([...$this->addField('Competencias'), ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Propongo **Competencias**.'])]);
         $draft = $this->draft();
-        $draft[1]['fields'][] = ['key' => 'sin_guardar', 'label' => 'Sin guardar', 'quien_llena' => 'carrera', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]];
+        $draft[1]['fields'][] = ['key' => 'sin_guardar', 'label' => 'Sin guardar', 'quien_llena' => 'carrera', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]], 'max_length' => 400];
 
         $this->ask('Agrega Competencias', null, $draft, 'sesion-1:7')->assertAccepted();
 
@@ -61,6 +61,7 @@ class TemplateAssistantApiTest extends TestCase
             ->assertJsonPath('draft_version', 'sesion-1:7')
             ->assertJsonPath('changed', ['sections' => [], 'fields' => ['competencias']])
             ->assertJsonPath('sections.1.fields.1.key', 'sin_guardar')
+            ->assertJsonPath('sections.1.fields.1.max_length', 400)
             ->assertJsonPath('sections.3.fields.1.key', 'competencias');
 
         $this->postJson(route('api.v1.admin.template.assistant.proposals.apply', $proposalId))->assertOk();

@@ -78,7 +78,7 @@ Pulse «Abrir» para ir a donde corresponde, o «Marcar leída» para quitarlo d
 
 «Editar» abre el editor y pide escribir «editar plantilla». Ahí escribe directo en la hoja, marca si cada campo «Se puede editar» y pulsa «Guardar». El logo de la universidad y «Editar JSON» se guardan al instante, sin pasar por «Guardar».
 
-En el editor puede insertar datos del sistema (con el botón o escribiendo «/»), duplicar, mover y arrastrar campos y secciones, y deshacer cualquier cambio. Con «Tipo de respuesta» pone respuestas para todas las carreras: obligatoria o no, ayuda, límites, lista o desplegable, y «Mostrar solo si». Con «Tabla repetible» crea tablas sin JSON. El ojo muestra el borrador sin guardar y los problemas se marcan en rojo mientras edita. Antes de guardar se le avisa qué sílabos cambian.
+En el editor puede insertar datos del sistema (con el botón o escribiendo «/»), duplicar, mover y arrastrar campos y secciones, y deshacer cualquier cambio. Con «Tipo de respuesta» pone respuestas para todas las carreras: obligatoria o no, ayuda, límites, lista o desplegable, y «Mostrar solo si». Con «Tabla repetible» crea tablas sin JSON. Con «Límite de caracteres» fija cuánto puede escribir el docente en un campo editable. El ojo muestra el borrador sin guardar y los problemas se marcan en rojo mientras edita. Antes de guardar se le avisa qué sílabos cambian.
 
 Con una convocatoria abierta la plantilla está bloqueada. Para cambiarla, pause la convocatoria. Al reanudar se le pedirá confirmación: los sílabos de este período se adaptan a la plantilla nueva, porque el formato es único para toda la universidad. Se conserva lo escrito en los campos que siguen encajando; los enviados o aprobados vuelven a borrador para enviarse y firmarse de nuevo.
 

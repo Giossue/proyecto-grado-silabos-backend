@@ -31,6 +31,7 @@ class SendTemplateAssistantMessageRequest extends ManageTemplatesRequest
             'draft.*.fields.*.quien_llena' => ['required', Rule::in(FieldDefinition::RESPONSIBLES)],
             'draft.*.fields.*.content' => ['required', 'array', $this->document()],
             'draft.*.fields.*.show_if' => ['sometimes', 'nullable', 'array'],
+            'draft.*.fields.*.max_length' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:50000'],
         ];
     }
 
@@ -51,11 +52,12 @@ class SendTemplateAssistantMessageRequest extends ManageTemplatesRequest
             'draft.*.fields.*.quien_llena' => 'quién lo llena',
             'draft.*.fields.*.content' => 'contenido',
             'draft.*.fields.*.show_if' => 'mostrar solo si',
+            'draft.*.fields.*.max_length' => 'límite de caracteres',
         ];
     }
 
     /**
-     * @return list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>, show_if?: array{response: string, options: list<string>}}>}>
+     * @return list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>, show_if?: array{response: string, options: list<string>}, max_length?: int}>}>
      */
     public function draft(): array
     {
@@ -69,6 +71,7 @@ class SendTemplateAssistantMessageRequest extends ManageTemplatesRequest
                     'quien_llena' => (string) $field['quien_llena'],
                     'content' => $this->normalized((array) $field['content']),
                     ...$this->condition($field['show_if'] ?? null),
+                    ...(isset($field['max_length']) && is_int($field['max_length']) ? ['max_length' => $field['max_length']] : []),
                 ];
             }
             $sections[] = [
