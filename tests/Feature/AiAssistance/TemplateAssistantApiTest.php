@@ -215,6 +215,21 @@ class TemplateAssistantApiTest extends TestCase
         $this->postJson(route('api.v1.admin.template.assistant.proposals.apply', $proposal->id))->assertForbidden();
     }
 
+    public function test_a_proposal_carries_the_repeatable_tables_the_assistant_created_to_the_editor(): void
+    {
+        $this->script([
+            ScriptedAiAgentGateway::call('crear_tabla_repetible', ['titulo' => 'Prácticas', 'fila' => 'práctica', 'minimo' => 1, 'maximo' => 5, 'al_empezar' => 1, 'columnas' => [['nombre' => 'Tema', 'tipo' => 'texto', 'obligatoria' => true, 'opciones' => []]]]),
+            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Prácticas', 'quien_llena' => 'carrera', 'contenido_html' => '<div data-block="tabla_practicas"></div>', 'despues_de' => '(final)']),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
+        ]);
+
+        $this->ask('Agrega una tabla de prácticas')->assertAccepted();
+        $proposalId = (string) $this->getJson(route('api.v1.admin.template.assistant.show'))->assertOk()->json('messages.1.proposal.id');
+
+        $this->getJson(route('api.v1.admin.template.assistant.proposals.show', $proposalId))->assertOk()
+            ->assertJsonPath('block_changes.tabla_practicas.label', 'Prácticas');
+    }
+
     /**
      * @return list<AiAgentStep>
      */

@@ -194,7 +194,10 @@ class TemplateDraftRehearsalTest extends TestCase
         $this->assertNotEmpty($retired);
         $after = DB::table('secciones_plantilla')->whereIn('seccion_plantilla_id', array_keys($retired))->pluck('clave_seccion_plantilla', 'seccion_plantilla_id')->all();
         $this->assertNotEmpty($after);
-        $this->assertSame(array_intersect_key($retired, $after), $after);
+        $expected = array_intersect_key($retired, $after);
+        ksort($expected);
+        ksort($after);
+        $this->assertSame($expected, $after);
         foreach ($retired as $id => $key) {
             $this->assertStringEndsWith('-'.substr((string) $id, 0, 8), $key);
             $this->assertSame(1, substr_count($key, '-'));

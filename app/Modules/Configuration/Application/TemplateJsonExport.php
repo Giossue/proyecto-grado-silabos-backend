@@ -27,6 +27,7 @@ final class TemplateJsonExport
                 ...($block['props'] !== [] ? ['props' => $block['props']] : []),
                 ...($block['value'] !== [] ? ['value' => $block['value']] : []),
                 ...($block['rules'] !== [] ? ['rules' => $block['rules']] : []),
+                ...(isset($block['catalog']) ? ['catalog' => $block['catalog']] : []),
                 'layout' => DocumentHtml::toLines(['type' => 'doc', 'content' => $block['layout']]),
             ], $definition->blocks()),
             'required_sections' => $definition->requiredSections(),

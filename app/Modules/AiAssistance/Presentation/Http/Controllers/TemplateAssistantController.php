@@ -94,6 +94,7 @@ class TemplateAssistantController extends Controller
             'changes' => $proposal->cambios['lista'],
             'changed' => ['sections' => $proposal->cambios['secciones'], 'fields' => $proposal->cambios['campos']],
             'sections' => $proposal->estructura['sections'],
+            ...(isset($proposal->estructura['block_changes']) ? ['block_changes' => $proposal->estructura['block_changes']] : []),
         ]);
     }
 

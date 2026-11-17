@@ -83,5 +83,12 @@
       { "mensaje": "que se muestre como desplegable y que no sea obligatoria", "aplicar": true },
       { "mensaje": "y ponle una ayuda que diga: elija la modalidad principal" }
     ]
+  },
+  {
+    "nombre": "Tabla repetible nueva",
+    "turnos": [
+      { "mensaje": "En metodología agrega una tabla de salidas de campo donde el docente ponga el lugar, la fecha y las horas, máximo cinco", "aplicar": true },
+      { "mensaje": "que el lugar sea obligatorio" }
+    ]
   }
 ]

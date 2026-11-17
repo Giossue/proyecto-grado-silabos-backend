@@ -3,6 +3,8 @@
 namespace App\Modules\AiAssistance\Application\TemplateAssistant;
 
 use App\Modules\Configuration\Application\TemplateContext;
+use App\Modules\Configuration\Domain\Blocks\BlockDefinition;
+use App\Modules\Configuration\Domain\Blocks\RepeatableTable;
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
@@ -43,6 +45,11 @@ final class TemplateDraft
 
     /** @var list<DraftSection> */
     private array $sections;
+
+    /** @var array<string, array<string, mixed>> */
+    private array $tables = [];
+
+    private ?TemplateDefinition $withTables = null;
 
     /**
      * @param  list<DraftSection>  $base
@@ -87,20 +94,42 @@ final class TemplateDraft
 
     public function definition(): TemplateDefinition
     {
-        return $this->definition;
+        if ($this->tables === []) {
+            return $this->definition;
+        }
+
+        return $this->withTables ??= $this->definition->withBlocks($this->tables);
     }
 
     public function changed(): bool
     {
-        return $this->sections !== $this->base;
+        return $this->sections !== $this->base || $this->tables !== [];
     }
 
     /**
-     * @return array{version: int, sections: list<array{key: string, title: string, orientation: string, fields: list<DraftField>}>}
+     * @return array{version: int, sections: list<array{key: string, title: string, orientation: string, fields: list<DraftField>}>, block_changes?: array<string, array<string, mixed>>}
      */
     public function payload(): array
     {
-        return ['version' => 1, 'sections' => $this->sections];
+        return ['version' => 1, 'sections' => $this->sections, ...($this->tables === [] ? [] : ['block_changes' => $this->tables])];
+    }
+
+    /**
+     * @param  array<string, mixed>  $design
+     */
+    public function createTable(array $design): string
+    {
+        $design = RepeatableTable::withKeys([...$design, 'kind' => null], array_keys($this->definition()->blocks()));
+        $kind = (string) $design['kind'];
+        try {
+            $table = BlockDefinition::define($kind, RepeatableTable::build($design), array_keys($this->definition->variables()));
+        } catch (ValidationException $exception) {
+            throw new TemplateDraftError('La tabla no es válida: '.implode(' ', array_map('strval', collect($exception->errors())->flatten()->all())));
+        }
+        $this->tables[$kind] = $table;
+        $this->withTables = null;
+
+        return $kind;
     }
 
     /**
@@ -108,8 +137,8 @@ final class TemplateDraft
      */
     public function overview(): array
     {
-        $required = $this->definition->requiredSections();
-        $library = $this->definition->librarySections();
+        $required = $this->definition()->requiredSections();
+        $library = $this->definition()->librarySections();
         $overview = [];
         foreach ($this->sections as $index => $section) {
             $overview[] = [
@@ -255,7 +284,7 @@ final class TemplateDraft
     public function removeSection(string $key): string
     {
         $index = $this->locateSection($key);
-        if (in_array($key, $this->definition->requiredSections(), true) || in_array($key, $this->definition->librarySections(), true)) {
+        if (in_array($key, $this->definition()->requiredSections(), true) || in_array($key, $this->definition()->librarySections(), true)) {
             throw new TemplateDraftError("La sección «{$this->sections[$index]['title']}» es obligatoria y no se puede quitar.");
         }
         array_splice($this->sections, $index, 1);
@@ -342,7 +371,7 @@ final class TemplateDraft
     public function applyPreset(string $key, string $presetKey): string
     {
         [$sectionIndex, $fieldIndex] = $this->locateField($key);
-        $preset = collect($this->definition->presets())->firstWhere('key', $presetKey);
+        $preset = collect($this->definition()->presets())->firstWhere('key', $presetKey);
         if (! is_array($preset)) {
             throw new TemplateDraftError("No existe el contenido listo «{$presetKey}». Use listar_presets para ver los disponibles.");
         }
@@ -356,7 +385,7 @@ final class TemplateDraft
      */
     public function changes(): array
     {
-        $changes = [];
+        $changes = array_values(array_map(fn (array $table): string => "Nueva tabla repetible «{$table['label']}».", $this->tables));
         $baseSections = $this->keyed($this->base);
         $draftSections = $this->keyed($this->sections);
         foreach ($this->sections as $section) {
@@ -486,7 +515,7 @@ final class TemplateDraft
         foreach (FreeText::blocks($document) as $node) {
             if (($node['type'] ?? null) === 'documentBlock') {
                 $kind = (string) data_get($node, 'attrs.kind', '');
-                $label = $this->definition->block($kind)['label'] ?? $kind;
+                $label = $this->definition()->block($kind)['label'] ?? $kind;
 
                 return "[bloque «{$label}»]";
             }
@@ -543,7 +572,7 @@ final class TemplateDraft
         }
         try {
             $document = app(TemplateContext::class)->using(
-                $this->definition,
+                $this->definition(),
                 fn (): array => FieldDocument::normalize(DocumentHtml::fromHtml($html === '' ? '<p></p>' : $html), 'contenido_html'),
             );
         } catch (ValidationException $exception) {

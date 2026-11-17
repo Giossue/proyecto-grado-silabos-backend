@@ -10,6 +10,7 @@ use App\Modules\Academic\Presentation\Http\Controllers\FichaImportsController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
 use App\Modules\Academic\Presentation\Http\Controllers\SupportDocumentController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\TemplateAssistantController;
+use App\Modules\Configuration\Presentation\Http\Controllers\TemplateBlockController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateDraftController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateStructureController;
@@ -195,6 +196,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.draft.preview');
             Route::post('admin/template/{template}/draft/impact', [TemplateDraftController::class, 'impact'])
                 ->middleware('active-role')->name('api.v1.admin.template.draft.impact');
+            Route::post('admin/template/{template}/blocks/design', [TemplateBlockController::class, 'design'])
+                ->middleware('active-role')->name('api.v1.admin.template.blocks.design');
             Route::post('admin/template/{template}/draft/check', [TemplateDraftController::class, 'check'])
                 ->middleware(['active-role', 'throttle:120,1'])->name('api.v1.admin.template.draft.check');
             Route::get('admin/template/{template}/versions', [TemplateVersionController::class, 'index'])

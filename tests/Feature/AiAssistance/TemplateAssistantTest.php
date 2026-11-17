@@ -137,6 +137,35 @@ class TemplateAssistantTest extends TestCase
         $this->assertEquals(['kind' => 'texto', 'options' => [], 'value' => '', 'required' => false, 'maxLength' => 300], $content['content'][1]['content'][1]['attrs']);
     }
 
+    public function test_the_assistant_creates_a_simple_repeatable_table_and_places_it_in_a_field(): void
+    {
+        $column = fn (string $name, string $type, bool $required = false, array $options = []): array => ['nombre' => $name, 'tipo' => $type, 'obligatoria' => $required, 'opciones' => $options];
+        $table = ['titulo' => 'Prácticas de laboratorio', 'fila' => 'práctica', 'minimo' => 1, 'maximo' => 10, 'al_empezar' => 2];
+        $gateway = $this->script([
+            ScriptedAiAgentGateway::calls(
+                ['crear_tabla_repetible', [...$table, 'columnas' => [$column('Modalidad', 'opcion')]]],
+                ['crear_tabla_repetible', [...$table, 'maximo' => 0, 'columnas' => [$column('Tema', 'texto')]]],
+                ['crear_tabla_repetible', [...$table, 'columnas' => [$column('Tema', 'texto', true), $column('Modalidad', 'opcion', false, ['Presencial', 'Virtual']), $column('Horas', 'numero')]]],
+            ),
+            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Prácticas', 'quien_llena' => 'carrera', 'contenido_html' => '<div data-block="tabla_practicas_de_laboratorio"></div>', 'despues_de' => '(final)']),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
+        ]);
+
+        $outcome = $this->run_('Agrega una tabla de prácticas');
+
+        [$noOptions, $badLimits, $created] = $gateway->toolResults(1);
+        $this->assertStringContainsString('La columna «Modalidad» es de tipo opcion: escriba sus opciones sin repetir.', $noOptions);
+        $this->assertStringContainsString('La tabla no es válida', $badLimits);
+        $this->assertStringContainsString('"clave":"tabla_practicas_de_laboratorio"', $created);
+        $this->assertStringContainsString('"ok":true', $gateway->toolResults(2)[3]);
+        $this->assertContains('Nueva tabla repetible «Prácticas de laboratorio».', $outcome->proposal['changes'] ?? []);
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $outcome->proposal['payload'] ?? [])->assertOk();
+        $block = SyllabusTemplate::query()->firstOrFail()->definition()->block('tabla_practicas_de_laboratorio');
+        $this->assertSame(['tema', 'modalidad', 'horas'], array_keys($block['value']['filas']['items']['properties']));
+        $this->assertSame(['tema_obligatoria'], array_column($block['rules'], 'code'));
+        $this->assertSame('tabla_practicas_de_laboratorio', FieldDefinition::query()->where('clave', 'practicas')->firstOrFail()->contenido['content'][0]['attrs']['kind']);
+    }
+
     public function test_only_the_palette_colors_are_accepted(): void
     {
         $gateway = $this->script([

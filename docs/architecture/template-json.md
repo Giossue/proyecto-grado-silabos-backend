@@ -238,6 +238,53 @@ varias líneas; si falta, una sola línea), `initial` (con cuántos elementos ar
 Una lista con `minItems` < `maxItems` se puede agrandar y achicar desde el editor, y debe repetirse en una fila de
 tabla (`<tr data-repeat>`) o en una sección (`<section data-repeat>`).
 
+### Diseñador de tablas repetibles (2026-11-16)
+
+En el editor, el botón «Tabla repetible» de la cinta (campos Carrera) abre un diálogo para crear una tabla nueva
+o abrir las del campo elegido, sin JSON. Una tabla repetible es un bloque con una sola lista de filas cuyas
+columnas son de texto (`maxLength`, `multiline`), elegir una (`oneOf`) o número (`maximum`, `multipleOf`
+según los decimales). Por columna se elige además el ancho (`data-width` en la celda) y si es obligatoria; por
+tabla, el título, el nombre de cada fila (`title` de la lista, para «Agregar …»), mínimo, máximo y filas al
+empezar. Una columna obligatoria se guarda como una regla `submit` con `filled: "lista.*.columna"` y
+`equals: {"count": "lista"}` (código `<columna>_obligatoria`, mensaje «Llene «Tema» en cada práctica: {detail}.»);
+el docente no puede enviar con esa celda vacía en alguna fila. El diseño se dibuja como una tabla con una fila de
+encabezados celestes y una fila `data-repeat` con un `data-slot` por columna (`RepeatableTable`).
+
+- `GET /api/v1/admin/template` (y `.../{id}`) trae `blockDesigns`: por cada bloque, `design` (lo que el diálogo
+  edita) o `reason` (por qué no se puede: «No es una sola lista de filas.», «Tiene listas o grupos dentro de cada
+  fila.», «No tiene datos que llene el docente: es una tabla fija.», o un diseño con celdas combinadas, totales,
+  contadores, condiciones o filas extra), siempre seguido de «Para cambiarla use Opciones avanzadas → Editar
+  JSON.». Un bloque solo se ofrece para editar si su diseño, vuelto a armar, da exactamente la misma definición; si
+  no, se abre solo para ver. En la plantilla oficial se edita `bibliografia`; `identificacion`, `unidades` y
+  `evaluacion` se abren solo para ver.
+- `POST /api/v1/admin/template/{id}/blocks/design` recibe el diseño (`kind`, `new`, `label`, `list`, `item`,
+  `min`, `max`, `initial`, `band`, `columns[]` con `key`, `title`, `type` `text|choice|number`, `max_length`,
+  `multiline`, `options[]` (`value`, `label`), `maximum`, `decimals`, `width`, `required`, y `extras`) y devuelve
+  `definition` (validada con `BlockDefinition::define`), el `design` releído e `initial` (el valor con el que
+  empieza el bloque). No escribe nada. Los errores van por dato (`columns.0.title`: «Escriba el nombre de la
+  columna.», `columns.1.options`: «Agregue al menos una opción.», `max`: «El máximo de filas no puede ser menor que
+  el mínimo.», `kind`: «Ya existe una tabla con ese nombre interno.») o en `definition` con la ruta del bloque.
+  El servidor pone la clave de las columnas y opciones nuevas a partir de su nombre; las existentes conservan la
+  suya aunque cambie el nombre, para no perder lo escrito.
+- `extras` lleva lo que el diálogo no muestra y se conserva tal cual: las demás reglas (por ejemplo
+  `libros_sin_titulo` con su `hint`), `catalog` y los `errorMessage` propios. Un `errorMessage` de columna se
+  conserva mientras no cambien su nombre, tipo ni límites; el de la lista, mientras no cambien mínimo, máximo ni el
+  nombre de la fila. Si se cambian, vale el mensaje por defecto. Quitar una columna que usa `catalog` da el error
+  de `catalog` y no se aplica.
+- «Guardar» del editor manda, solo si se cambió alguna tabla, `block_changes`: `{ "<kind>": definición }` junto al
+  resto del cuerpo `version: 1`. El servidor reemplaza o agrega esas definiciones (`TemplateDefinition::withBlocks`)
+  y vuelve a validar todo; sin `block_changes`, el guardado deja los bloques idénticos. Vista previa, aviso de
+  sílabos afectados y problemas en vivo reciben el mismo cuerpo, así que cuentan también los cambios de tablas. La
+  versión 2 (Editar JSON) no lee `block_changes`: trae los bloques completos.
+- Lo escrito por los docentes sigue la regla de siempre (`FieldResponse::carry`, `InProgressWork::adaptToTemplate`):
+  un bloque con el mismo tipo y propiedades conserva su valor; al guardar, las celdas de columnas quitadas se
+  descartan y las nuevas empiezan vacías. Si lo escrito ya no cabe (más filas que el nuevo máximo, una opción que ya
+  no existe), ese campo vuelve a la plantilla y el aviso de sílabos afectados lo cuenta en «pierde lo escrito».
+- En el editor, si una tabla ya puesta en la plantilla queda con más filas que el nuevo máximo, su valor inicial se
+  reemplaza por el `initial` devuelto.
+- El asistente crea tablas simples con `crear_tabla_repetible` (mismo `RepeatableTable` y las mismas validaciones);
+  la propuesta guarda `block_changes` en su `payload`.
+
 El constructor visual cambia `minItems`, `maxItems` e `initial` de cada lista sin tocar el JSON («Editar → Listas»).
 Al guardar envía `"lists": [{"block": "unidades", "path": "units.*.semanas", "min": 1, "max": 20, "initial": 2}]`.
 El servidor vuelve a validar el bloque y rechaza un máximo menor que el mínimo o un «Al

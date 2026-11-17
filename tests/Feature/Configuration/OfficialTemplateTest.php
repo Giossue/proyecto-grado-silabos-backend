@@ -235,6 +235,7 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame(route('template.schema'), $exported['$schema']);
         $this->assertMatchesTemplateSchema($exported);
         $this->assertSame(['identificacion', 'unidades', 'evaluacion', 'bibliografia'], array_keys($exported['blocks']));
+        $this->assertArrayHasKey('catalog', $exported['blocks']['bibliografia']);
         $this->assertCount(12, $exported['sections']);
         $this->assertSame(['key', 'title', 'orientation', 'fields'], array_keys($exported['sections'][0]));
         $this->assertSame(['key', 'label', 'quien_llena', 'content'], array_keys($exported['sections'][0]['fields'][0]));

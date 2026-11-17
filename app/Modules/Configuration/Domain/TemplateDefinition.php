@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Domain;
 
 use App\Modules\Configuration\Domain\Blocks\BlockDefinition;
 use App\Modules\Configuration\Domain\Blocks\BlockDefinitionError;
+use App\Modules\Configuration\Domain\Blocks\RepeatableTable;
 use App\Modules\Configuration\Domain\Blocks\ValueSchema;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 
@@ -178,6 +179,22 @@ final class TemplateDefinition
         $variables = array_keys($this->variables());
         foreach (array_keys($changed) as $kind) {
             $blocks[$kind] = BlockDefinition::define($kind, $blocks[$kind], $variables);
+        }
+
+        return new self([...$this->definition, 'blocks' => $blocks]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $changes
+     */
+    public function withBlocks(array $changes): self
+    {
+        $blocks = $this->definition['blocks'];
+        $variables = array_keys($this->variables());
+        foreach ($changes as $kind => $raw) {
+            $changed = BlockDefinition::define((string) $kind, $raw, $variables);
+            RepeatableTable::guard((string) $kind, $blocks[(string) $kind] ?? null, $changed, $variables);
+            $blocks[(string) $kind] = $changed;
         }
 
         return new self([...$this->definition, 'blocks' => $blocks]);

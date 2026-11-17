@@ -81,6 +81,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'lists.*.min' => ['required', 'integer', 'min:0', 'max:100'],
             'lists.*.max' => ['required', 'integer', 'min:1', 'max:100'],
             'lists.*.initial' => ['required', 'integer', 'min:0', 'max:100'],
+            'block_changes' => ['sometimes', 'array', 'max:20'],
             ...array_fill_keys(TemplateDefinition::ROOT_KEYS, ['sometimes', 'array']),
             'response_policy' => ['sometimes', 'in:protected'],
             'sections' => ['present', 'array', 'max:60'],
@@ -133,6 +134,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'lists.*.min' => 'mínimo',
             'lists.*.max' => 'máximo',
             'lists.*.initial' => 'al empezar',
+            'block_changes' => 'tablas cambiadas',
             'document' => 'documento',
             'variables' => 'datos del sistema',
             'blocks' => 'bloques',
@@ -222,6 +224,10 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             $document['title']['text'] = trim($title);
         }
         $layout = $this->input('layout');
+        $changes = $this->input('block_changes');
+        if (is_array($changes) && $changes !== [] && (int) $this->input('version') !== self::FORMAT_VERSION) {
+            $definition = $definition->withBlocks($changes);
+        }
         $lists = $this->input('lists');
         if (is_array($lists) && $lists !== []) {
             $definition = $definition->withListLimits(array_map(fn (mixed $list): array => [

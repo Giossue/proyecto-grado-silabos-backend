@@ -114,6 +114,17 @@ y el botón «Documentos» (DOC-10).
     desplegable, «Elegir al menos» y «Como máximo»); en un campo «No editable» queda apagado
     («Tipo de respuesta: no va en campos Institucionales»). Responde quien llena el campo: lo
     puede contestar Coordinación en cada materia o dejarlo para el docente;
+  - ícono «Tabla repetible» (2026-11-16): en un campo «Editable» abre un menú con «Nueva tabla
+    repetible» y, por cada tabla del campo, «Editar «…»» o «Ver «…»». El diálogo pide «Título de la
+    tabla», «Cada fila se llama» (para «Agregar …»), «Mínimo de filas», «Máximo de filas» y «Filas al
+    empezar», y por columna «Nombre», «Tipo de celda» («Texto» con «Máx. caracteres» y «Varias
+    líneas», «Elegir una» con sus opciones, «Número» con «Número máximo» y «Decimales»), «Ancho
+    (px)» y «Obligatoria», con subir, bajar y quitar. Debajo, la «Vista previa» de la tabla se
+    actualiza mientras se escribe. «Insertar tabla» la pone al final del campo; «Aplicar cambios»
+    cambia la tabla en toda la plantilla. Se guarda con «Guardar». Los errores salen junto a cada
+    dato. Las tablas que el diálogo no puede representar (identificación, unidades, evaluación) se
+    abren solo para ver, con el motivo y «Para cambiarla use Opciones avanzadas → Editar JSON.»;
+    en un campo «No editable» queda apagado;
   - con un campo elegido: «¿Se puede editar?» («No editable» es Institucional y «Editable» es
     Carrera) (2026-11-11), «Plantilla» (inserta
     Identificación institucional, Distribución y planificación, Bibliografía básica o
@@ -122,8 +133,9 @@ y el botón «Documentos» (DOC-10).
   - un ícono con ayuda al pasar el cursor, junto a las demás herramientas: «Opciones
     avanzadas», cuyo menú tiene «Diseño» y «Editar JSON»;
   - «Diseño» (diálogo): márgenes y tamaños de letra;
-  - los límites de las listas (unidades, semanas por unidad) no se cambian desde la pantalla
-    (2026-11-02): quedan en la definición de la plantilla y solo se tocan por JSON;
+  - los límites de las listas de unidades y semanas por unidad no se cambian desde la pantalla
+    (2026-11-02): quedan en la definición de la plantilla y solo se tocan por JSON; los de las tablas
+    repetibles simples, sí, desde «Tabla repetible»;
   - ícono «Vista previa» (ojo, 2026-11-16): muestra las hojas del borrador sin guardar en modo lectura, tal
     como quedarán al guardar; las herramientas se apagan y el mismo botón («Volver a editar») regresa;
   - mientras se edita, cada problema se marca en vivo, poco después de dejar de escribir, en el campo o la

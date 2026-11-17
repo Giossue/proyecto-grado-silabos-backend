@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $plantilla_id
  * @property string $mensaje_ia_plantilla_id
  * @property string $solicitada_por
- * @property array{version: int, sections: list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>} $estructura
+ * @property array{version: int, sections: list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>, block_changes?: array<string, array<string, mixed>>} $estructura
  * @property array{lista: list<string>, secciones: list<string>, campos: list<string>} $cambios
  * @property string $huella_base
  * @property string $version_borrador

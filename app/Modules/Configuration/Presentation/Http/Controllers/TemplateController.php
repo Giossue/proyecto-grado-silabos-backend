@@ -141,6 +141,7 @@ class TemplateController extends Controller
             'variables' => TemplateVariables::catalog(),
             'presets' => OfficialTemplate::presets($definition),
             'definition' => TemplatePresentation::definition($definition),
+            'blockDesigns' => TemplatePresentation::blockDesigns($definition),
             'logos' => [
                 'institution' => route('logos.institution', ['v' => $logos->version($logos->institutionPath())]),
                 'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$logos->version(public_path('images/silabo/facultad.jpeg')),

@@ -74,3 +74,10 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
     puede fijar cuántas elegir: `responder` explicando que el límite se pone cuando haya opciones,
     o `preguntar` qué herramientas ofrecer para escribirlas y fijar `minChoices` 1 y `maxChoices` 3.
 
+16. «En metodología agrega una tabla de prácticas de laboratorio donde el docente ponga el tema
+    (obligatorio), la modalidad presencial o virtual y las horas, de una a diez prácticas.»
+    `ver_plantilla` → `crear_tabla_repetible` (titulo «Prácticas de laboratorio», fila «práctica»,
+    minimo 1, maximo 10, al_empezar 1; columnas Tema `texto` obligatoria, Modalidad `opcion` con
+    Presencial y Virtual, Horas `numero`) → `agregar_campo` (quien_llena `carrera`, contenido
+    `<div data-block="CLAVE"></div>` con la clave devuelta, despues_de «(final)») →
+    `validar_borrador` → `responder`.

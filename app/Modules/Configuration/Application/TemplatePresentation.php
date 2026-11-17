@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Configuration\Domain\Blocks\RepeatableTable;
 use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -17,6 +18,19 @@ final class TemplatePresentation
     public static function definition(TemplateDefinition $definition): array
     {
         return ['document' => $definition->document(), 'blocks' => $definition->blocks(), ...(($definition->toArray()['response_policy'] ?? null) === 'protected' ? ['response_policy' => 'protected'] : [])];
+    }
+
+    /**
+     * @return array<string, array{design: array<string, mixed>|null, reason: string|null}>
+     */
+    public static function blockDesigns(TemplateDefinition $definition): array
+    {
+        $variables = array_keys($definition->variables());
+
+        return array_map(
+            fn (string $kind): array => RepeatableTable::read($kind, $definition->blocks()[$kind], $variables),
+            array_combine(array_keys($definition->blocks()), array_keys($definition->blocks())),
+        );
     }
 
     /**

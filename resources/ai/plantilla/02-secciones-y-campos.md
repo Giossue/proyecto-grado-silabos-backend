@@ -55,7 +55,18 @@ vacíos. No escriba texto de ejemplo dentro de los espacios: quedaría fijo.
 
 `listar_presets` muestra contenidos oficiales listos, como la tabla de identificación, la
 planificación de unidades, la bibliografía o las firmas. `usar_preset` los copia en un campo y
-fija quién lo llena. Es la única forma de poner un bloque.
+fija quién lo llena. Es la forma de poner un bloque oficial.
+
+## Tablas repetibles nuevas
+
+Cuando el docente debe llenar una tabla a la que agrega filas (prácticas, salidas de campo,
+tutorías), use `crear_tabla_repetible`: título, nombre de cada fila en singular, filas mínimas,
+máximas y al empezar, y columnas de tipo `texto`, `opcion` (con sus opciones) o `numero`. Una
+columna `obligatoria` impide enviar con esa celda vacía en alguna fila. Devuelve la clave del
+bloque; póngalo en un campo Carrera con `<div data-block="CLAVE"></div>` usando `agregar_campo`
+o `cambiar_contenido_campo`. Para una tabla fija con espacios para responder, arme la tabla HTML
+con respuestas, no una tabla repetible. Cambiar columnas de una tabla ya creada se hace en el
+editor: el administrador la abre en «Tabla repetible» de la cinta.
 
 Bloques (su diseño interno no se cambia): identificación, unidades, evaluación y bibliografía.
 La tabla de firmas y las demás tablas no son bloques: su contenido se puede cambiar con

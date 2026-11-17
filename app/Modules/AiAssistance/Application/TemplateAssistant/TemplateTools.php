@@ -12,6 +12,8 @@ final class TemplateTools
 {
     public const MAX_MESSAGE = 4000;
 
+    private const CELL_TYPES = ['texto' => 'text', 'opcion' => 'choice', 'numero' => 'number'];
+
     private const READ_ONLY = ['ver_plantilla', 'ver_campo', 'listar_presets', 'listar_variables', 'ver_estado', 'responder', 'preguntar'];
 
     /**
@@ -59,6 +61,24 @@ final class TemplateTools
             $this->spec('mover_campo', 'Mueve un campo para que quede después de otro campo, en la misma sección o en otra.', ['clave' => $key, 'seccion' => $key, 'despues_de' => $after]),
             $this->spec('quitar_campo', 'Quita un campo.', ['clave' => $key]),
             $this->spec('usar_preset', 'Reemplaza el contenido de un campo por un contenido listo y fija quién lo llena.', ['clave' => $key, 'preset' => ['type' => 'string', 'description' => 'Clave del contenido listo según listar_presets.']]),
+            $this->spec('crear_tabla_repetible', 'Crea una tabla repetible nueva (el docente agrega filas) y devuelve su clave. Después póngala en un campo Carrera con <div data-block="CLAVE"></div> (agregar_campo o cambiar_contenido_campo).', [
+                'titulo' => ['type' => 'string', 'description' => 'Título de la tabla, por ejemplo «Prácticas de laboratorio».'],
+                'fila' => ['type' => 'string', 'description' => 'Nombre de cada fila en singular, por ejemplo «práctica»; el botón dice «Agregar práctica».'],
+                'minimo' => ['type' => 'integer', 'description' => 'Filas mínimas (0 a 100).'],
+                'maximo' => ['type' => 'integer', 'description' => 'Filas máximas (1 a 100).'],
+                'al_empezar' => ['type' => 'integer', 'description' => 'Filas con las que empieza, entre el mínimo y el máximo.'],
+                'columnas' => ['type' => 'array', 'description' => 'Columnas en orden (1 a 24).', 'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'nombre' => ['type' => 'string'],
+                        'tipo' => ['type' => 'string', 'enum' => array_keys(self::CELL_TYPES), 'description' => 'texto (hasta 1000 caracteres), opcion (elegir una de «opciones») o numero (hasta 999,99).'],
+                        'obligatoria' => ['type' => 'boolean', 'description' => 'Si es verdadera, el docente no puede enviar con esa celda vacía en alguna fila.'],
+                        'opciones' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Solo para «opcion»; vacío en los otros tipos.'],
+                    ],
+                    'required' => ['nombre', 'tipo', 'obligatoria', 'opciones'],
+                    'additionalProperties' => false,
+                ]],
+            ]),
             $this->spec('validar_borrador', 'Revisa el borrador con las mismas reglas de guardar y lista los cambios hechos.', []),
             $this->spec('responder', 'Termina el turno con un mensaje para el administrador: resume los cambios del borrador o responde su pregunta.', ['mensaje' => ['type' => 'string']]),
             $this->spec('preguntar', 'Termina el turno pidiendo una aclaración cuando el pedido es ambiguo.', ['pregunta' => ['type' => 'string']]),
@@ -102,6 +122,7 @@ final class TemplateTools
                 'mover_campo' => $this->apply('Campo movido.', fn (): string => $this->draft->moveFieldAfter($this->string($args, 'clave'), $this->string($args, 'seccion'), $this->string($args, 'despues_de'))),
                 'quitar_campo' => $this->apply('Campo quitado.', fn (): string => $this->draft->removeField($this->string($args, 'clave'))),
                 'usar_preset' => $this->apply('Contenido listo aplicado.', fn (): string => $this->draft->applyPreset($this->string($args, 'clave'), $this->string($args, 'preset'))),
+                'crear_tabla_repetible' => $this->apply('Tabla repetible creada. Póngala en un campo con <div data-block="CLAVE"></div>.', fn (): string => $this->draft->createTable($this->tableDesign($args))),
                 'validar_borrador' => TemplateToolResult::ok($this->validation()),
                 'responder' => TemplateToolResult::finish(TemplateToolResult::ANSWER, $this->message($args, 'mensaje')),
                 'preguntar' => TemplateToolResult::finish(TemplateToolResult::QUESTION, $this->message($args, 'pregunta')),
@@ -141,6 +162,53 @@ final class TemplateTools
     private function apply(string $message, callable $change): TemplateToolResult
     {
         return TemplateToolResult::ok(['ok' => true, 'mensaje' => $message, 'clave' => $change()]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $args
+     * @return array<string, mixed>
+     */
+    private function tableDesign(array $args): array
+    {
+        $columns = $args['columnas'] ?? null;
+        if (! is_array($columns) || ! array_is_list($columns) || $columns === [] || count($columns) > 24) {
+            throw new TemplateDraftError('Indique de 1 a 24 columnas.');
+        }
+        $design = ['label' => trim($this->string($args, 'titulo')), 'item' => trim($this->string($args, 'fila'))];
+        if ($design['label'] === '' || mb_strlen($design['label']) > 120 || $design['item'] === '' || mb_strlen($design['item']) > 60) {
+            throw new TemplateDraftError('Escriba el título (hasta 120 caracteres) y el nombre de cada fila (hasta 60).');
+        }
+        foreach (['minimo' => 'min', 'maximo' => 'max', 'al_empezar' => 'initial'] as $name => $key) {
+            if (! is_int($args[$name] ?? null)) {
+                throw new TemplateDraftError("Falta el parámetro «{$name}» como número entero.");
+            }
+            $design[$key] = $args[$name];
+        }
+        $design['columns'] = array_map(function (mixed $column): array {
+            $name = is_array($column) && is_string($column['nombre'] ?? null) ? trim($column['nombre']) : '';
+            $type = self::CELL_TYPES[is_array($column) ? ($column['tipo'] ?? '') : ''] ?? null;
+            if ($name === '' || mb_strlen($name) > 300 || $type === null) {
+                throw new TemplateDraftError('Cada columna necesita «nombre» y un «tipo»: texto, opcion o numero.');
+            }
+            $options = is_array($column['opciones'] ?? null) ? array_values(array_filter(array_map(fn (mixed $option): string => is_string($option) ? trim($option) : '', $column['opciones']), fn (string $option): bool => $option !== '')) : [];
+            if ($type === 'choice' && ($options === [] || count($options) !== count(array_unique($options)))) {
+                throw new TemplateDraftError("La columna «{$name}» es de tipo opcion: escriba sus opciones sin repetir.");
+            }
+
+            return [
+                'title' => $name,
+                'type' => $type,
+                'required' => ($column['obligatoria'] ?? false) === true,
+                'width' => null,
+                ...match ($type) {
+                    'choice' => ['options' => array_map(fn (string $option): array => ['label' => $option], $options)],
+                    'number' => ['maximum' => 999.99, 'decimals' => 2],
+                    default => ['max_length' => 1000, 'multiline' => false],
+                },
+            ];
+        }, $columns);
+
+        return $design;
     }
 
     /**
