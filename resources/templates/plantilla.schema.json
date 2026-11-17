@@ -281,7 +281,17 @@
                 "key": { "$ref": "#/$defs/key" },
                 "label": { "type": ["string", "null"], "maxLength": 180 },
                 "quien_llena": { "enum": ["carrera", "institucional"] },
-                "content": { "$ref": "#/$defs/html" }
+                "content": { "$ref": "#/$defs/html" },
+                "show_if": {
+                    "type": ["object", "null"],
+                    "description": "Mostrar el campo solo si una respuesta anterior de elegir una o varias tiene alguna de estas opciones.",
+                    "required": ["response", "options"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "response": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,40}$" },
+                        "options": { "type": "array", "minItems": 1, "maxItems": 50, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,40}$" } }
+                    }
+                }
             }
         },
         "section": {

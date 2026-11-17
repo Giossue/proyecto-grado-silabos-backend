@@ -46,7 +46,7 @@ final class FieldResponse
             throw ValidationException::withMessages([$attribute => 'Complete solo los espacios de respuesta. El texto, los encabezados y la estructura los define Administración.']);
         }
         /** @var array<string, mixed> $document */
-        $document = ResponseKind::withoutOwnOptions($document);
+        $document = ResponseKind::withoutOwnOptions(self::adopt($template, $document, false));
 
         return $document;
     }
@@ -274,7 +274,13 @@ final class FieldResponse
             return $value;
         }
         if (self::blank($template)) {
-            return self::blank($value) ? $value : ResponseKind::unanswered(self::withoutBlankLines($value));
+            if (self::blank($value)) {
+                return $value;
+            }
+            /** @var array<string, mixed> $own */
+            $own = ResponseCondition::withoutLogic(ResponseKind::unanswered(self::withoutBlankLines($value)));
+
+            return $own;
         }
         $expected = $template['content'] ?? [];
         $actual = $value['content'] ?? [];
@@ -318,7 +324,7 @@ final class FieldResponse
             return $value;
         }
         if ($type === ResponseKind::NODE) {
-            return [...$value, 'attrs' => ResponseKind::ownOptions($template['attrs'] ?? [], $value['attrs'] ?? [], $saving)];
+            return [...$value, 'attrs' => ResponseCondition::stamp($template['attrs'] ?? [], ResponseKind::ownOptions($template['attrs'] ?? [], $value['attrs'] ?? [], $saving))];
         }
         if (in_array($type, ['tableHeader', 'documentBlock'], true) || self::blank($template)) {
             return $value;

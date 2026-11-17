@@ -8,6 +8,7 @@ use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
+use App\Modules\Configuration\Domain\ResponseCondition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
@@ -54,6 +55,7 @@ class SaveSubjectProfile
             $this->authorize($lockedSubject, $request);
             $this->locks->assertCareerEditable($lockedSubject->carrera_id);
 
+            $used = $this->fields->conditionOptions();
             foreach ($fieldIds as $fieldId) {
                 $current = FieldValue::query()
                     ->where('asignatura_id', $lockedSubject->id)
@@ -61,6 +63,13 @@ class SaveSubjectProfile
                     ->first();
                 $definition = $allowed->get($fieldId)->contenido;
                 $document = is_array($values[$fieldId]) ? FieldResponse::career($definition, $values[$fieldId], "values.{$fieldId}") : null;
+                if ($document !== null && $used !== []) {
+                    try {
+                        ResponseCondition::assertKeepsUsedOptions($document, $used);
+                    } catch (ValidationException $exception) {
+                        throw ValidationException::withMessages(["values.{$fieldId}" => collect($exception->errors())->flatten()->all()]);
+                    }
+                }
                 if ($document === null || $document == FieldResponse::template(FieldDocument::normalize($definition))) {
                     $current?->delete();
 

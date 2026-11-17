@@ -151,6 +151,36 @@ final class TemplateDefinition
     }
 
     /**
+     * @return array<string, array{response: string, options: list<string>}>
+     */
+    public function fieldConditions(): array
+    {
+        $conditions = [];
+        foreach (is_array($this->definition['field_conditions'] ?? null) ? $this->definition['field_conditions'] : [] as $key => $condition) {
+            if (is_array($condition) && is_string($condition['response'] ?? null) && is_array($condition['options'] ?? null)) {
+                $conditions[(string) $key] = ['response' => $condition['response'], 'options' => array_values(array_filter($condition['options'], is_string(...)))];
+            }
+        }
+
+        return $conditions;
+    }
+
+    /**
+     * @param  array<string, array{response: string, options: list<string>}>  $conditions
+     */
+    public function withFieldConditions(array $conditions): self
+    {
+        $definition = $this->definition;
+        unset($definition['field_conditions']);
+        if ($conditions !== []) {
+            ksort($conditions);
+            $definition['field_conditions'] = $conditions;
+        }
+
+        return new self($definition);
+    }
+
+    /**
      * @param  array<string, mixed>  $document
      */
     public function withDocument(array $document): self

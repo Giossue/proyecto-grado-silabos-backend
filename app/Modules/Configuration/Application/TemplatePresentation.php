@@ -68,6 +68,8 @@ final class TemplatePresentation
      */
     public static function sections(SyllabusTemplate $template): array
     {
+        $conditions = $template->definition()->fieldConditions();
+
         return array_values($template->sections->map(fn (TemplateSection $section): array => [
             'id' => (string) $section->id,
             'key' => (string) $section->clave,
@@ -79,6 +81,7 @@ final class TemplatePresentation
                 'label' => $field->etiqueta,
                 'quien_llena' => (string) $field->quien_llena,
                 'content' => $field->contenido,
+                ...(isset($conditions[$field->clave]) ? ['show_if' => $conditions[$field->clave]] : []),
             ])->all())->values()->all()),
         ])->values()->all());
     }

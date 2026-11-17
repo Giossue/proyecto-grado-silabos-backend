@@ -4,6 +4,7 @@ namespace App\Modules\AiAssistance\Presentation\Http\Requests;
 
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\ResponseCondition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Presentation\Http\Requests\ManageTemplatesRequest;
@@ -29,6 +30,7 @@ class SendTemplateAssistantMessageRequest extends ManageTemplatesRequest
             'draft.*.fields.*.label' => ['present', 'nullable', 'string', 'max:180'],
             'draft.*.fields.*.quien_llena' => ['required', Rule::in(FieldDefinition::RESPONSIBLES)],
             'draft.*.fields.*.content' => ['required', 'array', $this->document()],
+            'draft.*.fields.*.show_if' => ['sometimes', 'nullable', 'array'],
         ];
     }
 
@@ -48,11 +50,12 @@ class SendTemplateAssistantMessageRequest extends ManageTemplatesRequest
             'draft.*.fields.*.label' => 'nombre del campo',
             'draft.*.fields.*.quien_llena' => 'quién lo llena',
             'draft.*.fields.*.content' => 'contenido',
+            'draft.*.fields.*.show_if' => 'mostrar solo si',
         ];
     }
 
     /**
-     * @return list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>
+     * @return list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>, show_if?: array{response: string, options: list<string>}}>}>
      */
     public function draft(): array
     {
@@ -65,6 +68,7 @@ class SendTemplateAssistantMessageRequest extends ManageTemplatesRequest
                     'label' => trim((string) ($field['label'] ?? '')),
                     'quien_llena' => (string) $field['quien_llena'],
                     'content' => $this->normalized((array) $field['content']),
+                    ...$this->condition($field['show_if'] ?? null),
                 ];
             }
             $sections[] = [
@@ -76,6 +80,21 @@ class SendTemplateAssistantMessageRequest extends ManageTemplatesRequest
         }
 
         return $sections;
+    }
+
+    /**
+     * @return array{show_if?: array{response: string, options: list<string>}}
+     */
+    private function condition(mixed $raw): array
+    {
+        if ($raw === null) {
+            return [];
+        }
+        try {
+            return ['show_if' => ResponseCondition::define($raw)];
+        } catch (ValidationException) {
+            return [];
+        }
     }
 
     private function document(): Closure

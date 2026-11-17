@@ -65,6 +65,7 @@ final class ResponseKind
         }
         $options = self::options($kind, $attrs['options'] ?? []);
         $settings = self::settings($kind, $options, $attrs);
+        $logic = self::logic($attrs);
         $raw = $attrs['value'] ?? null;
         $schema = self::schema($kind, $options);
         if ($schema === null) {
@@ -72,7 +73,7 @@ final class ResponseKind
                 TemplateDocument::fail('Esta respuesta todavía no tiene opciones para elegir.');
             }
 
-            return ['kind' => $kind, 'options' => $options, 'value' => self::emptyValue($kind), ...$settings];
+            return ['kind' => $kind, 'options' => $options, 'value' => self::emptyValue($kind), ...$settings, ...$logic];
         }
         $own = ($attrs[self::OWN_OPTIONS] ?? null) === true ? [self::OWN_OPTIONS => true] : [];
         $limit = $settings['maxLength'] ?? null;
@@ -94,7 +95,24 @@ final class ResponseKind
             self::assertChoices(count($value), self::setting($settings, 'minChoices'), self::setting($settings, 'maxChoices'));
         }
 
-        return ['kind' => $kind, 'options' => $options, 'value' => $value, ...$settings, ...(self::hasOptions($kind) ? $own : [])];
+        return ['kind' => $kind, 'options' => $options, 'value' => $value, ...$settings, ...(self::hasOptions($kind) ? $own : []), ...$logic];
+    }
+
+    /**
+     * @param  array<string, mixed>  $attrs
+     * @return array<string, mixed>
+     */
+    private static function logic(array $attrs): array
+    {
+        $logic = [];
+        if (($attrs[ResponseCondition::ID] ?? null) !== null) {
+            $logic[ResponseCondition::ID] = ResponseCondition::id($attrs[ResponseCondition::ID]);
+        }
+        if (($attrs[ResponseCondition::ATTR] ?? null) !== null) {
+            $logic[ResponseCondition::ATTR] = ResponseCondition::define($attrs[ResponseCondition::ATTR]);
+        }
+
+        return $logic;
     }
 
     /**

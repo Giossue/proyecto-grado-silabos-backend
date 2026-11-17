@@ -68,6 +68,25 @@ o `cambiar_contenido_campo`. Para una tabla fija con espacios para responder, ar
 con respuestas, no una tabla repetible. Cambiar columnas de una tabla ya creada se hace en el
 editor: el administrador la abre en «Tabla repetible» de la cinta.
 
+## Mostrar solo si (lógica condicional)
+
+Una parte puede mostrarse solo si una respuesta anterior de elegir una o elegir varias tiene
+alguna de ciertas opciones (por ejemplo «mostrar esto solo si respondió Sí»). Si no se cumple,
+el docente no la ve, no se le exige, no se valida al enviar y no se imprime en el Word ni en el
+PDF; lo que había escrito se conserva y vuelve a verse si cambia la respuesta.
+
+- La respuesta que decide lleva un identificador: `"id"` en su `data-response` (minúsculas,
+  números y guion bajo, por ejemplo `"id":"usa_laboratorio"`). `ver_campo` lo muestra.
+- Campo entero: `mostrar_solo_si` con la clave del campo, el identificador de la respuesta y
+  las opciones (por su texto, como «Sí», o su clave, como `o1`). Con `respuesta` vacía se quita.
+- Una sola respuesta: ponga `"showIf":{"response":"usa_laboratorio","options":["o1"]}` en su
+  `data-response`, con las claves de las opciones.
+- La respuesta que decide debe estar antes (en un campo anterior o antes en el mismo campo) y
+  no puede ser la misma parte. Una sola condición por parte, sin combinar con «y» u «o».
+- Si después se quita esa respuesta o la opción usada, la condición queda inválida y no se
+  puede guardar hasta corregirla. Coordinación no puede quitar en su materia una opción que use
+  una condición.
+
 Bloques (su diseño interno no se cambia): identificación, unidades, evaluación y bibliografía.
 La tabla de firmas y las demás tablas no son bloques: su contenido se puede cambiar con
 `cambiar_contenido_campo`, respetando los colores permitidos.

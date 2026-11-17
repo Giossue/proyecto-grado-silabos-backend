@@ -137,6 +137,35 @@ class TemplateAssistantTest extends TestCase
         $this->assertEquals(['kind' => 'texto', 'options' => [], 'value' => '', 'required' => false, 'maxLength' => 300], $content['content'][1]['content'][1]['attrs']);
     }
 
+    public function test_the_assistant_shows_a_field_or_a_response_only_if_an_earlier_answer_was_chosen(): void
+    {
+        $question = '<p>¿Usa laboratorio? <span data-response=\'{"kind":"una","options":[{"const":"o1","title":"Sí"},{"const":"o2","title":"No"}],"id":"usa_laboratorio"}\'></span></p>'
+            .'<p>¿Cuál? <span data-response=\'{"kind":"texto","showIf":{"response":"usa_laboratorio","options":["o1"]}}\'></span></p>';
+        $gateway = $this->script([
+            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Laboratorio', 'quien_llena' => 'carrera', 'contenido_html' => $question, 'despues_de' => '(final)']),
+            ScriptedAiAgentGateway::calls(
+                ['mostrar_solo_si', ['clave' => 'descripcion', 'respuesta' => 'usa_laboratorio', 'opciones' => ['Sí']]],
+                ['mostrar_solo_si', ['clave' => 'objetivo_general', 'respuesta' => 'usa_laboratorio', 'opciones' => ['Tal vez']]],
+                ['mostrar_solo_si', ['clave' => 'objetivo_general', 'respuesta' => 'no_existe', 'opciones' => ['Sí']]],
+                ['mostrar_solo_si', ['clave' => 'objetivo_general', 'respuesta' => 'usa_laboratorio', 'opciones' => ['Sí']]],
+            ),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
+        ]);
+
+        $outcome = $this->run_('Muestra el objetivo general solo si usa laboratorio');
+
+        [$earlier, $missingOption, $missingResponse, $valid] = array_slice($gateway->toolResults(2), 1);
+        $this->assertStringContainsString('usa una respuesta que ya no está antes de esta parte', $earlier);
+        $this->assertStringContainsString('no tiene la opción «Tal vez»', $missingOption);
+        $this->assertStringContainsString('No hay ninguna respuesta con el identificador «no_existe»', $missingResponse);
+        $this->assertStringContainsString('"ok":true', $valid);
+        $this->assertContains('«Objetivo general» se mostrará solo si la respuesta «usa_laboratorio» tiene: o1.', $outcome->proposal['changes'] ?? []);
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $outcome->proposal['payload'] ?? [])->assertOk();
+        $this->assertSame(['objetivo_general' => ['response' => 'usa_laboratorio', 'options' => ['o1']]], $this->template->fresh()->definition()->fieldConditions());
+        $content = FieldDefinition::query()->where('clave', 'laboratorio')->firstOrFail()->contenido;
+        $this->assertEquals(['response' => 'usa_laboratorio', 'options' => ['o1']], $content['content'][1]['content'][1]['attrs']['showIf']);
+    }
+
     public function test_the_assistant_creates_a_simple_repeatable_table_and_places_it_in_a_field(): void
     {
         $column = fn (string $name, string $type, bool $required = false, array $options = []): array => ['nombre' => $name, 'tipo' => $type, 'obligatoria' => $required, 'opciones' => $options];

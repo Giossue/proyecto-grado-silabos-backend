@@ -15,6 +15,7 @@ final class TemplateJsonExport
     public static function export(SyllabusTemplate $template): array
     {
         $definition = $template->definition();
+        $conditions = $definition->fieldConditions();
 
         return [
             '$schema' => route('template.schema'),
@@ -42,6 +43,7 @@ final class TemplateJsonExport
                     'label' => $field->etiqueta,
                     'quien_llena' => $field->quien_llena,
                     'content' => DocumentHtml::toLines($field->contenido),
+                    ...(isset($conditions[$field->clave]) ? ['show_if' => $conditions[$field->clave]] : []),
                 ])->all())->values()->all(),
             ])->values()->all(),
         ];

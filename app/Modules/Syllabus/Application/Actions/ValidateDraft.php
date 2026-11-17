@@ -8,12 +8,14 @@ use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\ResponseCondition;
 use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\DraftValidation;
 use App\Modules\Syllabus\Application\IdentificationCard;
+use App\Modules\Syllabus\Application\SyllabusConditions;
 use App\Modules\Syllabus\Application\SyllabusDocumentFields;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
@@ -22,7 +24,7 @@ use Illuminate\Validation\ValidationException;
 
 class ValidateDraft
 {
-    public const RULE_VERSION = 'field-document-v11';
+    public const RULE_VERSION = 'field-document-v12';
 
     public function __construct(
         private readonly ActiveRole $roles,
@@ -39,14 +41,18 @@ class ValidateDraft
             $issues = [];
             $variables = TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($locked)]);
             $templates = $this->profiles->templates((string) $locked->parallel()->value('asignatura_id'));
+            $conditions = SyllabusConditions::evaluate($locked, $templates);
             foreach ($fields as $field) {
-                if (! SubjectProfileFields::teacherEditable($field, $templates)) {
+                if (! SubjectProfileFields::teacherEditable($field, $templates) || isset($conditions['hidden'][$field->id])) {
                     continue;
                 }
-                $template = $templates[$field->id] ?? $field->contenido;
-                $empty = FieldResponse::isEmpty($template, $values->get($field->id)?->valor)
+                $original = $templates[$field->id] ?? $field->contenido;
+                /** @var array<string, mixed> $template */
+                $template = ResponseCondition::clear($original, $conditions['answers'], true);
+                $shown = ResponseCondition::clear($values->get($field->id)?->valor, $conditions['answers'], true);
+                $empty = FieldResponse::isEmpty($template, $shown)
                     && (! FieldResponse::enabled() || FieldResponse::asksForAnswer(FieldResponse::template($template)));
-                $answers = FreeText::isDocument($values->get($field->id)?->valor) ? $values->get($field->id)?->valor : $template;
+                $answers = ResponseCondition::shownResponses(FreeText::isDocument($values->get($field->id)?->valor) ? $values->get($field->id)?->valor : $original, $conditions['answers']);
                 $pending = ResponseKind::pending($answers);
                 if ($empty) {
                     $issues[] = [
@@ -68,7 +74,7 @@ class ValidateDraft
                 $stored = $values->get($field->id)?->valor;
                 if (FieldResponse::enabled() && is_array($stored)) {
                     try {
-                        FieldResponse::normalize($template, $stored);
+                        FieldResponse::normalize($original, $stored);
                     } catch (ValidationException) {
                         $issues[] = ['field_id' => $field->id, 'code' => 'estructura_respuesta_modificada', 'severity' => 'error', 'message' => 'El formato de este campo cambió. Complete las respuestas en la estructura vigente.'];
                     }

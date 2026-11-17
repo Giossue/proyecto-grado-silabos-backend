@@ -2,9 +2,11 @@
 
 namespace App\Modules\Academic\Application;
 
+use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\ResponseCondition;
 use App\Modules\Configuration\Domain\ResponseKind;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -63,6 +65,14 @@ class SubjectProfileFields
     public static function teacherEditable(FieldDefinition $field, array $templates): bool
     {
         return $field->career() && (! isset($templates[$field->id]) || FieldResponse::open($templates[$field->id]));
+    }
+
+    /**
+     * @return array<string, list<string>> opciones que usa alguna condición «Mostrar solo si», por identificador de respuesta
+     */
+    public function conditionOptions(): array
+    {
+        return ResponseCondition::usedOptions(TemplateContext::active()->fieldConditions(), $this->templateFields()->map(fn (FieldDefinition $field): array => $field->contenido)->all());
     }
 
     /**

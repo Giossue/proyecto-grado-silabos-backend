@@ -37,11 +37,11 @@ class SyllabusSnapshot
             'logos' => $this->logos->embedded(data_get($syllabus->contexto_academico, 'career.faculty_id')),
             'identification' => $identification,
             'template_variables' => $variables,
-            'sections' => $this->archivedSnapshotSections($syllabus, $variables) ?? $template->sections->map(fn (TemplateSection $section): array => [
+            'sections' => $this->resolved(SyllabusConditions::visibleSections($this->archivedSnapshotSections($syllabus) ?? array_values($template->sections->map(fn (TemplateSection $section): array => [
                 'key' => $section->clave,
                 'title' => $section->titulo,
                 'orientation' => $section->orientacion,
-                'fields' => $section->blocks->flatMap(fn ($block) => $block->fields->map(function (FieldDefinition $field) use ($values, $variables): array {
+                'fields' => $section->blocks->flatMap(fn ($block) => $block->fields->map(function (FieldDefinition $field) use ($values): array {
                     $document = $field->quien_llena === FieldDefinition::INSTITUTIONAL
                         ? $field->contenido : (($values->get($field->id) instanceof FieldValue ? $values->get($field->id)->valor : $field->contenido));
                     /** @var array<string, mixed> $document */
@@ -53,23 +53,27 @@ class SyllabusSnapshot
                         'label' => $field->etiqueta,
                         'quien_llena' => $field->quien_llena,
                         'document' => $document,
-                        'value' => FieldDocument::resolve($document, $variables),
                     ];
                 })->all())->values()->all(),
-            ])->values()->all(),
+            ])->values()->all()), $template->definition()->fieldConditions()), $variables),
         ];
     }
 
     /**
-     * @param  array<string, string>  $variables
      * @return list<array<string, mixed>>|null
      */
-    private function archivedSnapshotSections(Syllabus $syllabus, array $variables): ?array
+    private function archivedSnapshotSections(Syllabus $syllabus): ?array
     {
-        $sections = SyllabusDocumentFields::archivedSections($syllabus);
-        if ($sections === null) {
-            return null;
-        }
+        return SyllabusDocumentFields::archivedSections($syllabus);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $sections
+     * @param  array<string, string>  $variables
+     * @return list<array<string, mixed>>
+     */
+    private function resolved(array $sections, array $variables): array
+    {
         foreach ($sections as &$section) {
             foreach ($section['fields'] as &$field) {
                 $field['value'] = FieldDocument::resolve($field['document'], $variables);

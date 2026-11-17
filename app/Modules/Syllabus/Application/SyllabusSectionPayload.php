@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Application\SubjectProfileFields;
+use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
@@ -23,13 +24,14 @@ final class SyllabusSectionPayload
     public static function build(TemplateSection $section, Closure $stored, array $context, array $templates = []): array
     {
         $variables = TemplateVariables::resolve($context);
+        $conditions = TemplateContext::active()->fieldConditions();
 
         return [
             'id' => $section->id,
             'key' => $section->clave,
             'title' => $section->titulo,
             'orientation' => $section->orientacion,
-            'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($stored, $templates, $variables): array {
+            'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($conditions, $stored, $templates, $variables): array {
                 $document = FieldDocument::normalize($field->quien_llena === FieldDefinition::INSTITUTIONAL ? $field->contenido : $stored($field));
                 $editable = SubjectProfileFields::teacherEditable($field, $templates);
                 $template = FieldDocument::normalize($templates[$field->id] ?? $field->contenido);
@@ -44,6 +46,7 @@ final class SyllabusSectionPayload
                     'required' => $field->quien_llena !== FieldDefinition::INSTITUTIONAL,
                     'value' => $document,
                     'document' => FieldDocument::resolve($document, $variables),
+                    ...(isset($conditions[$field->clave]) ? ['show_if' => $conditions[$field->clave]] : []),
                 ];
             })->all())->values()->all(),
         ];

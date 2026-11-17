@@ -8,6 +8,7 @@ use App\Modules\Configuration\Domain\Blocks\RepeatableTable;
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\ResponseCondition;
 use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
- * @phpstan-type DraftField array{key: string, label: string, quien_llena: string, content: array<string, mixed>}
+ * @phpstan-type DraftField array{key: string, label: string, quien_llena: string, content: array<string, mixed>, show_if?: array{response: string, options: list<string>}}
  * @phpstan-type DraftSection array{key: string, title: string, orientation: string, fields: list<DraftField>}
  */
 final class TemplateDraft
@@ -154,6 +155,7 @@ final class TemplateDraft
                     'nombre' => $field['label'],
                     'quien_llena' => $field['quien_llena'],
                     'resumen' => $this->summary($field['content']),
+                    ...(isset($field['show_if']) ? ['mostrar_solo_si' => $field['show_if']] : []),
                 ], $section['fields'], array_keys($section['fields'])),
             ];
         }
@@ -175,7 +177,68 @@ final class TemplateDraft
             'quien_llena' => $field['quien_llena'],
             'seccion' => $this->sections[$sectionIndex]['key'],
             'contenido_html' => implode("\n", DocumentHtml::toLines($field['content'])),
+            ...(isset($field['show_if']) ? ['mostrar_solo_si' => $field['show_if']] : []),
         ];
+    }
+
+    /**
+     * @param  list<string>  $options
+     */
+    public function showFieldIf(string $key, string $response, array $options): string
+    {
+        [$sectionIndex, $fieldIndex] = $this->locateField($key);
+        $response = trim($response);
+        if ($response === '') {
+            $this->changeField($sectionIndex, $fieldIndex, function (array $field): array {
+                unset($field['show_if']);
+
+                return $field;
+            });
+
+            return $key;
+        }
+        $source = null;
+        foreach ($this->sections as $section) {
+            foreach ($section['fields'] as $field) {
+                foreach (ResponseCondition::responses($field['content']) as $attrs) {
+                    if (($attrs[ResponseCondition::ID] ?? null) === $response) {
+                        $source ??= $attrs;
+                    }
+                }
+            }
+        }
+        if ($source === null) {
+            throw new TemplateDraftError("No hay ninguna respuesta con el identificador «{$response}». Póngale \"id\" en data-response al colocarla (ver_campo muestra los identificadores).");
+        }
+        $keys = [];
+        foreach ($options as $option) {
+            $match = array_values(array_filter(is_array($source['options'] ?? null) ? $source['options'] : [], fn (array $choice): bool => $choice['const'] === trim($option) || mb_strtolower($choice['title']) === mb_strtolower(trim($option))));
+            if ($match === []) {
+                throw new TemplateDraftError("La respuesta «{$response}» no tiene la opción «{$option}».");
+            }
+            $keys[] = $match[0]['const'];
+        }
+        try {
+            $condition = ResponseCondition::define(['response' => $response, 'options' => $keys]);
+        } catch (ValidationException $exception) {
+            throw new TemplateDraftError((string) collect($exception->errors())->flatten()->first());
+        }
+        $before = $this->sections;
+        $this->changeField($sectionIndex, $fieldIndex, fn (array $field): array => [...$field, 'show_if' => $condition]);
+        $fields = [];
+        foreach ($this->sections as $index => $section) {
+            foreach ($section['fields'] as $position => $field) {
+                $fields[] = ['path' => "sections.{$index}.fields.{$position}", 'document' => $field['content'], 'show_if' => $field['show_if'] ?? null];
+            }
+        }
+        foreach (ResponseCondition::problems($fields) as $problem) {
+            if ($problem['path'] === "sections.{$sectionIndex}.fields.{$fieldIndex}.show_if") {
+                $this->sections = $before;
+                throw new TemplateDraftError($problem['message']);
+            }
+        }
+
+        return $key;
     }
 
     public function addSection(string $title, string $orientation, int $position): string
@@ -431,6 +494,11 @@ final class TemplateDraft
             if ($before['field']['content'] !== $field['field']['content']) {
                 $changes[] = "Cambia el contenido de «{$name}».";
             }
+            if (($before['field']['show_if'] ?? null) !== ($field['field']['show_if'] ?? null)) {
+                $changes[] = isset($field['field']['show_if'])
+                    ? "«{$name}» se mostrará solo si la respuesta «{$field['field']['show_if']['response']}» tiene: ".implode(', ', $field['field']['show_if']['options']).'.'
+                    : "«{$name}» se mostrará siempre.";
+            }
             if ($before['section']['key'] !== $field['section']['key']) {
                 $changes[] = "«{$name}» pasa a la sección «{$field['section']['title']}».";
             }
@@ -486,6 +554,8 @@ final class TemplateDraft
      */
     private static function sectionsOf(SyllabusTemplate $template): array
     {
+        $conditions = $template->definition()->fieldConditions();
+
         return array_values($template->sections->map(fn (TemplateSection $section): array => [
             'key' => $section->clave,
             'title' => $section->titulo,
@@ -495,6 +565,7 @@ final class TemplateDraft
                 'label' => $field->etiqueta,
                 'quien_llena' => $field->quien_llena,
                 'content' => $field->contenido,
+                ...(isset($conditions[$field->clave]) ? ['show_if' => $conditions[$field->clave]] : []),
             ])->all())->all()),
         ])->all());
     }

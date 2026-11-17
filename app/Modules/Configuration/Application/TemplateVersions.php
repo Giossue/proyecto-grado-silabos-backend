@@ -78,6 +78,7 @@ final class TemplateVersions
                         'label' => (string) ($field['label'] ?? ''),
                         'quien_llena' => (string) $field['quien_llena'],
                         'content' => DocumentHtml::fromHtml($field['content']),
+                        ...(is_array($field['show_if'] ?? null) ? ['show_if' => $field['show_if']] : []),
                     ], array_values($section['fields'] ?? [])),
                 ], array_values($json['sections'] ?? [])),
             ],

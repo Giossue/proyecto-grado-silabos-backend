@@ -81,3 +81,13 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
     Presencial y Virtual, Horas `numero`) → `agregar_campo` (quien_llena `carrera`, contenido
     `<div data-block="CLAVE"></div>` con la clave devuelta, despues_de «(final)») →
     `validar_borrador` → `responder`.
+
+17. «En metodología pregunta si la asignatura usa laboratorio (Sí o No); si responde Sí, que
+    escriba cuál, y que "Técnicas de enseñanza" solo aparezca si usa laboratorio.»
+    `ver_plantilla` → `ver_campo` (`metodologia`) → `cambiar_contenido_campo` con el mismo HTML
+    más `<p>¿Usa laboratorio? <span data-response='{"kind":"una","options":[{"const":"o1","title":"Sí"},{"const":"o2","title":"No"}],"id":"usa_laboratorio"}'></span></p>`
+    y `<p>¿Cuál? <span data-response='{"kind":"texto","showIf":{"response":"usa_laboratorio","options":["o1"]}}'></span></p>`
+    → `mostrar_solo_si` (clave `tecnicas_ensenanza`, respuesta `usa_laboratorio`, opciones
+    «Sí») → `validar_borrador` → `responder` explicando que, si responde No, el docente no ve
+    esas partes, no se le exigen y no se imprimen.
+

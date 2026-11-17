@@ -434,6 +434,7 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | `orientation` | `portrait` o `landscape`. |
 | `quien_llena` | `carrera` («Carrera») o `institucional` («Institucional»). Un JSON anterior con `docente` o `coordinacion` se importa como `carrera`. |
 | `content` | Lista de líneas HTML, un texto HTML o un documento Tiptap (`{"type":"doc",...}`). |
+| `show_if` | Opcional. `{"response": "<id>", "options": ["o1", …]}`: el campo se muestra solo si esa respuesta anterior tiene alguna de esas opciones. Ver «Mostrar solo si». |
 
 Límites: 60 secciones, 60 campos por sección, tablas de hasta 24 columnas y 100 filas, documentos de hasta 2 MB.
 
@@ -588,6 +589,57 @@ Reglas:
 - **Word, PDF y revisiones** imprimen lo elegido como texto (una opción por línea en «Elegir
   varias») y nada si no se contestó. Las opciones viajan con la respuesta, así que una revisión
   enviada conserva lo elegido aunque después cambien.
+
+#### Mostrar solo si (2026-11-16)
+
+Un campo entero o una sola respuesta pueden mostrarse solo si una respuesta anterior de
+«Elegir una» o «Elegir varias» tiene alguna de ciertas opciones («mostrar esto solo si respondió
+Sí»). Administración lo pone desde el editor: con el campo elegido, «Mostrar solo si…» en la
+cinta; para una respuesta, en «Más opciones» de su cuadro. El asistente usa `mostrar_solo_si`
+(campo) o `showIf` en `data-response` (respuesta).
+
+- **Identificador de la respuesta que decide**: `attrs.id` (minúsculas, números y `_`, hasta 41
+  caracteres; si no vale: «El identificador de la respuesta no es válido.»). El editor lo genera
+  al insertar o guardar una respuesta de elegir, o al usarla en una condición. Las respuestas ya
+  guardadas no lo tienen hasta que se editan, así que un documento sin condiciones queda igual
+  byte a byte. Debe ser único en la plantilla («Dos respuestas tienen el mismo identificador.
+  Quite una y vuelva a insertarla.»).
+- **Condición**: `{"response": "<id>", "options": ["o1", …]}` con las claves de las opciones;
+  se cumple si lo respondido es una de ellas («Elegir una») o incluye alguna («Elegir varias»).
+  En una respuesta va en `attrs.showIf`; en un campo, en `show_if` del campo (el servidor la
+  guarda en `definicion_plantilla.field_conditions`, por clave de campo, y la quita si no queda
+  ninguna). Una sola condición por parte, sin «y» ni «o».
+- **Reglas al guardar** (también en los problemas en vivo, sobre el campo que la tiene): la forma
+  («Elija la respuesta y al menos una de sus opciones para «Mostrar solo si».»), la respuesta debe
+  estar antes en el orden del documento y no ser la misma parte («La condición «Mostrar solo si»
+  usa una respuesta que ya no está antes de esta parte. Elija otra respuesta o quite la
+  condición.»), debe ser de elegir («…solo puede usar respuestas de elegir una o elegir varias.»)
+  y tener las opciones usadas («…usa una opción que la respuesta ya no tiene. Elija otra opción o
+  quite la condición.»). Si se borra la respuesta o la opción, la condición queda marcada en vivo
+  y no se puede guardar hasta corregirla. Las rutas son `sections.{i}.fields.{j}.show_if` (campo)
+  y `sections.{i}.fields.{j}.content` (respuesta).
+- **Coordinación** no puede quitar en su materia una opción que use alguna condición: «No puede
+  quitar una opción que la plantilla usa para mostrar u ocultar otra parte del sílabo. Déjela o
+  pida a Administración que cambie esa condición.» (`422` en `values.{campo}`). El identificador y
+  la condición los fija siempre la plantilla: el servidor los copia de ella en la fila de la
+  materia y en el sílabo, y quita los que traiga un espacio propio de Coordinación.
+- **Docente**: lo oculto no se muestra y se vuelve a evaluar mientras responde, en orden del
+  documento. Lo escrito en una parte oculta **no se borra**: queda guardado tal cual y vuelve a
+  verse si cambia la respuesta que decide. Al enviar, lo oculto no es obligatorio ni se valida
+  (`respuesta_faltante`, `campo_obligatorio_faltante`, `respuesta_sin_opciones`,
+  `respuesta_fuera_de_limite`).
+- **Si la respuesta que decide no se encuentra** en el sílabo que se evalúa (no tiene
+  identificador, el sílabo conserva una estructura anterior o el campo ya no está), la condición
+  no oculta nada: la parte se muestra, se exige, se valida y se imprime. Una respuesta que decide
+  y está oculta sí cuenta como sin contestar, así que lo que depende de ella también se oculta.
+- **Word, PDF, revisiones y vista previa**: la fotografía deja fuera los campos ocultos (y una
+  sección cuyos campos quedaron todos ocultos) y lleva las respuestas ocultas sin contestar, así
+  que no se imprimen; lo guardado del docente no cambia.
+  Coordinación sigue viendo todo en el proyecto de carrera para ajustar opciones.
+- El motor de condiciones de los bloques (`keep_if`, `Blocks\Condition`) evalúa datos dentro de
+  un bloque con una sola clave y un solo valor; estas condiciones cruzan campos y comparan con
+  varias opciones, así que viven en `ResponseCondition` (backend) y `src/lib/responseConditions.ts`
+  (frontend), con la misma regla de evaluación en orden.
 
 El catálogo de tipos está en un solo lugar por capa: `ResponseKind::KINDS` (backend) y
 `RESPONSE_KINDS` en `src/lib/responseKinds.ts` (frontend). Cada tipo es un nombre y un esquema

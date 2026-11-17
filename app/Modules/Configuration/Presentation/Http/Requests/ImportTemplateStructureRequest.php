@@ -5,6 +5,7 @@ namespace App\Modules\Configuration\Presentation\Http\Requests;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\ResponseCondition;
 use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -92,6 +93,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'sections.*.fields.*.key' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'max:100', $this->uniqueFieldKey()],
             'sections.*.fields.*.label' => ['nullable', 'string', 'max:180'],
             'sections.*.fields.*.quien_llena' => ['required', Rule::in(FieldDefinition::RESPONSIBLES)],
+            'sections.*.fields.*.show_if' => ['sometimes', 'nullable', 'array'],
             'sections.*.fields.*.content' => ['required', function (string $attribute, mixed $value, Closure $fail): void {
                 if (is_string($value) || (is_array($value) && array_is_list($value) && $value !== [] && array_filter($value, 'is_string') === $value)) {
                     $value = DocumentHtml::fromHtml($value);
@@ -151,6 +153,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'sections.*.fields.*.label' => 'nombre del campo',
             'sections.*.fields.*.quien_llena' => 'quién lo llena',
             'sections.*.fields.*.content' => 'contenido',
+            'sections.*.fields.*.show_if' => 'mostrar solo si',
         ];
     }
 
@@ -160,12 +163,65 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
-            if ($this->validDefinition() === null) {
+            $definition = $this->validDefinition();
+            if ($definition === null) {
                 foreach ($this->definitionErrors ?? [] as $message) {
                     $validator->errors()->add('definition', $message);
                 }
+
+                return;
+            }
+            foreach (ResponseCondition::problems($this->conditionFields($definition)) as $problem) {
+                $validator->errors()->add($problem['path'], $problem['message']);
             }
         }];
+    }
+
+    /**
+     * @return list<array{path: string, document: mixed, show_if: mixed}>
+     */
+    private function conditionFields(TemplateDefinition $definition): array
+    {
+        $fields = [];
+        foreach (array_values((array) $this->input('sections', [])) as $sectionIndex => $section) {
+            foreach (array_values(is_array($section['fields'] ?? null) ? $section['fields'] : []) as $fieldIndex => $field) {
+                if (! is_array($field)) {
+                    continue;
+                }
+                $content = $field['content'] ?? null;
+                try {
+                    $content = is_string($content) || (is_array($content) && array_is_list($content)) ? DocumentHtml::fromHtml($content) : $content;
+                    $document = is_array($content) ? app(TemplateContext::class)->using($definition, fn (): array => FieldDocument::normalize($content)) : null;
+                } catch (ValidationException) {
+                    $document = null;
+                }
+                $fields[] = ['path' => "sections.{$sectionIndex}.fields.{$fieldIndex}", 'document' => $document, 'show_if' => $field['show_if'] ?? null];
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * @return array<string, array{response: string, options: list<string>}>
+     */
+    private function fieldConditions(): array
+    {
+        $conditions = [];
+        foreach ((array) $this->input('sections', []) as $section) {
+            foreach (is_array($section['fields'] ?? null) ? $section['fields'] : [] as $field) {
+                if (! is_array($field) || ! is_string($field['key'] ?? null) || ($field['show_if'] ?? null) === null) {
+                    continue;
+                }
+                try {
+                    $conditions[$field['key']] = ResponseCondition::define($field['show_if']);
+                } catch (ValidationException) {
+                    continue;
+                }
+            }
+        }
+
+        return $conditions;
     }
 
     private function validDefinition(): ?TemplateDefinition
@@ -189,7 +245,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
         }
         $current = SyllabusTemplate::query()->first()?->definition() ?? TemplateContext::active();
         if ((int) $this->input('version') !== self::FORMAT_VERSION) {
-            return $this->definition = $this->defining(fn (): TemplateDefinition => $this->withTitleAndLayout($current));
+            return $this->definition = $this->defining(fn (): TemplateDefinition => $this->withTitleAndLayout($current)->withFieldConditions($this->fieldConditions()));
         }
         $sections = [];
         foreach ((array) $this->input('sections', []) as $section) {
@@ -213,7 +269,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             }
         }
 
-        return $this->definition = $this->defining(fn (): TemplateDefinition => $this->withTitleAndLayout($definition));
+        return $this->definition = $this->defining(fn (): TemplateDefinition => $this->withTitleAndLayout($definition)->withFieldConditions($this->fieldConditions()));
     }
 
     private function withTitleAndLayout(TemplateDefinition $definition): TemplateDefinition

@@ -99,3 +99,10 @@ Celda de una tabla para elegir varias, entre una y dos:
 <tr><td><span data-response='{"kind":"varias","options":[{"const":"o1","title":"Aula"},{"const":"o2","title":"Laboratorio"},{"const":"o3","title":"Campo"}],"minChoices":1,"maxChoices":2}'></span></td></tr>
 </table>
 ```
+
+Pregunta de Sí o No y un espacio que se muestra solo si respondió Sí (ver «Mostrar solo si»):
+
+```html
+<p>¿Usa laboratorio? <span data-response='{"kind":"una","options":[{"const":"o1","title":"Sí"},{"const":"o2","title":"No"}],"id":"usa_laboratorio"}'></span></p>
+<p>¿Cuál? <span data-response='{"kind":"texto","showIf":{"response":"usa_laboratorio","options":["o1"]}}'></span></p>
+```

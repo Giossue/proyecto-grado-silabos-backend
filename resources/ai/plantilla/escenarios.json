@@ -90,5 +90,12 @@
       { "mensaje": "En metodología agrega una tabla de salidas de campo donde el docente ponga el lugar, la fecha y las horas, máximo cinco", "aplicar": true },
       { "mensaje": "que el lugar sea obligatorio" }
     ]
+  },
+  {
+    "nombre": "Mostrar solo si",
+    "turnos": [
+      { "mensaje": "En metodología pregunta si la asignatura usa laboratorio, sí o no, y si responde sí que escriba cuál", "aplicar": true },
+      { "mensaje": "y que técnicas de enseñanza solo aparezca si usa laboratorio" }
+    ]
   }
 ]

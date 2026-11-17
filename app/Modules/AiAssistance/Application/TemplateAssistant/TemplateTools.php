@@ -79,6 +79,11 @@ final class TemplateTools
                     'additionalProperties' => false,
                 ]],
             ]),
+            $this->spec('mostrar_solo_si', 'Muestra un campo solo si una respuesta anterior de elegir una o varias tiene alguna de las opciones dadas (si no, el docente no lo ve, no se le exige y no se imprime). Con «respuesta» vacía quita la condición. Para una sola respuesta use "showIf" en su data-response.', [
+                'clave' => $key,
+                'respuesta' => ['type' => 'string', 'description' => 'Identificador ("id" en data-response) de la respuesta anterior, por ejemplo «usa_laboratorio». Vacío quita la condición.'],
+                'opciones' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Opciones de esa respuesta que muestran el campo, por su texto («Sí») o su clave («o1»). Vacío si quita la condición.'],
+            ]),
             $this->spec('validar_borrador', 'Revisa el borrador con las mismas reglas de guardar y lista los cambios hechos.', []),
             $this->spec('responder', 'Termina el turno con un mensaje para el administrador: resume los cambios del borrador o responde su pregunta.', ['mensaje' => ['type' => 'string']]),
             $this->spec('preguntar', 'Termina el turno pidiendo una aclaración cuando el pedido es ambiguo.', ['pregunta' => ['type' => 'string']]),
@@ -123,6 +128,7 @@ final class TemplateTools
                 'quitar_campo' => $this->apply('Campo quitado.', fn (): string => $this->draft->removeField($this->string($args, 'clave'))),
                 'usar_preset' => $this->apply('Contenido listo aplicado.', fn (): string => $this->draft->applyPreset($this->string($args, 'clave'), $this->string($args, 'preset'))),
                 'crear_tabla_repetible' => $this->apply('Tabla repetible creada. Póngala en un campo con <div data-block="CLAVE"></div>.', fn (): string => $this->draft->createTable($this->tableDesign($args))),
+                'mostrar_solo_si' => $this->apply('Condición actualizada.', fn (): string => $this->draft->showFieldIf($this->string($args, 'clave'), $this->string($args, 'respuesta'), $this->strings($args, 'opciones'))),
                 'validar_borrador' => TemplateToolResult::ok($this->validation()),
                 'responder' => TemplateToolResult::finish(TemplateToolResult::ANSWER, $this->message($args, 'mensaje')),
                 'preguntar' => TemplateToolResult::finish(TemplateToolResult::QUESTION, $this->message($args, 'pregunta')),
@@ -219,6 +225,20 @@ final class TemplateTools
         $value = $args[$name] ?? null;
         if (! is_string($value)) {
             throw new TemplateDraftError("Falta el parámetro «{$name}» como texto.");
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  array<string, mixed>  $args
+     * @return list<string>
+     */
+    private function strings(array $args, string $name): array
+    {
+        $value = $args[$name] ?? null;
+        if (! is_array($value) || ! array_is_list($value) || array_filter($value, fn (mixed $item): bool => ! is_string($item)) !== []) {
+            throw new TemplateDraftError("Falta el parámetro «{$name}» como lista de textos.");
         }
 
         return $value;
