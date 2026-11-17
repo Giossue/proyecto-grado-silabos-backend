@@ -15,7 +15,6 @@ use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
 use App\Modules\AiAssistance\Domain\Exceptions\AiProviderError;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateVersion;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\CreatesSyllabusProcess;
@@ -205,38 +204,6 @@ class TemplateAssistantTest extends TestCase
         $copy = FieldDefinition::query()->where('clave', 'laboratorio_2')->firstOrFail()->contenido;
         $this->assertSame('usa_laboratorio_2', $copy['content'][0]['content'][1]['attrs']['id']);
         $this->assertEquals(['response' => 'usa_laboratorio', 'options' => ['o1']], $copy['content'][1]['content'][1]['attrs']['showIf']);
-    }
-
-    public function test_the_assistant_reads_the_version_history_without_writing_or_sharing_who_saved(): void
-    {
-        $empty = $this->script([
-            ScriptedAiAgentGateway::call('ver_historial'),
-            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Aún no hay versiones.']),
-        ]);
-        $this->run_('¿Qué versiones hay?');
-        $this->assertStringContainsString('"versiones":[]', $empty->toolResults(1)[0]);
-        $this->assertSame(0, TemplateVersion::query()->count());
-
-        $payload = TemplateDraft::fromTemplate($this->template)->payload();
-        $payload['sections'][1]['title'] = '2. Descripción';
-        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $payload)->assertOk();
-        $versions = TemplateVersion::query()->count();
-        $this->openSyllabusProcess($this->template->id);
-        $gateway = $this->script([
-            ScriptedAiAgentGateway::calls(['ver_historial'], ['comparar_version', ['numero' => 1]], ['comparar_version', ['numero' => 99]]),
-            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
-        ]);
-
-        $outcome = $this->run_('¿Qué cambió desde la primera versión?');
-
-        [$history, $compared, $missing] = $gateway->toolResults(1);
-        $this->assertStringContainsString('"numero":2', $history);
-        $this->assertStringContainsString('"numero":1', $history);
-        $this->assertStringNotContainsString((string) User::query()->where('correo_electronico', 'admin@silabos.test')->value('nombre'), $history);
-        $this->assertStringContainsString('2. Descripción', $compared);
-        $this->assertStringContainsString('No existe la versión 99', $missing);
-        $this->assertSame(TemplateAssistantOutcome::ANSWER, $outcome->status);
-        $this->assertSame($versions, TemplateVersion::query()->count());
     }
 
     public function test_the_assistant_creates_a_simple_repeatable_table_and_places_it_in_a_field(): void

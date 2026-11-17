@@ -2,9 +2,9 @@
 
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
-- Fecha: 2026-11-16.
-- Última migración aplicada: `2026_11_16_000272_create_template_versions_table`.
-- Origen: base temporal creada solo para regenerar este documento, con todas las migraciones aplicadas (PostgreSQL 18), esquema `public`, 38 tablas.
+- Fecha: 2026-11-17.
+- Última migración aplicada: `2026_11_11_000271_library_review_email_keeps_its_switch`.
+- Origen: base temporal creada solo para regenerar este documento, con todas las migraciones aplicadas (PostgreSQL 18), esquema `public`, 37 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --dbname=<base temporal> -X -At -f <consulta>.sql`.
   - columnas: `pg_attribute` + `format_type()` + `pg_attrdef` (`pg_get_expr`);
@@ -53,7 +53,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - `proteger_archivo_registrado()`: triggers en `archivos`
 - `proteger_envio_biblioteca()`: triggers en `envios_biblioteca`
 - `proteger_notificacion()`: triggers en `notificaciones`
-- `proteger_registro_append_only()`: triggers en `aprobaciones`, `eventos_auditoria`, `firmas_silabo`, `revisiones_coordinacion`, `versiones_plantilla`
+- `proteger_registro_append_only()`: triggers en `aprobaciones`, `eventos_auditoria`, `firmas_silabo`, `revisiones_coordinacion`
 - `proteger_registro_con_campos_unicos()`: triggers en `revisiones_silabo`
 - `reinicio_institucional_habilitado()`: ningún trigger la llama directamente
 - `validar_exportacion_silabo()`: triggers en `exportaciones_silabo`
@@ -754,29 +754,6 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `valores_campo_silabo_definicion_unica`: `(silabo_id, definicion_campo_id) WHERE (silabo_id IS NOT NULL)`
 - CHECK:
   - `valores_campo_un_solo_dueno_check`: `CHECK (((silabo_id IS NULL) <> (asignatura_id IS NULL)))`
-
-### `versiones_plantilla`
-
-| Columna | Tipo | Nulo | Por defecto |
-|---|---|---|---|
-| `version_plantilla_id` | uuid | no |  |
-| `plantilla_id` | uuid | no |  |
-| `numero_version_plantilla` | integer | no |  |
-| `contenido_version_plantilla` | jsonb | no |  |
-| `guardada_por` | uuid | sí |  |
-| `guardada_en` | timestamp(6) with time zone | no | `clock_timestamp()` |
-
-- PK: `PRIMARY KEY (version_plantilla_id)`
-- FK:
-  - `versiones_plantilla_guardada_por_foreign`: `FOREIGN KEY (guardada_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
-  - `versiones_plantilla_plantilla_id_foreign`: `FOREIGN KEY (plantilla_id) REFERENCES plantilla_silabo(plantilla_id) ON DELETE CASCADE`
-- Únicos:
-  - `versiones_plantilla_plantilla_id_numero_version_plantilla_uniqu`: `(plantilla_id, numero_version_plantilla)`
-- CHECK:
-  - `versiones_plantilla_contenido_check`: `CHECK ((jsonb_typeof(contenido_version_plantilla) = 'object'::text))`
-  - `versiones_plantilla_numero_check`: `CHECK ((numero_version_plantilla >= 1))`
-- Triggers:
-  - `proteger_version_plantilla`: BEFORE UPDATE FOR EACH ROW EXECUTE FUNCTION proteger_registro_append_only()
 
 ## Tablas del framework
 

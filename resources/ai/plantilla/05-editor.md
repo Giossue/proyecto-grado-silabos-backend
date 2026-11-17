@@ -22,8 +22,6 @@ un clic: arriba aparece la cinta con las herramientas de lo seleccionado.
 | Mostrar solo si | Sí (`mostrar_solo_si`, `showIf`) | «Mostrar solo si…» o, en una respuesta, «Tipo de respuesta» |
 | Contenidos listos | Sí (`usar_preset`) | «¿Se puede editar?» → «Plantilla» |
 | Revisar errores | Sí (`validar_borrador`, mismas reglas) | Los problemas se marcan en vivo en el campo o la sección |
-| Ver versiones y qué cambió | Sí, solo leer (`ver_historial`, `comparar_version`) | «Historial» → «Ver cambios» |
-| Restaurar una versión | No | «Historial» → «Restaurar» → «Cargar en el editor» |
 | Deshacer y rehacer | No | «Deshacer» y «Rehacer» en la cinta, o Ctrl+Z y Ctrl+Y |
 | Vista previa y «Ver como docente» | No | «Vista previa» en la cinta; «Ver como docente» arriba |
 | Sílabos afectados al guardar | No | Aparece solo al pulsar «Guardar» |
@@ -74,10 +72,6 @@ un clic: arriba aparece la cinta con las herramientas de lo seleccionado.
 - **Deshacer**: «Deshacer» y «Rehacer» en la cinta, o Ctrl+Z y Ctrl+Y, también para agregar,
   borrar, mover o duplicar campos y secciones. Si sale del editor sin guardar, este pregunta y
   «Volver y descartar cambios» deja todo como estaba guardado.
-- **Historial**: «Historial», arriba, lista cada guardado con quién y cuándo. «Ver cambios»
-  compara esa versión con la actual. «Restaurar» → «Cargar en el editor» pone esa versión en
-  el editor como borrador; la plantilla no cambia hasta pulsar «Guardar». Restaurar no recupera
-  lo cambiado solo con «Editar JSON» (bloques y datos del sistema).
 - **Convocatoria abierta**: la plantilla no se puede editar; primero hay que pausar la
   convocatoria.
 

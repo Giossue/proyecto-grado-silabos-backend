@@ -258,9 +258,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## Plantilla
 
-- Hay una sola plantilla. Se edita en el sitio, sin publicación (I-32). Desde el 2026-11-16
-  cada guardado queda en un historial de versiones que se puede ver, comparar y restaurar al
-  borrador del editor (`odd/tasks/plantilla-madura.md`, S4a).
+- Hay una sola plantilla. Se edita en el sitio, sin versiones ni publicación (I-32). El
+  historial de versiones agregado el 2026-11-16 (`odd/tasks/plantilla-madura.md`, S4a) lo quitó
+  el usuario el 2026-11-17: «Sabes qué, mejor quita lo de historial de la plantilla».
 - La plantilla la define Administración, y el Word que genera es el formato oficial del
   sílabo. No hay otra autoridad que la apruebe (antes PV-01 y PV-07; confirmado por el
   responsable del producto el 2026-10-26).
@@ -317,10 +317,6 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
     2026-11-11 que dejaba el botón solo a Coordinación (S3a).
   - Los tipos de respuesta son tres: texto libre, elegir una y elegir varias. Sin número, fecha
     ni texto corto (S3b; Número se quitó el 2026-11-11).
-  - Cada guardado del editor queda como versión en `versiones_plantilla` (solo se agrega), con
-    quién y cuándo; se ve, se compara con la actual y se restaura al borrador del editor, sin
-    guardar. Restaurar trae secciones, campos, título, márgenes y condiciones, no los bloques,
-    variables ni plantillas listas de la definición (S4a).
   - Antes de guardar se cuentan los sílabos de la convocatoria en pausa que cambiarían,
     ensayando el guardado real en una transacción que se deshace; si no se puede contar a
     tiempo, se guarda igual tras confirmar (S4b). Los problemas se marcan en vivo con las mismas

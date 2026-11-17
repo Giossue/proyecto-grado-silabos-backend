@@ -1,0 +1,28 @@
+# Ajustes del editor de plantilla y del asistente
+
+Objetivo: tres ajustes pedidos tras cerrar el editor de plantilla maduro (commit `bca6e7b8`). Rama: main (commits locales, sin push).
+Entrega: commits por unidad en backend y frontend. Pruebas: Pest (`php -d memory_limit=1G vendor/bin/pest`), Vitest.
+
+## Specs
+
+- S1. Restaurar vuelve de verdad al estado anterior: «Pero es simple lógica, de qué me sirve tener un historial si no cambia a un estado anterior». Restaurar una versión trae todo lo que la versión guardó: secciones, campos, título, márgenes y también las tablas (bloques), los datos del sistema, las plantillas listas y las condiciones de campos. Sigue cargándose en el editor y se guarda con «Guardar», con el aviso de sílabos afectados, los bloqueos y las validaciones de siempre.
+- S2. Ocultar una respuesta oculta toda su línea: «Pero tocaría arreglarlo, claro». Cuando una respuesta con «Mostrar solo si» queda oculta, se oculta el párrafo (o la celda de tabla) que la contiene, para que no quede texto suelto como «Cuál:». Igual en el formulario del docente, la vista previa, el Word y el PDF. Lo escrito no se borra (regla vigente).
+- S3. El asistente no se sale del objetivo: «y lo de deepseek toca arreglarlo, y es que existe en la documentacion de la api de deepseek configuraciones que justamente me ayudan a que no se salga del objetivo planteado». Hoy no se envía `temperature` (DeepSeek usa 1.0 en modo sin razonamiento); ya se usan `strict` (beta), `tool_choice: required` y `thinking: disabled`. Usar las opciones documentadas de la API de DeepSeek (https://api-docs.deepseek.com) para que responda de forma estable y dentro de lo pedido, medido con los escenarios (35 tras quitar el historial) contra el modelo real.
+
+- S4. «Sabes qué, mejor quita lo de historial de la plantilla»: se quita por completo el historial de versiones de la plantilla (backend, frontend, asistente, documentación). Nunca se subió a producción, así que se borra su migración en vez de agregar otra.
+
+## Tasks
+
+- [~] T1 (S1) Restaurar completo — CANCELADO: el usuario pidió quitar el historial (L5); el trabajo sin commit se descartó.
+- [x] T4 (S4) Quitar el historial de versiones de la plantilla en ambos repos — delegado; backend 897, frontend 918 pasan
+- [ ] T2 (S2) Ocultar la línea de una respuesta oculta — después de T1 (comparten pruebas Pest)
+- [ ] T3 (S3) Configuración de DeepSeek medida con escenarios — delegado (paralelo con T1)
+
+## Log
+
+- L1 (usuario, 2026-11-17): «1. Pero es simple lógica, de qué me sirve tener un historial si no cambia a un estado anterior 2. Pero tocaría arreglarlo, claro … y lo de deepseek toca arreglarlo, y es que existe en la documentacion de la api de deepseek configuraciones que justamente me ayudan a que no se salga del objetivo planteado».
+- L2: documentación de DeepSeek (context7, api-docs.deepseek.com): `temperature` 0.0–2.0 solo tiene efecto sin razonamiento (con razonamiento queda fija); modo `strict` de herramientas en `/beta` con `strict: true` y `additionalProperties: false`; `tool_choice` admite `required` o una función concreta. El gateway (`HostedAiAgentGateway`) ya manda `strict`, `tool_choice: required`, `thinking: disabled`, sin `temperature`.
+- L3 (T1, writer): restaurar manda `restore_from` (guardar, `draft/preview|impact|check`, `blocks/design`); el servidor toma la definición completa de la versión y aplica encima el borrador. `versiones_plantilla.contenido` es `jsonb` y pierde el orden de claves: se reordena contra la plantilla actual (sin eso la bibliografía restaurada dejaba de ser editable en el diseñador). Pendiente de decisión: migrar la columna a `json` para que las versiones nuevas conserven el orden exacto. RED→GREEN: `TemplateVersionRestoreTest` (7), `TemplateHistoryRestore.test.ts` (+3), `TemplateTableDesigner.test.ts` (+1).
+- L4 (T1, writer, decisión del coordinador): migración `2026_11_17_000273` pasa `versiones_plantilla.contenido_version_plantilla` de `jsonb` a `json` (ida y vuelta, trigger y CHECK intactos); el reordenamiento al restaurar solo corre si las claves raíz están en orden de `jsonb`. `TemplateVersionDiff` informa «Mostrar solo si» de campos y respuestas y la marca «Actual» lo tiene en cuenta. RED→GREEN: `TemplateVersionsKeepKeyOrderMigrationTest` (3), `TemplateVersionRestoreTest` (+2), `TemplateVersionDiffTest` (+2), `TemplateVersionHistoryTest` (+1).
+- L5 (usuario, 2026-11-17): «Sabes qué, mejor quita lo de historial de la plantilla». Se detuvo la verificación de T1, se descartaron sus cambios sin commit y se revirtió la migración 000272 en la base local. El historial no estaba en `origin/main`.
+- L6 (T4, writer): historial quitado en ambos repos sin migración nueva: se borró `2026_11_16_000272_create_template_versions_table`, `TemplateVersions`, `TemplateVersionDiff`, el modelo `TemplateVersion`, `TemplateVersionController` y sus tres rutas; guardar, formatear, vaciar e importar vuelven a su forma anterior a `7c0b4673`. Asistente sin `ver_historial` ni `comparar_version` (conocimiento, ejemplo 20, `pruebas.txt` y 3 escenarios fuera: quedan 35 escenarios y 56 turnos). Frontend sin «Historial», `TemplateHistorySheet`, `TemplateHistoryChanges`, `applyVersion` ni las llamadas `/versions`. Se conserva `TemplateJsonExport` (lo usa la exportación JSON). Docs, ayuda de pantalla, OpenAPI y esquema generado (37 tablas) al día. Pest 897/897, Vitest 918/918, Pint, PHPStan, typecheck, lint y contract:check en verde.

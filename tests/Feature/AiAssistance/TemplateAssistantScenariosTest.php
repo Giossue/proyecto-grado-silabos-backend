@@ -18,7 +18,7 @@ class TemplateAssistantScenariosTest extends TestCase
     use RefreshDatabase;
 
     private const CAPABILITIES = [
-        'listar_variables', 'duplicar_campo', 'duplicar_seccion', 'mover_campo', 'ver_historial', 'comparar_version',
+        'listar_variables', 'duplicar_campo', 'duplicar_seccion', 'mover_campo',
         'crear_tabla_repetible', 'mostrar_solo_si', 'cambiar_responsable_campo', 'usar_preset', 'renumerar', 'preguntar',
     ];
 

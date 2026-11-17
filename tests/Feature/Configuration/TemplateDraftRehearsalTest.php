@@ -239,7 +239,6 @@ class TemplateDraftRehearsalTest extends TestCase
             'definitions' => $rows('definiciones_campo'),
             'values' => $rows('valores_campo'),
             'syllabi' => $rows('silabos'),
-            'versions' => DB::table('versiones_plantilla')->count(),
             'audit' => DB::table('eventos_auditoria')->count(),
             'notifications' => DB::table('notificaciones')->count(),
         ];

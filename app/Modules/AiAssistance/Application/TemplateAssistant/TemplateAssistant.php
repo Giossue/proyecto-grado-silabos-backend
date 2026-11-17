@@ -88,7 +88,7 @@ final class TemplateAssistant
         $this->gatewayVersion = '';
         $draft = $editorDraft === null ? TemplateDraft::fromTemplate($template) : TemplateDraft::fromDraft($template, $editorDraft);
         $this->preexisting = $this->validator->errors($draft);
-        $tools = new TemplateTools($draft, $this->validator, $this->processState(), $this->preexisting, $template);
+        $tools = new TemplateTools($draft, $this->validator, $this->processState(), $this->preexisting);
         $system = $this->knowledge->system();
         $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $request, $editorDraft !== null, $history !== [], $lastProposal)]];
         $deadline = now()->addSeconds((int) config('ai.template.max_seconds'));

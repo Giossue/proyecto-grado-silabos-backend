@@ -54,10 +54,6 @@ esquema completo está en `docs/generated/database-schema.md`; las reglas de est
   Coordinación por materia (fila de `valores_campo` con `asignatura_id`) y el docente llena los
   espacios que le quedan.
 
-- **Versión de la plantilla** (`versiones_plantilla`, 2026-11-16): fotografía del JSON de la
-  plantilla en cada guardado del editor, con número, quién y cuándo. Solo se agrega; sirve para
-  ver, comparar y restaurar al borrador del editor.
-
 Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 
 ## Proyecto de carrera (`Academic`)
