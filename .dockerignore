@@ -15,6 +15,7 @@ vendor
 proyecto-grado-silabos-frontend
 tests
 docs
+manuales
 *.md
 !README.md
 .phpunit.cache
