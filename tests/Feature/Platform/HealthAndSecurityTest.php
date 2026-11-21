@@ -29,6 +29,17 @@ class HealthAndSecurityTest extends TestCase
             ->assertCookieMissing((string) config('session.cookie'));
     }
 
+    public function test_an_api_call_without_session_answers_401_even_without_asking_for_json(): void
+    {
+        // Found by the OWASP ZAP scan: without «Accept: application/json» the guest redirect looked
+        // for a «login» route that does not exist and answered 500.
+        $this->get('/api/v1/coordination/reviews')
+            ->assertUnauthorized()
+            ->assertExactJson(['message' => 'Unauthenticated.']);
+
+        $this->getJson('/api/v1/coordination/reviews')->assertUnauthorized();
+    }
+
     public function test_each_web_response_has_a_valid_correlation_identifier(): void
     {
         $response = $this->get(route('home'));

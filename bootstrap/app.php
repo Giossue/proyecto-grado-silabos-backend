@@ -4,12 +4,14 @@ use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\AssignCorrelationId;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\RequireActiveRole;
+use App\Http\Middleware\RequireWebAppOrigin;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -22,9 +24,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'active-role' => RequireActiveRole::class,
+            'web-app' => RequireWebAppOrigin::class,
         ]);
+        // The login and two-factor limiters read the session: the origin check goes first.
+        $middleware->prependToPriorityList(ThrottleRequests::class, RequireWebAppOrigin::class);
 
         $middleware->statefulApi();
+
+        // There are no server-side login pages: a guest gets a JSON 401, never a redirect to a
+        // «login» route that does not exist (that answered 500; found by the OWASP ZAP scan).
+        $middleware->redirectGuestsTo(fn (): ?string => null);
 
         $middleware->trimStrings(except: [
             'content', 'content.*', 'value', 'value.*', 'values.*', 'values.*.*',

@@ -22,7 +22,8 @@ Ruta /api/v1/…
 
 | Middleware | Qué hace |
 |---|---|
-| `auth:sanctum` | Exige sesión. La SPA usa cookie de sesión y token CSRF. |
+| `auth:sanctum` | Exige sesión. La SPA usa cookie de sesión y token CSRF. Sin sesión responde `401` en JSON aunque la petición no pida JSON (no hay páginas de ingreso en el servidor). |
+| `web-app` (`RequireWebAppOrigin`) | En el login y el desafío 2FA, exige que la petición venga de la SPA (origen en `SANCTUM_STATEFUL_DOMAINS`); si no, responde `400` «Inicie sesión desde la aplicación web.» antes de leer las credenciales. |
 | `verified` | Exige correo verificado. |
 | `active-role` (`RequireActiveRole`) | Exige un rol activo guardado en la sesión. Si falta, responde `409` «Seleccione un rol vigente.». |
 | `EnsureActiveUser` | Si la cuenta se desactivó, cierra la sesión y responde `403`. |
@@ -74,6 +75,7 @@ este patrón:
 
 | Código | Cuándo |
 |---|---|
+| `400` | Login o 2FA pedidos fuera de la SPA (sin su origen no hay sesión). |
 | `401` | Sin sesión. |
 | `403` | Sin permiso o cuenta desactivada. |
 | `409` | Falta el rol activo, o conflicto de versión del borrador: `code = conflicto_version_borrador` y `version_bloqueo_actual`. |

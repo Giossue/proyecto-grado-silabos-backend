@@ -27,6 +27,25 @@ class ApiSessionTest extends TestCase
         config(['sanctum.stateful' => ['localhost:5173']]);
     }
 
+    public function test_login_and_two_factor_outside_the_web_app_answer_400_without_checking_the_password(): void
+    {
+        // Found by the OWASP ZAP scan: without the SPA origin there is no session and both answered 500.
+        $this->seed(DatabaseSeeder::class);
+        $this->withoutHeader('Origin');
+        $message = ['message' => 'Inicie sesión desde la aplicación web.'];
+
+        $this->postJson(route('api.v1.authentication.login'), ['email' => 'docente@silabos.test', 'password' => 'Demo-2026!'])
+            ->assertStatus(400)
+            ->assertExactJson($message);
+        $this->postJson(route('api.v1.authentication.login'), ['email' => 'docente@silabos.test', 'password' => 'otra'])
+            ->assertStatus(400)
+            ->assertExactJson($message);
+        $this->postJson(route('api.v1.authentication.two-factor.challenge'), ['code' => '123456'])
+            ->assertStatus(400)
+            ->assertExactJson($message);
+        $this->assertGuest();
+    }
+
     public function test_authenticated_teacher_receives_a_session_payload_and_enters_directly_with_its_sole_role(): void
     {
         $this->seed(DatabaseSeeder::class);

@@ -40,7 +40,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::post('authentication/login', [SessionController::class, 'login'])
-        ->middleware('throttle:login')
+        ->middleware(['web-app', 'throttle:login'])
         ->name('api.v1.authentication.login');
     Route::post('authentication/password-recovery', [PasswordRecoveryController::class, 'sendLink'])
         ->middleware('throttle:password-recovery-link')
@@ -52,7 +52,7 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:password-recovery')
         ->name('api.v1.authentication.account-activation');
     Route::post('authentication/two-factor/challenge', [TwoFactorController::class, 'challenge'])
-        ->middleware('throttle:two-factor')
+        ->middleware(['web-app', 'throttle:two-factor'])
         ->name('api.v1.authentication.two-factor.challenge');
 
     Route::middleware('auth:sanctum')->group(function (): void {
